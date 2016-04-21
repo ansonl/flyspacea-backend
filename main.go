@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
+	//"time"
 	"io/ioutil"
 	"regexp"
 	//"strings"
-	//"net/url"
-	//"bytes"
-	//"strconv"
+	"net/url"
+	"bytes"
+	"strconv"
 )
 
 type Photo struct {
@@ -47,11 +47,13 @@ func main() {
     pagePhotos := Photos{}
     json.Unmarshal(body, &pagePhotos)
 
+    	/*
     res2B, _ := json.Marshal(pagePhotos)
     fmt.Println(string(res2B))
+    */
 
     var limit int
-    limit = 1
+    limit = 3
     if len(pagePhotos.Data) < limit {
     	limit = len(pagePhotos.Data)
     }
@@ -59,19 +61,20 @@ func main() {
     for i := 0; i < limit; i++ {
     	v := pagePhotos.Data[i]
 
-    	var timeOjb time.Time
+    	//var timeOjb time.Time
 
 		/* http://stackoverflow.com/questions/24401901/time-parse-why-does-golang-parses-the-time-incorrectly */
+		/*
     	layout := "2006-01-02T15:04:05-0700"
 		timeOjb, err := time.Parse(layout, v.CreatedTime)
-
 		if err != nil {
     		fmt.Println(err)
 		}
 		fmt.Println(timeOjb)
+		*/
     	
     	photoNode := fmt.Sprintf("https://graph.facebook.com/v2.5/%v?fields=source&access_token=522755171230853%%7ChxS9OzJ4I0CqmmrESRpNHfx77vs", v.Id)
-    	fmt.Println(photoNode)
+    	//fmt.Println(photoNode)
     	resp, err := http.Get(photoNode)
     	if err != nil {
 			// handle error
@@ -82,16 +85,17 @@ func main() {
     	photo := Photo{}
     	json.Unmarshal(body, &photo)
 
+    	/*
     	testPhotoNodeString, _ := json.Marshal(photo)
     	fmt.Println(string(testPhotoNodeString))
-
-    	/*
+    	*/
+    	
     	apiUrl := "https://api.havenondemand.com"
 	    resource := "/1/api/sync/ocrdocument/v1"
 	    data := url.Values{}
 	    data.Set("apikey", "6f5569d3-8fc0-4c74-80b4-efe9fd4c90a0")
 	    data.Add("url", photo.Source)
-	    data.Add("mode", "document_scan")
+	    data.Add("mode", "document_photo")
 
 	    u, _ := url.ParseRequestURI(apiUrl)
 	    u.Path = resource
@@ -105,8 +109,9 @@ func main() {
 	    havenResp, _ := client.Do(r)
 	    fmt.Println(havenResp.Status)
 	    ocrOutputRaw, err := ioutil.ReadAll(havenResp.Body)
-	    */
+	    
 
+	    /*
 	    //Test ocr response unmarshalling
 	    ocrOutputRaw := []byte(`
 	    	{
@@ -121,12 +126,14 @@ func main() {
 			    ]
 			}
 	    `)
+	    */
 
 	    ocrHavenResp := OCRHavenResp{}
 	    json.Unmarshal(ocrOutputRaw, &ocrHavenResp)
-
+	    /*
 	    testOCRHavenRespString, _ := json.Marshal(ocrHavenResp)
     	fmt.Println(string(testOCRHavenRespString))
+    	*/
 
     	//handle case to replace `1\n` but not `2016\n`
     	reNewLine := regexp.MustCompile(`(([^0-9][0-9])?\n)`)
@@ -141,7 +148,7 @@ func main() {
 
 	    rePhotoDateToListing := regexp.MustCompile(`(?im:[0-9]{2} (?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?) [0-9]{4}.*?)[0-9]{4}`)    
 	    departureStartIndex := rePhotoDateToListing.FindStringIndex(ocrHavenResp.TextBlockArray[0].Text)[1] - 4;
-	    fmt.Println(ocrHavenResp.TextBlockArray[0].Text[departureStartIndex:])
+	    //fmt.Println(ocrHavenResp.TextBlockArray[0].Text[departureStartIndex:])
 
 	    reDeparture := regexp.MustCompile(`(([0-9]{4})[ ]*([A-z ,&;]*)?.*?(-[A-z ,&;]*)*[ ]*([0-9]{1,3}[A-z]))`)
 	    fmt.Printf("%q\n",reDeparture.FindAllStringSubmatch(ocrHavenResp.TextBlockArray[0].Text[departureStartIndex:], -1))
