@@ -34,6 +34,136 @@ type OCRHavenResp struct {
 	TextBlockArray []TextBlock `json:"text_block"`
 }
 
+type TesseractOCRResp struct {
+	TextBlockArray []string `json:"ocr"`
+}
+
+func sendTesseractOCRRequest(photoUrl string) TesseractOCRResp {
+	apiUrl := "https://tesseract-harbor.herokuapp.com"
+    resource := "/process"
+    data := url.Values{}
+    data.Add("url", photoUrl)
+
+    u, _ := url.ParseRequestURI(apiUrl)
+    u.Path = resource
+    urlStr := fmt.Sprintf("%v", u)
+
+    client := &http.Client{}
+    r, _ := http.NewRequest("POST", urlStr, bytes.NewBufferString(data.Encode())) // <-- URL-encoded payload
+    r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+    r.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
+
+    fmt.Println("Tesseract OCR request sent.")
+
+    tesseractResp, _ := client.Do(r)
+    fmt.Println(tesseractResp.Status)
+    tesseractOutputRaw, ocrErr := ioutil.ReadAll(tesseractResp.Body)
+    if (ocrErr != nil) {
+    	fmt.Println("Error reading OCR request.")
+    }
+
+    fmt.Println(string(tesseractOutputRaw))
+
+    tesseractOCRResp := TesseractOCRResp{}
+    ocrUnmarshalErr := json.Unmarshal(tesseractOutputRaw, &tesseractOCRResp)
+    if (ocrUnmarshalErr != nil) {
+    	fmt.Println("Error unmarshaling OCR request.")
+    }
+    fmt.Println("OCR request received.")
+    
+    
+    //Print Haven OCR response in struct
+    testOCRHavenRespString, _ := json.Marshal(tesseractOCRResp)
+	fmt.Println(string(testOCRHavenRespString))
+	
+	return tesseractOCRResp
+}
+
+func sendHavenOCRRequest(photoUrl string) OCRHavenResp {
+	apiUrl := "https://api.havenondemand.com"
+    resource := "/1/api/sync/ocrdocument/v1"
+    data := url.Values{}
+    data.Set("apikey", "6f5569d3-8fc0-4c74-80b4-efe9fd4c90a0")
+    data.Add("url", photoUrl)
+    data.Add("mode", "document_scan")
+
+    u, _ := url.ParseRequestURI(apiUrl)
+    u.Path = resource
+    urlStr := fmt.Sprintf("%v", u)
+
+    client := &http.Client{}
+    r, _ := http.NewRequest("POST", urlStr, bytes.NewBufferString(data.Encode())) // <-- URL-encoded payload
+    r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+    r.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
+
+    fmt.Println("Haven OCR request sent.")
+
+    havenResp, _ := client.Do(r)
+    fmt.Println(havenResp.Status)
+    ocrOutputRaw, ocrErr := ioutil.ReadAll(havenResp.Body)
+    if (ocrErr != nil) {
+    	fmt.Println("Error reading OCR request.")
+    }
+
+    /*
+    //Test ocr response unmarshalling
+    ocrOutputRaw := []byte(`
+    	{
+		    "text_block": [
+		        {
+		            "text": "DEPARTURES FROM: ANDERSEN AFB, GUAM\n(UAM)\nMONDAY 18 APRIL 2016\n;C•:j&quot;l -i-, m;lt 0 l31,.;.t;;;l;;i&gt;:1\n0800 ELMENDORF AFB, AK - MCCONELL AFB\nKS\n&apos; 10F\n15 l;;&apos; : 5* £ ; 11=: U rt}? ; ; , ,.1 ? BE £ g;k;F;\n1750 HICKAM AFB, 1-11 10T\nSeat Releases: T=Tentative; F=Finn\nAll flights subject to change without notice",
+		            "left": 0,
+		            "top": 0,
+		            "width": 720,
+		            "height": 538
+		        }
+		    ]
+		}
+    `)
+    */
+
+    ocrHavenResp := OCRHavenResp{}
+    ocrUnmarshalErr := json.Unmarshal(ocrOutputRaw, &ocrHavenResp)
+    if (ocrUnmarshalErr != nil) {
+    	fmt.Println("Error unmarshaling OCR request.")
+    }
+    fmt.Println("OCR request received.")
+    
+    
+    //Print Haven OCR response in struct
+    testOCRHavenRespString, _ := json.Marshal(ocrHavenResp)
+	fmt.Println(string(testOCRHavenRespString))
+	
+	return ocrHavenResp
+}
+
+func parseHavenOCRResponse(resp OCRHavenResp) {
+	if (len(resp.TextBlockArray) == 0) {
+		fmt.Println("No text recognized.")
+		return
+	}
+
+	//handle case to replace `1\n` but not `2016\n`
+	reNewLine := regexp.MustCompile(`(([^0-9][0-9])?\n)`)
+	resp.TextBlockArray[0].Text = reNewLine.ReplaceAllString(resp.TextBlockArray[0].Text, "")
+
+	//resp.TextBlockArray[0].Text = strings.Replace(resp.TextBlockArray[0].Text, "\n", "", -1)
+
+	rePhotoDate := regexp.MustCompile(`(?i:[0-9]{2}[ ]*(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)[ ]*[0-9Il]{2,4})`)
+    fmt.Printf("Photo date %v\n", rePhotoDate.FindString(resp.TextBlockArray[0].Text))
+
+    //fmt.Println(resp.TextBlockArray[0].Text)
+
+    rePhotoDateToListing := regexp.MustCompile(`(?im:[0-9]{2}[ ]*(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)[ ]*[0-9]{2,4}.*?)[0-9]{4}`)    
+   	returnStringIndex := rePhotoDateToListing.FindStringIndex(resp.TextBlockArray[0].Text)
+   	if (len(returnStringIndex) > 1) {
+   		departureStartIndex := returnStringIndex[1] - 4
+   		reDeparture := regexp.MustCompile(`(([0-9]{4})[ ]*([A-z ,&;-]*?)(?:[-\/][ ]([A-z ,&;-]*?)[ ])*[ ]*(?:([0-9]{1,3}[A-z])|TBD))`)
+   		fmt.Printf("%q\n",reDeparture.FindAllStringSubmatch(resp.TextBlockArray[0].Text[departureStartIndex:], -1))
+   	}
+    //fmt.Println(resp.TextBlockArray[0].Text[departureStartIndex:])
+}
+
 func main() {
 	resp, err := http.Get("https://graph.facebook.com/v2.5/travispassengerterminal/photos?type=uploaded&access_token=522755171230853%7ChxS9OzJ4I0CqmmrESRpNHfx77vs")
 	if err != nil {
@@ -95,88 +225,13 @@ func main() {
     	}
     	fmt.Println("Photo node retrieved.")
 
-    	/*
+    	
     	testPhotoNodeString, _ := json.Marshal(photo)
     	fmt.Println(string(testPhotoNodeString))
-    	*/
     	
-    	apiUrl := "https://api.havenondemand.com"
-	    resource := "/1/api/sync/ocrdocument/v1"
-	    data := url.Values{}
-	    data.Set("apikey", "6f5569d3-8fc0-4c74-80b4-efe9fd4c90a0")
-	    data.Add("url", photo.Source)
-	    data.Add("mode", "document_scan")
-
-	    u, _ := url.ParseRequestURI(apiUrl)
-	    u.Path = resource
-	    urlStr := fmt.Sprintf("%v", u)
-
-	    client := &http.Client{}
-	    r, _ := http.NewRequest("POST", urlStr, bytes.NewBufferString(data.Encode())) // <-- URL-encoded payload
-	    r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	    r.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
-
-	    fmt.Println("OCR request sent.")
-
-	    havenResp, _ := client.Do(r)
-	    fmt.Println(havenResp.Status)
-	    ocrOutputRaw, err := ioutil.ReadAll(havenResp.Body)
-	    
-
-	    /*
-	    //Test ocr response unmarshalling
-	    ocrOutputRaw := []byte(`
-	    	{
-			    "text_block": [
-			        {
-			            "text": "DEPARTURES FROM: ANDERSEN AFB, GUAM\n(UAM)\nMONDAY 18 APRIL 2016\n;C•:j&quot;l -i-, m;lt 0 l31,.;.t;;;l;;i&gt;:1\n0800 ELMENDORF AFB, AK - MCCONELL AFB\nKS\n&apos; 10F\n15 l;;&apos; : 5* £ ; 11=: U rt}? ; ; , ,.1 ? BE £ g;k;F;\n1750 HICKAM AFB, 1-11 10T\nSeat Releases: T=Tentative; F=Finn\nAll flights subject to change without notice",
-			            "left": 0,
-			            "top": 0,
-			            "width": 720,
-			            "height": 538
-			        }
-			    ]
-			}
-	    `)
-	    */
-
-	    ocrHavenResp := OCRHavenResp{}
-	    ocrErr := json.Unmarshal(ocrOutputRaw, &ocrHavenResp)
-	    if (ocrErr != nil) {
-	    	fmt.Println("Error unmarshaling OCR request.")
-	    }
-	    fmt.Println("OCR request received.")
-	    
-	    testOCRHavenRespString, _ := json.Marshal(ocrHavenResp)
-    	fmt.Println(string(testOCRHavenRespString))
     	
-
-    	if (len(ocrHavenResp.TextBlockArray) == 0) {
-    		fmt.Println("No text recognized.")
-    		continue
-    	}
-
-    	//handle case to replace `1\n` but not `2016\n`
-    	reNewLine := regexp.MustCompile(`(([^0-9][0-9])?\n)`)
-    	ocrHavenResp.TextBlockArray[0].Text = reNewLine.ReplaceAllString(ocrHavenResp.TextBlockArray[0].Text, "")
-
-    	//ocrHavenResp.TextBlockArray[0].Text = strings.Replace(ocrHavenResp.TextBlockArray[0].Text, "\n", "", -1)
-
-    	rePhotoDate := regexp.MustCompile(`(?i:[0-9]{2}[ ]*(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)[ ]*[0-9Il]{2,4})`)
-	    fmt.Printf("Photo date %v\n", rePhotoDate.FindString(ocrHavenResp.TextBlockArray[0].Text))
-
-	    //fmt.Println(ocrHavenResp.TextBlockArray[0].Text)
-
-	    rePhotoDateToListing := regexp.MustCompile(`(?im:[0-9]{2}[ ]*(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)[ ]*[0-9]{2,4}.*?)[0-9]{4}`)    
-	   	returnStringIndex := rePhotoDateToListing.FindStringIndex(ocrHavenResp.TextBlockArray[0].Text)
-	   	if (len(returnStringIndex) > 1) {
-	   		departureStartIndex := returnStringIndex[1] - 4
-	   		reDeparture := regexp.MustCompile(`(([0-9]{4})[ ]*([A-z ,&;]*)?.*?(-[A-z ,&;]*)*[ ]*(?:([0-9]{1,3}[A-z])|TBD))`)
-	   		fmt.Printf("%q\n",reDeparture.FindAllStringSubmatch(ocrHavenResp.TextBlockArray[0].Text[departureStartIndex:], -1))
-	   	}
-	    //fmt.Println(ocrHavenResp.TextBlockArray[0].Text[departureStartIndex:])
-
-	    
-
+    	//ocrHavenResp := sendHavenOCRRequest(photo.Source)
+    	//parseHavenOCRResponse(ocrHavenResp)
+    	sendTesseractOCRRequest(photo.Source)
     }
 }
