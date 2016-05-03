@@ -1,12 +1,17 @@
 DROP TABLE IF EXISTS flights;
 CREATE TABLE flights (
- origin CHAR(50),
- destination CHAR(50),
- departTimestamp TIMESTAMP,
- seats INT,
- seatRelease CHAR(50), 
- CONSTRAINT flights_pk PRIMARY KEY (origin, destination, departTimestamp));
+ Origin VARCHAR(50),
+ Destination VARCHAR(50),
+ RollCall TIMESTAMP,
+ SeatCount INT,
+ SeatType VARCHAR(3), 
+ Cancelled BOOLEAN,
+ CONSTRAINT flights_pk PRIMARY KEY (Origin, Destination, RollCall));
 
 #Insert new pickup
-INSERT INTO flights (origin, destination, departTimestamp)
-  VALUES ('a', 'b', '2002-10-02T10:00:00-05:00');
+INSERT INTO flights (Origin, Destination, RollCall, SeatCount, SeatType, Cancelled) 
+    VALUES ($1, $2, $3, $4, $5, $6);
+
+SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled 
+ FROM flights 
+ WHERE Origin=$1 AND RollCall <= current_timestamp AND RollCall > current_timestamp - INTERVAL '14 day';
