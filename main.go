@@ -50,11 +50,33 @@ type Departure struct {
     SeatCount int `json:"seatCount"`
     SeatType string `json:"seatType"`
     Canceled bool `json:"canceled"`
+    PhotoSource string `json:"photoSource"`
 }
 
 type Terminal struct {
     Title string `json:"title"`
     Id string `json:"id"`
+}
+
+type OCRMethodInterface interface {
+    doOCR()
+    getTargetDeparturesArray() []Departure
+    getParent() OCRMethod
+}
+
+type OCRMethod struct {
+    Name string
+    PhotoObj Photo
+    TargetDeparturesArray []Departure
+    PhotoDateFound bool
+}
+
+type HavenMethod struct {
+    OCRMethod
+}
+
+type TesseractMethod struct {
+    OCRMethod
 }
 
 var db *(sql.DB)
@@ -70,17 +92,23 @@ func sendTesseractOCRRequest(photoUrl string) TesseractOCRResp {
     urlStr := fmt.Sprintf("%v", u)
 
     client := &http.Client{}
+    client.Timeout = 1*time.Minute
     r, _ := http.NewRequest("POST", urlStr, bytes.NewBufferString(data.Encode())) // <-- URL-encoded payload
     r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
     r.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
 
-    fmt.Println("Tesseract OCR request sent.")
+    //fmt.Println("Tesseract OCR request sent.")
 
-    tesseractResp, _ := client.Do(r)
+    tesseractResp, clientErr := client.Do(r)
+    if (clientErr != nil) {
+        fmt.Println("Error doing OCR client request.")
+        return TesseractOCRResp{}
+    }
     //fmt.Println(tesseractResp.Status)
     tesseractOutputRaw, ocrErr := ioutil.ReadAll(tesseractResp.Body)
     if (ocrErr != nil) {
     	fmt.Println("Error reading OCR request.")
+        return TesseractOCRResp{}
     }
 
     //fmt.Println(string(tesseractOutputRaw))
@@ -90,7 +118,7 @@ func sendTesseractOCRRequest(photoUrl string) TesseractOCRResp {
     if (ocrUnmarshalErr != nil) {
     	fmt.Println("Error unmarshaling OCR request.")
     }
-    fmt.Println("OCR request received.")
+    //fmt.Println("Tesseract OCR request received.")
     
     /*
     //Print Tesseract OCR response in struct
@@ -114,19 +142,25 @@ func sendHavenOCRRequest(photoUrl string) OCRHavenResp {
     urlStr := fmt.Sprintf("%v", u)
 
     client := &http.Client{}
+    client.Timeout = 1*time.Minute
     r, _ := http.NewRequest("POST", urlStr, bytes.NewBufferString(data.Encode())) // <-- URL-encoded payload
     r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
     r.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
 
-    fmt.Println("Haven OCR request sent.")
+    //fmt.Println("Haven OCR request sent.")
 
-    havenResp, _ := client.Do(r)
+    havenResp, clientErr := client.Do(r)
+    if (clientErr != nil) {
+        fmt.Println("Error doing OCR client request.")
+        return OCRHavenResp{}
+    }
     //fmt.Println(havenResp.Status)
     ocrOutputRaw, ocrErr := ioutil.ReadAll(havenResp.Body)
     if (ocrErr != nil) {
     	fmt.Println("Error reading OCR request.")
+        return OCRHavenResp{}
     }
-
+    
     /*
     //Test ocr response unmarshalling
     ocrOutputRaw := []byte(`
@@ -148,8 +182,9 @@ func sendHavenOCRRequest(photoUrl string) OCRHavenResp {
     ocrUnmarshalErr := json.Unmarshal(ocrOutputRaw, &ocrHavenResp)
     if (ocrUnmarshalErr != nil) {
     	fmt.Println("Error unmarshaling OCR request.")
+        fmt.Println(string(ocrOutputRaw))
     }
-    fmt.Println("OCR request received.")
+    //fmt.Println("Haven OCR request received.")
     
     /*
     //Print Haven OCR response in struct
@@ -160,11 +195,12 @@ func sendHavenOCRRequest(photoUrl string) OCRHavenResp {
 	return ocrHavenResp
 }
 
-func parseOCRResponseByNewline(splitResponse []string) []Departure {
+func parseOCRResponseByNewline(splitResponse []string) ([]Departure, bool) {
     var departures []Departure
     departures = make([]Departure, 0)
 
     for i := 0; i < len(splitResponse); i++ {
+        //print each string of split response as we parse them
         //fmt.Printf("%v %v\n", i, splitResponse[i])
         //find photo date
         //handle both 01 April 2016 AND April 28th, 2016 AND April 01, 2016 formats
@@ -172,7 +208,7 @@ func parseOCRResponseByNewline(splitResponse []string) []Departure {
         photoDate := rePhotoDate.FindString(splitResponse[i])
 
         if (len(photoDate) > 0) {
-            fmt.Printf("Photo date %v\n", photoDate)
+            //fmt.Printf("Photo date %v\n", photoDate)
             for i = i+1;i < len(splitResponse); i++ {
                 //fmt.Printf("%v %v\n", i, splitResponse[i])
 
@@ -188,26 +224,30 @@ func parseOCRResponseByNewline(splitResponse []string) []Departure {
                         tmp := foundDeparture[1]
                         foundDeparture[1] = foundDeparture[2]
                         foundDeparture[2] = tmp
-
-                        //The ([0-9]{1,3})([TF]) counts as captrue groups #3 and #4 so (TBD) is #5, if TDB, move TDB match to group #3 so we can handle it further on
-                        if (foundDeparture[5] == "TBD") {
-                            foundDeparture[3] = "TBD"
-                        }
                     }
 
                 }
 
                 //fmt.Printf("REGEX FIND %q", foundDeparture)
                 //Array should be in order ["1405 OSAN AB, KOR 10T" "1405" "OSAN AB, KOR" "10" "T" ""]
-
-
-
                 if (len(foundDeparture) > 3) {
+
+                    //Handle TBD seat counts
+                    //The ([0-9]{1,3})([TF]) counts as captrue groups #3 and #4 so (TBD) is #5, if TDB, move TDB match to group #3 so we can handle it further on
+                        if (foundDeparture[5] == "TBD") {
+                            foundDeparture[3] = "TBD"
+                        }
                     
                     var tmpDeparture Departure
                     tmpDeparture = Departure{}
 
                     layout := "02 January 2006 1504"
+
+                    //Check for two digit year
+                    if (photoDate[len(photoDate)-3] == ' ') {
+                        //fmt.Println("Two digit year detected, using two digit year layout string")
+                        layout = "02 January 06 1504"
+                    }
 
                     //Replace I and l strings in year of captured date with 1 string to successfully parse date
                     photoDate = photoDate[:len(photoDate)-4] + strings.Replace(photoDate[len(photoDate)-4:], "I", "1", -1)
@@ -218,7 +258,7 @@ func parseOCRResponseByNewline(splitResponse []string) []Departure {
                     tmpRollCall, rollCallErr := time.Parse(layout, addedTimeString)
                     if rollCallErr != nil {
                         fmt.Println(rollCallErr)
-                        return nil
+                        return nil, true
                     }
 
                     tmpDeparture.RollCall = tmpRollCall
@@ -243,18 +283,39 @@ func parseOCRResponseByNewline(splitResponse []string) []Departure {
                     departures = append(departures, tmpDeparture)
                 }
             }
-            break
+            return departures, true
         }
     }
-
-    return departures
+    //return with no photo date found
+    return nil, false
 }
 
-func selectRowsFromOrigin4Weeks(targetTable string, targetOrigin string) *(sql.Rows) {
+func selectRowsFromOrigin4WeeksNow(targetTable string, targetOrigin string) *(sql.Rows) {
     //we construct the SELECT query in Go because SQL does not support ordinal marker for table names
-    query := fmt.Sprintf(`SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled` +" FROM %v "+
+    query := fmt.Sprintf(`SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource` +" FROM %v "+
  `WHERE Origin=$1 AND RollCall <= current_timestamp + INTERVAL '14 day' AND RollCall > current_timestamp - INTERVAL '14 day';`, targetTable)
     rows, err := db.Query(query, targetOrigin)
+    if err != nil {
+        log.Println(err)
+    } else {
+        return rows
+    }
+    return nil
+}
+
+func generateMapKeyForDeparture(targetDeparture Departure) string {
+    return fmt.Sprintf("%v*%v*%v", strings.Replace(targetDeparture.Origin, " ", "", -1), strings.Replace(targetDeparture.Destination, " ", "", -1), targetDeparture.RollCall.Format(time.RFC3339))
+}
+
+func selectRowsFromOrigin4Weeks(targetTable string, targetOrigin string, targetTime time.Time) *(sql.Rows) {
+
+    formattedTime := targetTime.Format("2006-01-02 15:04:05")
+    //fmt.Printf("formatted time is %v\n", formattedTime)
+
+    //we construct the SELECT query in Go because SQL does not support ordinal marker for table names
+    query := fmt.Sprintf(`SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource` +" FROM %v "+
+ `WHERE Origin=$1 AND RollCall <= to_timestamp($2, 'YY-MM-DD HH24:MI:SS') + INTERVAL '14 day' AND RollCall > to_timestamp($2, 'YY-MM-DD HH24:MI:SS') - INTERVAL '14 day';`, targetTable)
+    rows, err := db.Query(query, targetOrigin, formattedTime)
     if err != nil {
         log.Println(err)
     } else {
@@ -271,12 +332,12 @@ func scanFlightRowsToMap(targetRows *(sql.Rows)) map[string]Departure {
         var tmpDeparture Departure
         tmpDeparture = Departure{}
 
-        if err := targetRows.Scan(&tmpDeparture.Origin, &tmpDeparture.Destination, &tmpDeparture.RollCall, &tmpDeparture.SeatCount, &tmpDeparture.SeatType, &tmpDeparture.Canceled); err != nil {
+        if err := targetRows.Scan(&tmpDeparture.Origin, &tmpDeparture.Destination, &tmpDeparture.RollCall, &tmpDeparture.SeatCount, &tmpDeparture.SeatType, &tmpDeparture.Canceled, &tmpDeparture.PhotoSource); err != nil {
             log.Println(err)
         }
 
-        key := fmt.Sprintf("%v*%v*%v", tmpDeparture.Origin, tmpDeparture.Destination, tmpDeparture.RollCall.Format(time.RFC3339))
-        //fmt.Println(key)
+        key := generateMapKeyForDeparture(tmpDeparture)
+        //fmt.Printf("Existing %v\n", key)
 
         existingSavedFlights[key] = tmpDeparture
     }
@@ -285,15 +346,18 @@ func scanFlightRowsToMap(targetRows *(sql.Rows)) map[string]Departure {
 }
 
 func updateDatabaseWithUpdatedFlights(updatedFlightArray []Departure) {
-    fmt.Println("COMPARE DB")
-
-    targetRows := selectRowsFromOrigin4Weeks("flights", "???")
+    if (len(updatedFlightArray) == 0) {
+        return
+    }
+    //fmt.Println("get flights origin from" + updatedFlightArray[0].Origin)
+    targetRows := selectRowsFromOrigin4Weeks("flights", updatedFlightArray[0].Origin, updatedFlightArray[0].RollCall)
+    //targetRows := selectRowsFromOrigin4WeeksNow("flights", updatedFlightArray[0].Origin)
     existingSavedFlights := scanFlightRowsToMap(targetRows)
 
     //find new flights that are not previously saved and update old flights
     for _, v := range updatedFlightArray {
-        key := fmt.Sprintf("%v*%v*%v", v.Origin, v.Destination, v.RollCall.Format(time.RFC3339))
-        //fmt.Println(key)
+        key := generateMapKeyForDeparture(v)
+        //fmt.Printf("Updated %v\n", key)
 
         //Check if updated flight already exists in database
         if existingDeparture, ok := existingSavedFlights[key]; ok {
@@ -302,8 +366,8 @@ func updateDatabaseWithUpdatedFlights(updatedFlightArray []Departure) {
                 var result sql.Result
                 var err error
                 if result, err = db.Exec(`UPDATE flights 
-                    SET SeatCount = $1, SeatType = $2 
-                    WHERE Origin = $3 AND Aestination = $4 AND RollCall = $5;`, v.SeatCount, v.SeatType, v.Origin, v.Destination, v.RollCall); err != nil {
+                    SET SeatCount = $1, SeatType = $2, PhotoSource = $3 
+                    WHERE Origin = $4 AND Aestination = $5 AND RollCall = $6;`, v.SeatCount, v.SeatType, v.PhotoSource, v.Origin, v.Destination, v.RollCall); err != nil {
                     log.Println(err)
                 } else {
                     rowsAffected, _ := result.RowsAffected()
@@ -314,8 +378,8 @@ func updateDatabaseWithUpdatedFlights(updatedFlightArray []Departure) {
             //insert
             var result sql.Result
             var err error
-            if result, err = db.Exec(`INSERT INTO flights (Origin, Destination, RollCall, SeatCount, SeatType, Cancelled) 
-                VALUES ($1, $2, $3, $4, $5, $6);`, v.Origin, v.Destination, v.RollCall, v.SeatCount, v.SeatType, v.Canceled); err != nil {
+            if result, err = db.Exec(`INSERT INTO flights (Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7);`, v.Origin, v.Destination, v.RollCall, v.SeatCount, v.SeatType, v.Canceled, v.PhotoSource); err != nil {
                 log.Println(err)
             } else {
                 rowsAffected, _ := result.RowsAffected()
@@ -355,14 +419,73 @@ func readTerminalFileToMap(terminalFilename string) map[string]Terminal {
     return terminalMap
 }
 
+func (method OCRMethod) getTargetDeparturesArray() []Departure{
+    return method.TargetDeparturesArray
+}
+
+func (method TesseractMethod) getParent() OCRMethod{
+    return method.OCRMethod
+}
+
+func (method HavenMethod) getParent() OCRMethod{
+    return method.OCRMethod
+}
+
+func (method *HavenMethod) doOCR() {
+    //Haven On Demand OCR request
+    ocrHavenResp := sendHavenOCRRequest(method.PhotoObj.Source)
+    if (len(ocrHavenResp.TextBlockArray) == 0) {
+        fmt.Println("No text recognized by Haven On Demand OCR")
+    } else {
+        //Haven OCR request contains one string with newlines so we split response into array of strings by newline
+        //Split by \n characters
+        splitByString := "\n"
+        var splitResponse []string
+        if (len(splitByString) > 0) {
+            splitResponse = strings.Split(ocrHavenResp.TextBlockArray[0].Text, splitByString)
+            //fmt.Printf("%v\n", splitResponse)
+        }
+        if method.TargetDeparturesArray, method.PhotoDateFound = parseOCRResponseByNewline(splitResponse); method.TargetDeparturesArray != nil {
+            //Set the source photo for all departures
+            for i, _ := range method.TargetDeparturesArray {
+                method.TargetDeparturesArray[i].PhotoSource = method.PhotoObj.Source
+            }
+        } else {
+            //fmt.Printf("Haven OCR Response Parse found nothing\n")
+            return
+        }
+    }
+    //fmt.Println(method.TargetDeparturesArray)
+}
+
+func (method TesseractMethod) doOCR() {
+    //Tesseract OCR request
+    ocrTesseractResp := sendTesseractOCRRequest(method.PhotoObj.Source)
+    if (len(ocrTesseractResp.TextArray) == 0) {
+        fmt.Println("No text recognized by Tesseract OCR.")
+    }
+    
+    if method.TargetDeparturesArray, method.PhotoDateFound = parseOCRResponseByNewline(ocrTesseractResp.TextArray); method.TargetDeparturesArray != nil {
+        //Set the source photo for all departures
+        for i, _ := range method.TargetDeparturesArray {
+            method.TargetDeparturesArray[i].PhotoSource = method.PhotoObj.Source
+        }
+    } else {
+        //fmt.Printf("Tesseract OCR Response found nothing\n")
+        return
+    }
+    
+}
+
 func updateTerminal(targetTerminal Terminal) {
     terminalId := targetTerminal.Id
     if (len(terminalId) == 0) {
         fmt.Printf("Terminal %v missing Id.\n", targetTerminal.Title)
         return
+    } else {
+        fmt.Printf("Starting %v %v\n", targetTerminal.Title, targetTerminal.Id)
     }
         
-
     apiUrl := "https://graph.facebook.com"
     resource := fmt.Sprintf("v2.5/%v/photos", terminalId)
     data := url.Values{}
@@ -378,7 +501,10 @@ func updateTerminal(targetTerminal Terminal) {
     r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
     r.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
 
-    pagePhotosEdgeResp, _ := client.Do(r)
+    pagePhotosEdgeResp, pagePhotoEdgeErr := client.Do(r)
+    if pagePhotoEdgeErr != nil {
+
+    }
     body, ocrErr := ioutil.ReadAll(pagePhotosEdgeResp.Body)
     if (ocrErr != nil) {
         fmt.Println("Error reading page photos edge resp.")
@@ -389,7 +515,7 @@ func updateTerminal(targetTerminal Terminal) {
     if pagePhotosErr != nil {
         fmt.Println("Error unmarshaling page photos edge.")
     }
-    fmt.Println("Page photos edge retrieved.")
+    //fmt.Println("Page photos edge retrieved.")
 
     /*
     res2B, _ := json.Marshal(pagePhotos)
@@ -400,7 +526,7 @@ func updateTerminal(targetTerminal Terminal) {
 
     //Look at the photo nodes returned by the photos edge
     var limit int
-    limit = 4
+    limit = 5
     if len(pagePhotos.Data) < limit {
         limit = len(pagePhotos.Data)
     }
@@ -420,7 +546,7 @@ func updateTerminal(targetTerminal Terminal) {
         fmt.Println(timeOjb)
         */
 
-        fmt.Println("Getting photo node.")
+        //fmt.Println("Getting photo node.")
 
         apiUrl := "https://graph.facebook.com"
         resource := fmt.Sprintf("v2.5/%v", v.Id)
@@ -451,57 +577,58 @@ func updateTerminal(targetTerminal Terminal) {
         if (photoNodeErr != nil) {
             fmt.Println("Error unmarshaling photoNode")
         }
-        fmt.Println("Photo node retrieved.")
+        //fmt.Println("Photo node retrieved.")
 
-        
+        /*
         testPhotoNodeString, _ := json.Marshal(photo)
         fmt.Println(string(testPhotoNodeString))
+        */
         
-        
-        var updatedFlightArray []Departure
+        //Specify the methods to use
+        havenThing := HavenMethod{OCRMethod{"Haven", photo, nil, false}}
+        tesseractThing := TesseractMethod{OCRMethod{"Tesseract", photo, nil, false}}
+        //Forgot about the need to pass pointer to obj and that method receiver is passed by value and not reference so obj method that modifies needs pointer to actually affect underlying obj. http://jordanorelli.com/post/32665860244/how-to-use-interfaces-in-go
+        //methodsToUse := []OCRMethodInterface{&havenThing}
+        methodsToUse := []OCRMethodInterface{&tesseractThing, &havenThing}
 
-        //Haven On Demand OCR request
-        ocrHavenResp := sendHavenOCRRequest(photo.Source)
-        if (len(ocrHavenResp.TextBlockArray) == 0) {
-            fmt.Println("No text recognized by Haven On Demand OCR")
-        } else {
-            //Haven OCR request contains one string with newlines so we split response into array of strings by newline
-            //Split by \n characters
-            splitByString := "\n"
-            var splitResponse []string
-            if (len(splitByString) > 0) {
-                splitResponse = strings.Split(ocrHavenResp.TextBlockArray[0].Text, splitByString)
-                //fmt.Printf("%v\n", splitResponse)
-            }
-            if updatedFlightArray = parseOCRResponseByNewline(splitResponse); updatedFlightArray != nil {
-                for i, _ := range updatedFlightArray {
-                    updatedFlightArray[i].Origin = targetTerminal.Title
-                }
-                updateDatabaseWithUpdatedFlights(updatedFlightArray)
-            } else {
-                fmt.Printf("Error parsing OCR Response for %v\n", targetTerminal.Title)
-                return
-            }
-            fmt.Printf("HAVEN score %v\n", len(updatedFlightArray))
+        var updatedFlightArray [][]Departure
+        updatedFlightArray = make([][]Departure, len(methodsToUse))
+
+        for i, _ := range methodsToUse {
+            methodsToUse[i].doOCR()
+            updatedFlightArray[i] = methodsToUse[i].getTargetDeparturesArray()
             
+            for j, _ := range updatedFlightArray[i] {
+                updatedFlightArray[i][j].Origin = targetTerminal.Title
+                //fmt.Printf("%q\n",updatedFlightArray[i][j])
+            }
         }
 
-        //Tesseract OCR request
-        ocrTesseractResp := sendTesseractOCRRequest(photo.Source)
-        if (len(ocrTesseractResp.TextArray) == 0) {
-            fmt.Println("No text recognized by Tesseract OCR.")
+        type methodIndexAndScore struct {
+            Index int
+            Score int
         }
-        if updatedFlightArray = parseOCRResponseByNewline(ocrTesseractResp.TextArray); updatedFlightArray != nil {
-            for i, _ := range updatedFlightArray {
-                updatedFlightArray[i].Origin = targetTerminal.Title
+        highestIndexAndScore := methodIndexAndScore{-1, -1}
+        for i, _ := range methodsToUse {
+            //Calculate score
+            var currentMethodScore int
+            if currentMethodScore = len(updatedFlightArray[i]); methodsToUse[i].getParent().PhotoDateFound == true {
+                currentMethodScore++
             }
-            updateDatabaseWithUpdatedFlights(updatedFlightArray)
-        } else {
-            fmt.Printf("Error parsing OCR Response for %v\n", targetTerminal.Title)
-            return
+
+            fmt.Printf("%v score is %v\n", methodsToUse[i].getParent().Name, currentMethodScore)
+
+            //if no highest score yet, or this method has the highest score
+            if (highestIndexAndScore.Index < 0 || currentMethodScore > highestIndexAndScore.Score) {
+                highestIndexAndScore.Index = i
+                highestIndexAndScore.Score = currentMethodScore
+            }
         }
-        fmt.Printf("Tesseract score %v\n", len(updatedFlightArray))
-        
+
+        fmt.Printf("Highest scoring OCR method is %v scoring %v\n", methodsToUse[highestIndexAndScore.Index].getParent().Name, highestIndexAndScore.Score)
+        //fmt.Printf("%q\n", updatedFlightArray[highestIndexAndScore.Index])
+
+        updateDatabaseWithUpdatedFlights(updatedFlightArray[highestIndexAndScore.Index])
 
         /*
         //Print what regex finds
@@ -521,18 +648,17 @@ func updateAllTerminals(terminalArray []Terminal) {
 func main() {
     setupDatabaseHandle()
 
-    //terminalMap := readTerminalFileToMap("terminals.json")
-
-    /*
+    terminalMap := readTerminalFileToMap("terminals.json")
     for _, v := range terminalMap {
         updateTerminal(v)
-        break
     }
-    */
+
+    /*
     v := Terminal{}
-    v.Title="Andersen Pax Term"
-    v.Id="321748637899280"
+    v.Title="Travis Pax Term"
+    v.Id="travispassengerterminal"
     updateTerminal(v)
+    */
 
     
     return
