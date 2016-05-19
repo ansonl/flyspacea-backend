@@ -15,6 +15,7 @@ import (
     _ "github.com/lib/pq"
     "os"
     "log"
+    "sync"
 )
 
 type Photo struct {
@@ -594,15 +595,24 @@ func updateTerminal(targetTerminal Terminal) {
         var updatedFlightArray [][]Departure
         updatedFlightArray = make([][]Departure, len(methodsToUse))
 
+        var wg sync.WaitGroup
+
         for i, _ := range methodsToUse {
-            methodsToUse[i].doOCR()
-            updatedFlightArray[i] = methodsToUse[i].getTargetDeparturesArray()
-            
-            for j, _ := range updatedFlightArray[i] {
-                updatedFlightArray[i][j].Origin = targetTerminal.Title
-                //fmt.Printf("%q\n",updatedFlightArray[i][j])
-            }
+            wg.Add(1)
+
+            go func(targetMethod OCRMethodInterface, targetFlightArray []Departure) {
+                defer wg.Done()
+                targetMethod.doOCR()
+                targetFlightArray = targetMethod.getTargetDeparturesArray()
+                
+                for j, _ := range targetFlightArray {
+                    targetFlightArray[j].Origin = targetTerminal.Title
+                    //fmt.Printf("%q\n",updatedFlightArray[i][j])
+                }
+            }(methodsToUse[i], updatedFlightArray[i])
         }
+
+        wg.Wait()
 
         type methodIndexAndScore struct {
             Index int
@@ -616,7 +626,7 @@ func updateTerminal(targetTerminal Terminal) {
                 currentMethodScore++
             }
 
-            fmt.Printf("%v score is %v\n", methodsToUse[i].getParent().Name, currentMethodScore)
+            //fmt.Printf("%v score is %v\n", methodsToUse[i].getParent().Name, currentMethodScore)
 
             //if no highest score yet, or this method has the highest score
             if (highestIndexAndScore.Index < 0 || currentMethodScore > highestIndexAndScore.Score) {
@@ -625,7 +635,7 @@ func updateTerminal(targetTerminal Terminal) {
             }
         }
 
-        fmt.Printf("Highest scoring OCR method is %v scoring %v\n", methodsToUse[highestIndexAndScore.Index].getParent().Name, highestIndexAndScore.Score)
+        //fmt.Printf("Highest scoring OCR method is %v scoring %v\n", methodsToUse[highestIndexAndScore.Index].getParent().Name, highestIndexAndScore.Score)
         //fmt.Printf("%q\n", updatedFlightArray[highestIndexAndScore.Index])
 
         updateDatabaseWithUpdatedFlights(updatedFlightArray[highestIndexAndScore.Index])
@@ -641,17 +651,17 @@ func updateTerminal(targetTerminal Terminal) {
     }
 }
 
-func updateAllTerminals(terminalArray []Terminal) {
-
+func updateAllTerminals(terminalMap map[string]Terminal) {
+    for _, v := range terminalMap {
+        updateTerminal(v)
+    }
 }
 
 func main() {
     setupDatabaseHandle()
 
     terminalMap := readTerminalFileToMap("terminals.json")
-    for _, v := range terminalMap {
-        updateTerminal(v)
-    }
+    updateAllTerminals(terminalMap)
 
     /*
     v := Terminal{}
