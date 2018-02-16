@@ -291,6 +291,18 @@ func downloadAndSavePhotosEdgePhoto(photosEdgePhoto PhotosEdgePhoto, targetTermi
 		runImageMagickConvert(targetTerminal, photoNumber)
 	}
 
+	text, err := getPlainText(SAVE_IMAGE_TRAINING, targetTerminal, photoNumber)
+	if err != nil {
+		log.Println(err)
+	}
+
+	actualDestinationSpelling := findDestinationInPlainText(text)
+
+	log.Println("actual dest spelling ", actualDestinationSpelling);
+
+	/*
+
+
 	hocr, err := getHOCRText(SAVE_IMAGE_TRAINING, targetTerminal, photoNumber)
 	if err != nil {
 		log.Println(err)
@@ -301,8 +313,8 @@ func downloadAndSavePhotosEdgePhoto(photosEdgePhoto PhotosEdgePhoto, targetTermi
 		log.Println(err)
 	}
 
-	log.Println("bbox %v %v %v %v", bbox.Min.X, bbox.Min.Y, bbox.Max.X, bbox.Max.Y)
-
+	log.Printf("bbox %v %v %v %v\n", bbox.Min.X, bbox.Min.Y, bbox.Max.X, bbox.Max.Y)
+*/
 	
 }
 
