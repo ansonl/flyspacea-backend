@@ -42,3 +42,8 @@ const (
 	IMAGE_TRAINING_DIRECTORY string = "training_images"
 	IMAGE_TRAINING_PROCESSED_DIRECTORY string = "training_images_processed"
 )
+
+//OCR keywords
+const (
+	KEYWORD_DESTINATION string = "destination"
+)

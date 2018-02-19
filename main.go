@@ -149,14 +149,25 @@ func updateTerminal(targetTerminal Terminal) {
 		if err != nil {
 			log.Println(err)
 		}
-		if time.Since(photoCreatedTime) > time.Hour*24 {
+		if time.Since(photoCreatedTime) > time.Hour*72 {
 			continue
 		}
 
 		recentPhotos += 1
-		fmt.Printf("\r %v recent photos for %v", recentPhotos, targetTerminal.Title)
+		fmt.Printf("%v recent photos for %v\n", recentPhotos, targetTerminal.Title)
 
+		//Download, save, create processed image in imagemagick
 		downloadAndSavePhotosEdgePhoto(photo, targetTerminal, i)
+
+		closestDestinationSpelling := findKeywordClosestSpellingInPhotoInSaveImageTypes(KEYWORD_DESTINATION, targetTerminal, i, []SaveImageType {SAVE_IMAGE_TRAINING, SAVE_IMAGE_TRAINING_PROCESSED})
+
+		if len(closestDestinationSpelling) == 0 {
+			log.Printf("No close dest spelling found %v\n", closestDestinationSpelling);
+		} else {
+			log.Printf("Closest dest spelling %v\n", closestDestinationSpelling);
+		}
+
+		
 
 		/*
 		   //Specify the methods to use
@@ -291,14 +302,7 @@ func downloadAndSavePhotosEdgePhoto(photosEdgePhoto PhotosEdgePhoto, targetTermi
 		runImageMagickConvert(targetTerminal, photoNumber)
 	}
 
-	text, err := getPlainText(SAVE_IMAGE_TRAINING, targetTerminal, photoNumber)
-	if err != nil {
-		log.Println(err)
-	}
 
-	actualDestinationSpelling := findDestinationInPlainText(text)
-
-	log.Println("actual dest spelling ", actualDestinationSpelling);
 
 	/*
 
@@ -325,6 +329,7 @@ func updateAllTerminals(terminalMap map[string]Terminal) {
 }
 
 func main() {
+	createFuzzyModelsForKeywords([]string {KEYWORD_DESTINATION}, &fuzzyModelForKeyword)
 
 	terminalMap := readTerminalFileToMap("terminals.json")
 	updateAllTerminals(terminalMap)
