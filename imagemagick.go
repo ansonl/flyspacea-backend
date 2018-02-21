@@ -1,19 +1,22 @@
 package main
 
 import (
-	"os"
 	"os/exec"
-	"fmt"
 )
 
-func runImageMagickConvert(targetTerminal Terminal, photoNumber int) {
+func runImageMagickConvert(saveTypes []SaveImageType, sReference Slide) (err error) {
 	cmd := "convert"
-	savePath := photoPath(SAVE_IMAGE_TRAINING, "", targetTerminal, photoNumber)
-	processedSavePath := photoPath(SAVE_IMAGE_TRAINING_PROCESSED, "", targetTerminal, photoNumber)
+
+	sReference.saveType = saveTypes[0]
+	savePath := photoPath(sReference)
+
+	sReference.saveType = saveTypes[1]
+	processedSavePath := photoPath(sReference)
+
 	args := []string{"-alpha", "off", "-fuzz", "35%", "-fill", "white", "+opaque", "black" , savePath, processedSavePath}
-	if err := exec.Command(cmd, args...).Run(); err != nil {
-		fmt.Println(fmt.Sprintf("%v", processedSavePath))
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+	if err = exec.Command(cmd, args...).Run(); err != nil {
+		return
 	}
+
+	return
 }

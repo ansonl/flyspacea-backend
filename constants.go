@@ -46,4 +46,6 @@ const (
 //OCR keywords
 const (
 	KEYWORD_DESTINATION string = "destination"
+	KEYWORD_TIME string = "time"
+	KEYWORD_SEATS string = "seats"
 )
