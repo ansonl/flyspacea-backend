@@ -33,7 +33,7 @@ func displayMessageForTerminal(t Terminal, message string) {
 
 //Drop in function for normal printing
 func displayMessageForSlide(s Slide, message string) {
-	fmt.Printf("%v\t%v\t%v - %v\n", s.terminal.Title, s.saveType, s.fbNodeId, message)
+	fmt.Printf("%v %v %v - %v\n", s.terminal.Title, s.saveType, s.fbNodeId, message)
 }
 
 /*

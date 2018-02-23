@@ -34,13 +34,15 @@ const (
 type SaveImageType int
 const (
 	SAVE_IMAGE_TRAINING SaveImageType = iota
-	SAVE_IMAGE_TRAINING_PROCESSED
+	SAVE_IMAGE_TRAINING_PROCESSED_BLACK
+	SAVE_IMAGE_TRAINING_PROCESSED_WHITE
 )
 
 //Image storage directories
 const (
 	IMAGE_TRAINING_DIRECTORY string = "training_images"
-	IMAGE_TRAINING_PROCESSED_DIRECTORY string = "training_images_processed"
+	IMAGE_TRAINING_PROCESSED_DIRECTORY_BLACK string = "training_images_processed_black"
+	IMAGE_TRAINING_PROCESSED_DIRECTORY_WHITE string = "training_images_processed_white"
 )
 
 //OCR keywords

@@ -23,11 +23,14 @@ func photoPath(slide Slide) string {
 		case SAVE_IMAGE_TRAINING:
 			photoDirectory = IMAGE_TRAINING_DIRECTORY
 			break;
-		case SAVE_IMAGE_TRAINING_PROCESSED:
-			photoDirectory = IMAGE_TRAINING_PROCESSED_DIRECTORY
+		case SAVE_IMAGE_TRAINING_PROCESSED_BLACK:
+			photoDirectory = IMAGE_TRAINING_PROCESSED_DIRECTORY_BLACK
+			break;
+		case SAVE_IMAGE_TRAINING_PROCESSED_WHITE:
+			photoDirectory = IMAGE_TRAINING_PROCESSED_DIRECTORY_WHITE
 			break;
 		default:
-			log.Println("Unknown save type")
+			log.Println("Unknown save type ", slide.saveType)
 	}
 
 	//prefixterminal_title_n.png

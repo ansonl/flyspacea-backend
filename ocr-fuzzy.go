@@ -35,7 +35,7 @@ func doOCRForSlide(s *Slide) (err error) {
 	client := gosseract.NewClient()
 	defer client.Close()
 	client.SetImage(filepath)
-	client.SetWhitelist("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ,:=")
+	client.SetWhitelist("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ,:=().*")
 	
 	if (*s).plainText, err = client.Text(); err != nil {
 		return
@@ -61,7 +61,7 @@ func findKeywordClosestSpellingInPhotoInSaveImageTypes(keyword string, slides []
 		//Find closest keyword spelling
 		foundKeywordSpelling := findKeywordClosestSpellingInPlainText(keyword, s.plainText)
 		if len(foundKeywordSpelling) == 0 {
-			displayMessageForSlide(s, fmt.Sprintf("No close spelling extracted from photo"))
+			displayMessageForSlide(s, fmt.Sprintf("No close spelling extracted from photo type %v", s.saveType))
 		}
 
 		closestKeywordSpellings = append(closestKeywordSpellings, foundKeywordSpelling)
@@ -81,9 +81,11 @@ func findKeywordClosestSpellingInPhotoInSaveImageTypes(keyword string, slides []
 		}
 	}
 
+	
 	if len(closestSpelling) != 0 {
-		displayMessageForTerminal(closestSpellingSlide.terminal, fmt.Sprintf("Closest spelling found in save type %v distance %v", closestSpellingSlide.saveType, closestSpellingDistance))
+		displayMessageForTerminal(closestSpellingSlide.terminal, fmt.Sprintf("Close spelling found in save type %v distance %v", closestSpellingSlide.saveType, closestSpellingDistance))
 	}
+	
 
 	return
 }

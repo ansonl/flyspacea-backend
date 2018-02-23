@@ -160,7 +160,7 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 		//displayMessageForTerminal(targetTerminal, fmt.Sprintf("Downloading recent photo %v",photoIndex+1))
 
 		var saveTypes []SaveImageType
-		saveTypes = []SaveImageType {SAVE_IMAGE_TRAINING, SAVE_IMAGE_TRAINING_PROCESSED}
+		saveTypes = []SaveImageType {SAVE_IMAGE_TRAINING, SAVE_IMAGE_TRAINING_PROCESSED_BLACK, SAVE_IMAGE_TRAINING_PROCESSED_WHITE}
 
 		tmpSlide := Slide{saveTypes[0], targetTerminal, photo.Id, "", ""}
 
@@ -169,20 +169,20 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 			return
 		}
 
-		
-
-		//create processed image in imagemagick
-		if err = runImageMagickConvert(saveTypes, tmpSlide); err != nil {
-			return
-		}
-		
 		var slides []Slide
-		slides = make([]Slide, len(saveTypes))
+		slides = make([]Slide, 0)
 		for _, currentSaveType := range saveTypes {
 			var newSlide Slide
 			newSlide.saveType = currentSaveType
 			newSlide.terminal = targetTerminal
 			newSlide.fbNodeId = photo.Id
+
+			//create processed image in imagemagick IF slide created is not original slide
+			if currentSaveType != SAVE_IMAGE_TRAINING {
+				if err = runImageMagickConvert(SAVE_IMAGE_TRAINING, newSlide); err != nil {
+					return
+				}
+			}
 
 			if err = doOCRForSlide(&newSlide); err != nil {
 				return
@@ -191,8 +191,19 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 			slides = append(slides, newSlide)
 		}
 
-		
+		/*
+		//Debugging print slides array
+		log.Printf("len(saveTypes) %v", len(saveTypes))
+		log.Printf("len(slides) %v", len(slides))
+		for _, s := range slides {
+			log.Printf("slide type %v", s.saveType)
+		}
+		*/
 
+		//Find date of 72 hour slide
+		
+		
+		/*
 		//Find closest spelling for KEYWORD_DESTINATION
 		var closestDestinationSpelling string
 		var closestDestinationSlide Slide
@@ -203,7 +214,7 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 		if len(closestDestinationSpelling) == 0 {
 			displayMessageForTerminal(targetTerminal, fmt.Sprintf("No close dest spelling founds"));
 		} else {
-			displayMessageForTerminal(targetTerminal, fmt.Sprintf("Closest dest spelling %v", closestDestinationSpelling));
+			displayMessageForTerminal(targetTerminal, fmt.Sprintf("Closest dest spelling %v in saveType %v", closestDestinationSpelling, closestDestinationSlide.saveType));
 		}
 
 		//Find KEYWORD_DESTINATION bounds in hOCR
@@ -213,7 +224,7 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 		}
 
 		displayMessageForTerminal(targetTerminal, fmt.Sprintf("%v bbox %v %v %v %v", photoIndex, bbox.Min.X, bbox.Min.Y, bbox.Max.X, bbox.Max.Y))
-
+		*/
 		
 
 		/*
