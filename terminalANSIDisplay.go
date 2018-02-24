@@ -14,6 +14,7 @@ func setupDisplayForTerminalArray(terminalArray []Terminal) {
 		fmt.Printf("\u001b[1m%v %v\u001b[0m\n\n", v.Title, i)
 	}
 }
+
 /*
 func displayMessageForTerminal(t Terminal, message string) {
 	var cursorLinesOffset int
@@ -33,7 +34,7 @@ func displayMessageForTerminal(t Terminal, message string) {
 
 //Drop in function for normal printing
 func displayMessageForSlide(s Slide, message string) {
-	fmt.Printf("%v %v %v - %v\n", s.terminal.Title, s.saveType, s.fbNodeId, message)
+	fmt.Printf("%v %v %v - %v\n", s.Terminal.Title, s.SaveType, s.FBNodeId, message)
 }
 
 /*

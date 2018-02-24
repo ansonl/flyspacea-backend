@@ -35,18 +35,18 @@ type Departure struct {
 */
 
 type Terminal struct {
-	Title string `json:"title"`
-	Id    string `json:"id"`
-	OffsetUp int `json:"offsetUp"`
+	Title    string `json:"title"`
+	Id       string `json:"id"`
+	OffsetUp int    `json:"offsetUp"`
 }
 
 //Processed version of downloaded photo
 type Slide struct {
-	saveType SaveImageType
-	terminal Terminal
-	fbNodeId string
+	SaveType SaveImageType
+	Suffix string
+	Terminal Terminal
+	FBNodeId string
 
-	plainText string
-	hOCRText string
-
+	PlainText string
+	HOCRText  string
 }

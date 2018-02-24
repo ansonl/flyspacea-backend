@@ -32,6 +32,7 @@ const (
 
 //Image storage types
 type SaveImageType int
+
 const (
 	SAVE_IMAGE_TRAINING SaveImageType = iota
 	SAVE_IMAGE_TRAINING_PROCESSED_BLACK
@@ -40,14 +41,19 @@ const (
 
 //Image storage directories
 const (
-	IMAGE_TRAINING_DIRECTORY string = "training_images"
+	IMAGE_TRAINING_DIRECTORY                 string = "training_images"
 	IMAGE_TRAINING_PROCESSED_DIRECTORY_BLACK string = "training_images_processed_black"
 	IMAGE_TRAINING_PROCESSED_DIRECTORY_WHITE string = "training_images_processed_white"
+)
+
+//Image storage suffixes
+const (
+	IMAGE_SUFFIX_CROPPED string = "c"
 )
 
 //OCR keywords
 const (
 	KEYWORD_DESTINATION string = "destination"
-	KEYWORD_TIME string = "time"
-	KEYWORD_SEATS string = "seats"
+	KEYWORD_TIME        string = "time"
+	KEYWORD_SEATS       string = "seats"
 )

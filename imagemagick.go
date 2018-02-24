@@ -1,18 +1,22 @@
 package main
 
 import (
-	"os/exec"
 	"errors"
+	"fmt"
+	"image"
+	_ "image/png"
 	"log"
+	"os"
+	"os/exec"
 )
 
 //Run image color filter on a slide from 'sourceSaveType' directory to sReference.saveType location
-func runImageMagickConvert(sourceSaveType SaveImageType, sReference Slide) (err error) {
+func runImageMagickColorProcess(sourceSaveType SaveImageType, sReference Slide) (err error) {
 	cmd := "convert"
 
 	//Create tmp orginal slide struct to pass photoPath() to get original source image path
 	originalSlide := sReference
-	originalSlide.saveType = sourceSaveType
+	originalSlide.SaveType = sourceSaveType
 	originalSavePath := photoPath(originalSlide)
 
 	processedSavePath := photoPath(sReference)
@@ -21,29 +25,29 @@ func runImageMagickConvert(sourceSaveType SaveImageType, sReference Slide) (err 
 	var replaceColor bool
 	var fill string
 	var opaque string
-	
+
 	//variables for invert color
 	var invertColor bool
 
-	switch (sReference.saveType) {
-		case SAVE_IMAGE_TRAINING_PROCESSED_BLACK:
-			replaceColor = true
-			fill = "white"
-			opaque = "black"
-			break;
-		case SAVE_IMAGE_TRAINING_PROCESSED_WHITE:
-			replaceColor = true
-			fill = "black"
-			opaque = "white"
-			invertColor = true
-			break;
-		default:
-			err = errors.New("Unknown save type for image convert")
-			return
+	switch sReference.SaveType {
+	case SAVE_IMAGE_TRAINING_PROCESSED_BLACK:
+		replaceColor = true
+		fill = "white"
+		opaque = "black"
+		break
+	case SAVE_IMAGE_TRAINING_PROCESSED_WHITE:
+		replaceColor = true
+		fill = "black"
+		opaque = "white"
+		invertColor = true
+		break
+	default:
+		err = errors.New("Unknown save type for image convert")
+		return
 	}
 
 	if replaceColor {
-		args := []string{"-alpha", "off", "-fuzz", "35%", "-fill", fill, "+opaque", opaque , originalSavePath, processedSavePath}
+		args := []string{"-alpha", "off", "-fuzz", "35%", "-fill", fill, "+opaque", opaque, originalSavePath, processedSavePath}
 		log.Printf("%v", args)
 		if err = exec.Command(cmd, args...).Run(); err != nil {
 			return
@@ -55,6 +59,40 @@ func runImageMagickConvert(sourceSaveType SaveImageType, sReference Slide) (err 
 		if err = exec.Command(cmd, args...).Run(); err != nil {
 			return
 		}
+	}
+
+	return
+}
+
+//Run image crop on a slide from sReference.saveType location to some directory with suffix on output filename
+func runImageMagickDateCropProcess(sReference Slide, cropVerticalOffset int, cropHeight int) (err error) {
+
+	//Create new save patch with suffix to indicate crop
+	originalSavePath := photoPath(sReference)
+	sReference.Suffix = IMAGE_SUFFIX_CROPPED
+	processedSavePath := photoPath(sReference)
+
+	log.Println("crop %v %v", originalSavePath, processedSavePath)
+
+	//find original dimensions
+	var reader *os.File
+	if reader, err = os.Open(originalSavePath); err != nil {
+		return
+	}
+
+	//load image
+	defer reader.Close()
+	var im image.Config
+	if im, _, err = image.DecodeConfig(reader); err != nil {
+		return
+	}
+
+	//run imagemagick crop
+	cmd := "convert"
+	args := []string{"-crop", fmt.Sprintf("%vx%v+%v+%v", im.Width, cropHeight, 0, cropVerticalOffset), originalSavePath, processedSavePath}
+	log.Printf("%v", args)
+	if err = exec.Command(cmd, args...).Run(); err != nil {
+		return
 	}
 
 	return
