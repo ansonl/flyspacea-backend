@@ -79,7 +79,13 @@ func updateAllTerminals(terminalMap map[string]Terminal) {
 }
 
 func updateTerminal(targetTerminal Terminal) (err error) {
-	terminalId := targetTerminal.Id
+	var terminalId string
+	if len(targetTerminal.Hr72Id) > 0 {
+		terminalId = targetTerminal.Hr72Id
+	} else {
+		terminalId = targetTerminal.Id
+	}
+	
 	if len(terminalId) == 0 {
 		log.Fatal("Terminal %v missing Id.\n", targetTerminal.Title)
 		return
