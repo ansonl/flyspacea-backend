@@ -42,10 +42,11 @@ type Terminal struct {
 
 //Processed version of downloaded photo
 type Slide struct {
-	SaveType SaveImageType
-	Suffix string
-	Terminal Terminal
-	FBNodeId string
+	SaveType  SaveImageType
+	Suffix    string
+	Extension string
+	Terminal  Terminal
+	FBNodeId  string
 
 	PlainText string
 	HOCRText  string

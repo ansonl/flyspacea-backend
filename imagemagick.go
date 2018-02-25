@@ -4,10 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	_ "image/gif"
+	_ "image/jpeg"
 	_ "image/png"
-	"log"
 	"os"
 	"os/exec"
+	//"log"
 )
 
 //Run image color filter on a slide from 'sourceSaveType' directory to sReference.saveType location
@@ -48,7 +50,7 @@ func runImageMagickColorProcess(sourceSaveType SaveImageType, sReference Slide) 
 
 	if replaceColor {
 		args := []string{"-alpha", "off", "-fuzz", "35%", "-fill", fill, "+opaque", opaque, originalSavePath, processedSavePath}
-		log.Printf("%v", args)
+		//log.Printf("%v", args)
 		if err = exec.Command(cmd, args...).Run(); err != nil {
 			return
 		}
@@ -72,8 +74,6 @@ func runImageMagickDateCropProcess(sReference Slide, cropVerticalOffset int, cro
 	sReference.Suffix = IMAGE_SUFFIX_CROPPED
 	processedSavePath := photoPath(sReference)
 
-	log.Println("crop %v %v", originalSavePath, processedSavePath)
-
 	//find original dimensions
 	var reader *os.File
 	if reader, err = os.Open(originalSavePath); err != nil {
@@ -90,7 +90,7 @@ func runImageMagickDateCropProcess(sReference Slide, cropVerticalOffset int, cro
 	//run imagemagick crop
 	cmd := "convert"
 	args := []string{"-crop", fmt.Sprintf("%vx%v+%v+%v", im.Width, cropHeight, 0, cropVerticalOffset), originalSavePath, processedSavePath}
-	log.Printf("%v", args)
+	//log.Printf("%v", args)
 	if err = exec.Command(cmd, args...).Run(); err != nil {
 		return
 	}

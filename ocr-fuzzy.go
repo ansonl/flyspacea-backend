@@ -31,6 +31,7 @@ func createFuzzyModels(modelMap *map[string]*fuzzy.Model) {
 func createFuzzyModelsForKeywords(keywords []string, modelMap *map[string]*fuzzy.Model) {
 	*modelMap = make(map[string]*fuzzy.Model)
 	for _, v := range keywords {
+		v = strings.ToLower(v)
 		(*modelMap)[v] = fuzzy.NewModel()
 		(*modelMap)[v].SetThreshold(1)
 		(*modelMap)[v].SetDepth(len(v) / 2)
@@ -45,7 +46,7 @@ func doOCRForSlide(s *Slide) (err error) {
 	client := gosseract.NewClient()
 	defer client.Close()
 	client.SetImage(filepath)
-	client.SetWhitelist("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ,:=().*")
+	client.SetWhitelist("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ,:=().*-")
 
 	if (*s).PlainText, err = client.Text(); err != nil {
 		return
@@ -68,10 +69,12 @@ func findKeywordClosestSpellingInPhotoInSaveImageTypes(keyword string, slides []
 	var closestKeywordSpellings []string
 
 	for _, s := range slides {
+	//fmt.Println("SAVETYPE ", s.SaveType, photoPath(s))
+
 		//Find closest keyword spelling
 		foundKeywordSpelling := findKeywordClosestSpellingInPlainText(keyword, s.PlainText)
 		if len(foundKeywordSpelling) == 0 {
-			displayMessageForSlide(s, fmt.Sprintf("No close spelling extracted from photo type %v", s.SaveType))
+			//displayMessageForSlide(s, fmt.Sprintf("No close spelling extracted from photo type %v", s.SaveType))
 		}
 
 		closestKeywordSpellings = append(closestKeywordSpellings, foundKeywordSpelling)
@@ -91,9 +94,12 @@ func findKeywordClosestSpellingInPhotoInSaveImageTypes(keyword string, slides []
 		}
 	}
 
-	if len(closestSpelling) != 0 {
-		displayMessageForTerminal(closestSpellingSlide.Terminal, fmt.Sprintf("Close spelling found in save type %v distance %v", closestSpellingSlide.SaveType, closestSpellingDistance))
-	}
+	
+		//Print closest spelling and distance
+		if len(closestSpelling) != 0 {
+			displayMessageForTerminal(closestSpellingSlide.Terminal, fmt.Sprintf("Close spelling %v found in save type %v distance %v", closestSpelling, closestSpellingSlide.SaveType, closestSpellingDistance))
+		}
+	
 
 	return
 }
@@ -101,16 +107,24 @@ func findKeywordClosestSpellingInPhotoInSaveImageTypes(keyword string, slides []
 //Find closest spelling of keyword in plain text
 func findKeywordClosestSpellingInPlainText(keyword string, plainText string) (closestSpelling string) {
 
+	//lowercase keyword and plaintext
+	keyword = strings.ToLower(keyword)
+	plainText = strings.ToLower(plainText)
+
 	fuzzyModel := fuzzyModelForKeyword[keyword]
 
 	if fuzzyModel == nil {
 		log.Fatal("No fuzzy model for %v", keyword)
 	}
-
-	plainText = strings.ToLower(plainText)
-
+	
+	/*
+	fmt.Println("keyword ", keyword)
+	fmt.Println("plaintext", plainText)
+	*/
+	
+	//Split by the special characters in our whitelist including \r and \n
 	ocrWords := strings.FieldsFunc(plainText, func(c rune) bool {
-		return c == ' ' || c == '\n' || c == '\r'
+		return c == ' ' || c == '\n' || c == '\r' || c == ',' || c == ':' || c == '=' || c == '(' || c == ')' || c == '.' || c == '*' || c == '-' 
 	})
 
 	var closestSpellingDistance int

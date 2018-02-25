@@ -41,6 +41,7 @@ const (
 
 //Image storage directories
 const (
+	IMAGE_TMP_DIRECTORY                      string = "tmp"
 	IMAGE_TRAINING_DIRECTORY                 string = "training_images"
 	IMAGE_TRAINING_PROCESSED_DIRECTORY_BLACK string = "training_images_processed_black"
 	IMAGE_TRAINING_PROCESSED_DIRECTORY_WHITE string = "training_images_processed_white"

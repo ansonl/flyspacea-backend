@@ -74,6 +74,8 @@ func updateAllTerminals(terminalMap map[string]Terminal) {
 	}
 
 	log.Printf("Update ended.\n")
+
+	displayStatistics()
 }
 
 func updateTerminal(targetTerminal Terminal) (err error) {
@@ -96,7 +98,7 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 	u.Path = resource
 	urlStr := fmt.Sprintf("%v?%v", u, data.Encode())
 
-	log.Println(urlStr)
+	//log.Println(urlStr)
 
 	//Create request
 	var req *http.Request
@@ -136,12 +138,13 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 	//Look at the photo nodes returned by the photos edge
 
 	var limit int
-	limit = 5
+	limit = 4
 	if len(pagePhotosEdge.Data) < limit {
 		limit = len(pagePhotosEdge.Data)
 	}
 
 	for photoIndex := 0; photoIndex < limit; photoIndex++ {
+		incrementPhotosFound()
 		photo := pagePhotosEdge.Data[photoIndex]
 
 		//Check if photo created within X timeframe (made recently?)
@@ -162,10 +165,10 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 		var saveTypes []SaveImageType
 		saveTypes = []SaveImageType{SAVE_IMAGE_TRAINING, SAVE_IMAGE_TRAINING_PROCESSED_BLACK, SAVE_IMAGE_TRAINING_PROCESSED_WHITE}
 
-		tmpSlide := Slide{saveTypes[0], "", targetTerminal, photo.Id, "", ""}
+		tmpSlide := Slide{saveTypes[0], "", "", targetTerminal, photo.Id, "", ""}
 
 		//Download, save
-		if err = downloadAndSaveSlide(tmpSlide); err != nil {
+		if err = downloadAndSaveSlide(&tmpSlide); err != nil {
 			return
 		}
 
@@ -174,8 +177,15 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 		for _, currentSaveType := range saveTypes {
 			var newSlide Slide
 			newSlide.SaveType = currentSaveType
+			newSlide.Extension = tmpSlide.Extension
 			newSlide.Terminal = targetTerminal
 			newSlide.FBNodeId = photo.Id
+
+			/*
+			//Manual slide control
+			newSlide.Extension = "jpeg"
+			newSlide.FBNodeId = "1579091732160230"
+			*/
 
 			//create processed image in imagemagick IF slide created is not original slide
 			if currentSaveType != SAVE_IMAGE_TRAINING {
@@ -196,9 +206,13 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 			return
 		}
 
-		displayMessageForTerminal(slides[0].Terminal, slideDate.Format("02 Jan 2006 -0700"))
+		displayMessageForTerminal(slides[0].Terminal, fmt.Sprintf("%v \u001b[1m\u001b[31m%v\u001b[0m", slides[0].FBNodeId, slideDate.Format("02 Jan 2006 -0700")))
 
+		if slideDate.Equal(time.Time{}) == false {
+			incrementPhotosFoundDateHeader()
+		}
 
+		incrementPhotosProcessed()
 		/*
 			//Debugging print slides array
 			log.Printf("len(saveTypes) %v", len(saveTypes))
@@ -236,10 +250,10 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 }
 
 //Download Photo Node from Photos Edge. Return error.
-func downloadAndSaveSlide(sReference Slide) (err error) {
+func downloadAndSaveSlide(sReference *Slide) (err error) {
 	//Create request url and parameters
 	apiUrl := GRAPH_API_URL
-	resource := fmt.Sprintf("%v/%v", GRAPH_API_VERSION, sReference.FBNodeId)
+	resource := fmt.Sprintf("%v/%v", GRAPH_API_VERSION, (*sReference).FBNodeId)
 	data := url.Values{}
 	data.Add(GRAPH_FIELDS_KEY, GRAPH_FIELD_IMAGES_KEY)
 	data.Add(GRAPH_ACCESS_TOKEN_KEY, GRAPH_ACCESS_TOKEN)
@@ -285,24 +299,32 @@ func downloadAndSaveSlide(sReference Slide) (err error) {
 }
 
 //Download Photo Node. Return error.
-func downloadAndSavePhotoNode(photoNode PhotoNode, sReference Slide) (err error) {
+func downloadAndSavePhotoNode(photoNode PhotoNode, sReference *Slide) (err error) {
 
 	if len(photoNode.Images) == 0 {
-		err = errors.New(fmt.Sprintf("PhotoNode %v %v has no images.", sReference.Terminal.Title, sReference.FBNodeId))
+		err = errors.New(fmt.Sprintf("PhotoNode %v %v has no images.", (*sReference).Terminal.Title, (*sReference).FBNodeId))
 		return
 	}
 
-	if exist, _ := exists(IMAGE_TRAINING_DIRECTORY); exist == false {
-		err = errors.New("Directory does not exist")
+	//Create tmp directory if needed
+	var exist bool
+	if exist, err = exists(IMAGE_TMP_DIRECTORY); exist == false || err != nil {
+		if err != nil {
+			return
+		}
+		if err = os.Mkdir(IMAGE_TMP_DIRECTORY, os.ModePerm); err != nil {
+			return
+		}
 		return
 	}
 
-	//Create file handle to correct photo path
-	var out *os.File
-	if out, err = os.Create(photoPath(sReference)); err != nil {
+	//Create file handle to tmp photo path
+	tmpFilepath := fmt.Sprintf("%v/%v", IMAGE_TMP_DIRECTORY, (*sReference).FBNodeId)
+	var tmpFile *os.File
+	if tmpFile, err = os.Create(tmpFilepath); err != nil {
 		return
 	}
-	defer out.Close()
+	defer tmpFile.Close()
 
 	//Create request
 	var req *http.Request
@@ -320,9 +342,42 @@ func downloadAndSavePhotoNode(photoNode PhotoNode, sReference Slide) (err error)
 
 	//Read response body into os.File
 	defer resp.Body.Close()
-	if _, err = io.Copy(out, resp.Body); err != nil {
+	if _, err = io.Copy(tmpFile, resp.Body); err != nil {
 		return
 	}
 
+	//Open tmp file for reading and read first 512 bytes for http.DetectContentType()
+
+	var fileHeader []byte
+	fileHeader = make([]byte, 512)
+	if tmpFile, err = os.Open(tmpFilepath); err != nil {
+		return
+	}
+
+	defer tmpFile.Close()
+	var length int
+	if length, err = tmpFile.Read(fileHeader); err != nil && err != io.EOF {
+		return
+	}
+	if length < len(fileHeader) {
+		fileHeader = fileHeader[:length]
+	}
+
+	var detectedContentType string
+	detectedContentType = http.DetectContentType(fileHeader)
+	if detectedContentType == "image/png" {
+		(*sReference).Extension = "png"
+	} else if detectedContentType == "image/jpeg" {
+		(*sReference).Extension = "jpeg"
+	} else if detectedContentType == "image/gif" {
+		(*sReference).Extension = "gif"
+	} else {
+		err = fmt.Errorf("Unhandled MIME type %v detected.", detectedContentType)
+		return
+	}
+
+	if err = copyFileContents(tmpFilepath, photoPath(*sReference)); err != nil {
+		return
+	}
 	return
 }
