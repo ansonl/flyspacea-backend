@@ -69,7 +69,7 @@ func findKeywordClosestSpellingInPhotoInSaveImageTypes(keyword string, slides []
 	var closestKeywordSpellings []string
 
 	for _, s := range slides {
-	//fmt.Println("SAVETYPE ", s.SaveType, photoPath(s))
+		//fmt.Println("SAVETYPE ", s.SaveType, photoPath(s))
 
 		//Find closest keyword spelling
 		foundKeywordSpelling := findKeywordClosestSpellingInPlainText(keyword, s.PlainText)
@@ -94,12 +94,12 @@ func findKeywordClosestSpellingInPhotoInSaveImageTypes(keyword string, slides []
 		}
 	}
 
-	
+	/*
 		//Print closest spelling and distance
 		if len(closestSpelling) != 0 {
 			displayMessageForTerminal(closestSpellingSlide.Terminal, fmt.Sprintf("Close spelling %v found in save type %v distance %v", closestSpelling, closestSpellingSlide.SaveType, closestSpellingDistance))
 		}
-	
+	*/
 
 	return
 }
@@ -116,15 +116,15 @@ func findKeywordClosestSpellingInPlainText(keyword string, plainText string) (cl
 	if fuzzyModel == nil {
 		log.Fatal("No fuzzy model for %v", keyword)
 	}
-	
+
 	/*
-	fmt.Println("keyword ", keyword)
-	fmt.Println("plaintext", plainText)
+		fmt.Println("keyword ", keyword)
+		fmt.Println("plaintext", plainText)
 	*/
-	
+
 	//Split by the special characters in our whitelist including \r and \n
 	ocrWords := strings.FieldsFunc(plainText, func(c rune) bool {
-		return c == ' ' || c == '\n' || c == '\r' || c == ',' || c == ':' || c == '=' || c == '(' || c == ')' || c == '.' || c == '*' || c == '-' 
+		return c == ' ' || c == '\n' || c == '\r' || c == ',' || c == ':' || c == '=' || c == '(' || c == ')' || c == '.' || c == '*' || c == '-'
 	})
 
 	var closestSpellingDistance int

@@ -17,6 +17,7 @@ import (
 	//worker management
 	"context"
 	"golang.org/x/sync/semaphore"
+	"regexp"
 	"runtime"
 )
 
@@ -80,12 +81,15 @@ func updateAllTerminals(terminalMap map[string]Terminal) {
 
 func updateTerminal(targetTerminal Terminal) (err error) {
 	var terminalId string
-	if len(targetTerminal.Hr72Id) > 0 {
-		terminalId = targetTerminal.Hr72Id
-	} else {
-		terminalId = targetTerminal.Id
-	}
-	
+	terminalId = targetTerminal.Id
+	/*
+		if len(targetTerminal.Hr72Id) > 0 {
+			terminalId = targetTerminal.Hr72Id
+		} else {
+			terminalId = targetTerminal.Id
+		}
+	*/
+
 	if len(terminalId) == 0 {
 		log.Fatal("Terminal %v missing Id.\n", targetTerminal.Title)
 		return
@@ -93,9 +97,21 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 		displayMessageForTerminal(targetTerminal, "Requesting page photos edge.")
 	}
 
+	//Try to find 72 hour album id. If no 72 hour album found, use terminal id.
+	var albumId string
+	if albumId, err = find72HrAlbumId(targetTerminal); err != nil {
+		return
+	}
+	if len(albumId) == 0 {
+		albumId = targetTerminal.Id
+		displayMessageForTerminal(targetTerminal, "72 hour album not found.")
+	} else {
+		displayMessageForTerminal(targetTerminal, "72 hour album found.")
+	}
+
 	//Create request url and parameters
 	apiUrl := GRAPH_API_URL
-	resource := fmt.Sprintf("%v/%v/%v", GRAPH_API_VERSION, terminalId, GRAPH_EDGE_PHOTOS)
+	resource := fmt.Sprintf("%v/%v/%v", GRAPH_API_VERSION, albumId, GRAPH_EDGE_PHOTOS)
 	data := url.Values{}
 	data.Add(GRAPH_TYPE_KEY, GRAPH_TYPE_UPLOADED_KEY)
 	data.Add(GRAPH_ACCESS_TOKEN_KEY, GRAPH_ACCESS_TOKEN)
@@ -141,8 +157,13 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 
 	//fmt.Printf("%v\n", string(body))
 
-	//Look at the photo nodes returned by the photos edge
+	//Check for error
+	if pagePhotosEdge.Error.Code != 0 {
+		err = fmt.Errorf("Code %v\nMessage %v", pagePhotosEdge.Error.Code, pagePhotosEdge.Error.Message)
+		return
+	}
 
+	//Look at the photo nodes returned by the photos edge
 	var limit int
 	limit = 4
 	if len(pagePhotosEdge.Data) < limit {
@@ -188,9 +209,9 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 			newSlide.FBNodeId = photo.Id
 
 			/*
-			//Manual slide control
-			newSlide.Extension = "jpeg"
-			newSlide.FBNodeId = "1579091732160230"
+				//Manual slide control
+				newSlide.Extension = "jpeg"
+				newSlide.FBNodeId = "1579091732160230"
 			*/
 
 			//create processed image in imagemagick IF slide created is not original slide
@@ -255,6 +276,73 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 	return
 }
 
+//Find 72Hr Album Id for Terminal
+func find72HrAlbumId(t Terminal) (albumId string, err error) {
+	//Create request url and parameters
+	apiUrl := GRAPH_API_URL
+	resource := fmt.Sprintf("%v/%v/%v", GRAPH_API_VERSION, t.Id, GRAPH_EDGE_ALBUMS)
+	data := url.Values{}
+	data.Add(GRAPH_ACCESS_TOKEN_KEY, GRAPH_ACCESS_TOKEN)
+
+	u, _ := url.ParseRequestURI(apiUrl)
+	u.Path = resource
+	urlStr := fmt.Sprintf("%v?%v", u, data.Encode())
+
+	//log.Println(urlStr)
+
+	//Create request
+	var req *http.Request
+	var client *http.Client
+	client = &http.Client{}
+	if req, err = http.NewRequest("GET", urlStr, nil); err != nil {
+		return
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
+
+	//Make request
+	var resp *http.Response
+	if resp, err = client.Do(req); err != nil {
+		return
+	}
+
+	//Read response body into []byte
+	defer resp.Body.Close()
+	var body []byte
+	if body, err = ioutil.ReadAll(resp.Body); err != nil {
+		//"Error reading page photos edge resp."
+		return
+	}
+
+	//Unmarshall into struct
+	var pageAlbumsEdge AlbumsEdge
+	if err = json.Unmarshal(body, &pageAlbumsEdge); err != nil {
+		//"Error unmarshaling page photos edge."
+		return
+	}
+	//fmt.Printf("%v\n", string(body))
+
+	//Check for error
+	if pageAlbumsEdge.Error.Code != 0 {
+		err = fmt.Errorf("Code %v\nMessage %v", pageAlbumsEdge.Error.Code, pageAlbumsEdge.Error.Message)
+		return
+	}
+
+	var Hr72Regex *regexp.Regexp
+	//Match Date Month Year. Capture date and year
+	if Hr72Regex, err = regexp.Compile("(?i)72.*hour"); err != nil {
+		return
+	}
+	for _, album := range pageAlbumsEdge.Data {
+		if regexResult := Hr72Regex.FindStringSubmatch(album.Name); regexResult != nil {
+			//Found match
+			albumId = album.Id
+			return
+		}
+	}
+	return
+}
+
 //Download Photo Node from Photos Edge. Return error.
 func downloadAndSaveSlide(sReference *Slide) (err error) {
 	//Create request url and parameters
@@ -294,6 +382,12 @@ func downloadAndSaveSlide(sReference *Slide) (err error) {
 	//Unmarshall into struct
 	var photo PhotoNode
 	if err = json.Unmarshal(body, &photo); err != nil {
+		return
+	}
+
+	//Check for error
+	if photo.Error.Code != 0 {
+		err = fmt.Errorf("Code %v\nMessage %v", photo.Error.Code, photo.Error.Message)
 		return
 	}
 

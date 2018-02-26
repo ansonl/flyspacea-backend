@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"image"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
-	"math"
 )
 
 //Find date of 72 hour slide in header by looking for month name
@@ -33,7 +33,7 @@ func findDateOfPhotoNodeSlides(slides []Slide) (slideDate time.Time, err error) 
 	var closestMonthSpelling string
 	var closestMonthSlide Slide
 	monthsSearchArray := []string{monthsLong[currentMonth-1], monthsLong[nextMonth-1], monthsShort[currentMonth-1], monthsLong[nextMonth-1]}
-	
+
 	//Look through all slides (savetypes) to find closest date to time.Now. Assume any OCR error dates will be at higher date difference than a correct OCR date within ~72 hours.
 	compareTargetDate := time.Now()
 	for i, v := range monthsSearchArray {
@@ -66,14 +66,14 @@ func findDateOfPhotoNodeSlides(slides []Slide) (slideDate time.Time, err error) 
 				if foundDate, err = findDateFromPlainText(s.PlainText, closestMonthSpelling, estimatedMonth); err != nil {
 					return
 				}
-				
+
 				//Check if date is closest date found so far
 				if slideDate.Equal(time.Time{}) || !foundDate.Equal(time.Time{}) {
 					slideDate = foundDate
 				} else {
 					slideDate = closerDate(compareTargetDate, slideDate, foundDate)
 				}
-				
+
 				if (slideDate.Equal(time.Time{}) || math.Abs(float64(compareTargetDate.Sub(foundDate))) < math.Abs(float64(compareTargetDate.Sub(slideDate)))) {
 					slideDate = foundDate
 				}
@@ -112,14 +112,14 @@ func findDateOfPhotoNodeSlides(slides []Slide) (slideDate time.Time, err error) 
 			if foundDate, err = findDateFromPlainText(s.PlainText, v, estimatedMonth); err != nil {
 				return
 			}
-			
+
 			//Check if date is closest date found so far
 			if slideDate.Equal(time.Time{}) || !foundDate.Equal(time.Time{}) {
 				slideDate = foundDate
 			} else {
 				slideDate = closerDate(compareTargetDate, slideDate, foundDate)
 			}
-			
+
 			if (slideDate.Equal(time.Time{}) || math.Abs(float64(compareTargetDate.Sub(foundDate))) < math.Abs(float64(compareTargetDate.Sub(slideDate)))) {
 				slideDate = foundDate
 			}
@@ -135,10 +135,8 @@ func findDateFromPlainText(plainText string, closestMonthSpelling string, estima
 	//Lowercase closestMonthSpelling
 	closestMonthSpelling = strings.ToLower(closestMonthSpelling)
 
-	
 	//fmt.Println("find date with closestMonthSpelling ", closestMonthSpelling)
 	//fmt.Println("plaintext", plainText)
-	
 
 	//Find date with Regexp
 	var DMYRegex *regexp.Regexp
@@ -161,17 +159,17 @@ func findDateFromPlainText(plainText string, closestMonthSpelling string, estima
 	var regexResult []string
 	if regexResult = DMYRegex.FindStringSubmatch(input); len(regexResult) == 3 {
 		/*
-		fmt.Println(regexResult, len(regexResult))
-		for i, r := range regexResult {
-			fmt.Println(i, r)
-		}
+			fmt.Println(regexResult, len(regexResult))
+			for i, r := range regexResult {
+				fmt.Println(i, r)
+			}
 		*/
 	} else if regexResult = MDYRegex.FindStringSubmatch(input); len(regexResult) == 3 {
 		/*
-		fmt.Println(regexResult, len(regexResult))
-		for i, r := range regexResult {
-			fmt.Println(i, r)
-		}
+			fmt.Println(regexResult, len(regexResult))
+			for i, r := range regexResult {
+				fmt.Println(i, r)
+			}
 		*/
 	} else {
 		//No match, proceed to next processed slide
@@ -196,7 +194,7 @@ func findDateFromPlainText(plainText string, closestMonthSpelling string, estima
 }
 
 func closerDate(target time.Time, one time.Time, two time.Time) (closerDate time.Time) {
-	if (math.Abs(float64(target.Sub(one))) < math.Abs(float64(target.Sub(two)))) {
+	if math.Abs(float64(target.Sub(one))) < math.Abs(float64(target.Sub(two))) {
 		closerDate = one
 	} else {
 		closerDate = two

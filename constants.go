@@ -5,6 +5,7 @@ const (
 	GRAPH_API_URL     string = "https://graph.facebook.com"
 	GRAPH_API_VERSION string = "v2.12"
 	GRAPH_EDGE_PHOTOS string = "photos"
+	GRAPH_EDGE_ALBUMS string = "albums"
 )
 
 //Graph API parameter keys
