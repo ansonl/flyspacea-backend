@@ -65,8 +65,6 @@ type Departure struct {
 type Terminal struct {
 	Title    string `json:"title"`
 	Id       string `json:"id"`
-	Hr72Id   string `json:"hr-72-id"`
-	OffsetUp int    `json:"offsetUp"`
 }
 
 //Processed version of downloaded photo

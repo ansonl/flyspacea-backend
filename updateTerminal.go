@@ -37,8 +37,7 @@ func readTerminalFileToArray(terminalFilename string) (terminalArray []Terminal,
 func readTerminalArrayToMap(terminalArray []Terminal) (terminalMap map[string]Terminal) {
 	//set key to v.Title and set v.Index
 	terminalMap = make(map[string]Terminal)
-	for i, v := range terminalArray {
-		v.OffsetUp = (len(terminalArray) - 1) - i
+	for _, v := range terminalArray {
 		terminalMap[v.Title] = v
 	}
 
@@ -82,13 +81,6 @@ func updateAllTerminals(terminalMap map[string]Terminal) {
 func updateTerminal(targetTerminal Terminal) (err error) {
 	var terminalId string
 	terminalId = targetTerminal.Id
-	/*
-		if len(targetTerminal.Hr72Id) > 0 {
-			terminalId = targetTerminal.Hr72Id
-		} else {
-			terminalId = targetTerminal.Id
-		}
-	*/
 
 	if len(terminalId) == 0 {
 		log.Fatal("Terminal %v missing Id.\n", targetTerminal.Title)
