@@ -63,8 +63,8 @@ type Departure struct {
 */
 
 type Terminal struct {
-	Title    string `json:"title"`
-	Id       string `json:"id"`
+	Title string `json:"title"`
+	Id    string `json:"id"`
 }
 
 //Processed version of downloaded photo

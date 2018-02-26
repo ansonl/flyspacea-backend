@@ -25,7 +25,7 @@
         "id": "318390778252811"
     },
     {
-        "url": "https://www.facebook.com/pages/Joint-Base-Charleston-Passenger-Terminal/112533608829923",
+        "url": "https://www.facebook.com/JBCharlestonPassengerTerminalSC/",
         "title": "Charleston (JB) Pax Term",
         "id": "1768570710123989"
     },
@@ -42,7 +42,8 @@
     {
         "url": "http://www.facebook.com/DyessPaxTerminal",
         "title": "Dyess AFB Pax Term",
-        "id": "1473369099622926"
+        "id": "1473369099622926",
+        "special-schedule-url": "http://www.dyess.af.mil/Portals/145/Docs/Space-A/Space-A.pdf"
     },
     {
         "url": "https://www.facebook.com/EglinSpaceA",
@@ -50,9 +51,9 @@
         "id": "336935336394330"
     },
     {
-        "url": "https://www.facebook.com/EielsonAirForceBase",
+        "url": "https://www.facebook.com/EielsonSpaceA/",
         "title": "Eielson AFB Pax Term",
-        "id": "149395778415497"
+        "id": "299826893832183"
     },
     {
         "url": "https://www.facebook.com/pages/Joint-Base-ElmendorfRichardson-Passenger-Terminal/204965679537720",

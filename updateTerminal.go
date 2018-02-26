@@ -82,13 +82,13 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 	var terminalId string
 	terminalId = targetTerminal.Id
 
+	//Make sure Terminal struct is ready for use
 	if len(terminalId) == 0 {
 		log.Fatal("Terminal %v missing Id.\n", targetTerminal.Title)
 		return
-	} else {
-		displayMessageForTerminal(targetTerminal, "Requesting page photos edge.")
 	}
 
+	//Request Albums edge from Graph API
 	//Try to find 72 hour album id. If no 72 hour album found, use terminal id.
 	var albumId string
 	if albumId, err = find72HrAlbumId(targetTerminal); err != nil {
@@ -101,70 +101,22 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 		displayMessageForTerminal(targetTerminal, "72 hour album found.")
 	}
 
-	//Create request url and parameters
-	apiUrl := GRAPH_API_URL
-	resource := fmt.Sprintf("%v/%v/%v", GRAPH_API_VERSION, albumId, GRAPH_EDGE_PHOTOS)
-	data := url.Values{}
-	data.Add(GRAPH_TYPE_KEY, GRAPH_TYPE_UPLOADED_KEY)
-	data.Add(GRAPH_ACCESS_TOKEN_KEY, GRAPH_ACCESS_TOKEN)
-
-	u, _ := url.ParseRequestURI(apiUrl)
-	u.Path = resource
-	urlStr := fmt.Sprintf("%v?%v", u, data.Encode())
-
-	//log.Println(urlStr)
-
-	//Create request
-	var req *http.Request
-	var client *http.Client
-	client = &http.Client{}
-	if req, err = http.NewRequest("GET", urlStr, nil); err != nil {
-		return
-	}
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
-
-	//Make request
-	var resp *http.Response
-	if resp, err = client.Do(req); err != nil {
-		return
-	}
-
-	//Read response body into []byte
-	defer resp.Body.Close()
-	var body []byte
-	if body, err = ioutil.ReadAll(resp.Body); err != nil {
-		//"Error reading page photos edge resp."
-		return
-	}
-
-	//Unmarshall into struct
-	var pagePhotosEdge PhotosEdge
-	if err = json.Unmarshal(body, &pagePhotosEdge); err != nil {
-		//"Error unmarshaling page photos edge."
-		return
-	}
-
-	//displayMessageForTerminal(targetTerminal, "Read page photos edge.")
-
-	//fmt.Printf("%v\n", string(body))
-
-	//Check for error
-	if pagePhotosEdge.Error.Code != 0 {
-		err = fmt.Errorf("Code %v\nMessage %v", pagePhotosEdge.Error.Code, pagePhotosEdge.Error.Message)
+	//Request Photos edge from Graph API
+	var photosEdge PhotosEdge
+	if photosEdge, err = getPhotosEdge(albumId); err != nil {
 		return
 	}
 
 	//Look at the photo nodes returned by the photos edge
 	var limit int
 	limit = 4
-	if len(pagePhotosEdge.Data) < limit {
-		limit = len(pagePhotosEdge.Data)
+	if len(photosEdge.Data) < limit {
+		limit = len(photosEdge.Data)
 	}
 
 	for photoIndex := 0; photoIndex < limit; photoIndex++ {
 		incrementPhotosFound()
-		photo := pagePhotosEdge.Data[photoIndex]
+		photo := photosEdge.Data[photoIndex]
 
 		//Check if photo created within X timeframe (made recently?)
 		var photoCreatedTime time.Time
@@ -186,8 +138,14 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 
 		tmpSlide := Slide{saveTypes[0], "", "", targetTerminal, photo.Id, "", ""}
 
-		//Download, save
-		if err = downloadAndSaveSlide(&tmpSlide); err != nil {
+		//Request Photo node for slide
+		var photoNode PhotoNode
+		if photoNode, err = getPhotoNodeForSlide(tmpSlide); err != nil {
+			return
+		}
+
+		//Download and Save Image for Photo node
+		if err = downloadAndSaveImageForPhotoNode(photoNode, &tmpSlide); err != nil {
 			return
 		}
 
@@ -335,11 +293,69 @@ func find72HrAlbumId(t Terminal) (albumId string, err error) {
 	return
 }
 
-//Download Photo Node from Photos Edge. Return error.
-func downloadAndSaveSlide(sReference *Slide) (err error) {
+//Request PhotosEdge from Graph API
+func getPhotosEdge(id string) (photosEdge PhotosEdge, err error) {
 	//Create request url and parameters
 	apiUrl := GRAPH_API_URL
-	resource := fmt.Sprintf("%v/%v", GRAPH_API_VERSION, (*sReference).FBNodeId)
+	resource := fmt.Sprintf("%v/%v/%v", GRAPH_API_VERSION, id, GRAPH_EDGE_PHOTOS)
+	data := url.Values{}
+	data.Add(GRAPH_TYPE_KEY, GRAPH_TYPE_UPLOADED_KEY)
+	data.Add(GRAPH_ACCESS_TOKEN_KEY, GRAPH_ACCESS_TOKEN)
+
+	u, _ := url.ParseRequestURI(apiUrl)
+	u.Path = resource
+	urlStr := fmt.Sprintf("%v?%v", u, data.Encode())
+
+	//log.Println(urlStr)
+
+	//Create request
+	var req *http.Request
+	var client *http.Client
+	client = &http.Client{}
+	if req, err = http.NewRequest("GET", urlStr, nil); err != nil {
+		return
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
+
+	//Make request
+	var resp *http.Response
+	if resp, err = client.Do(req); err != nil {
+		return
+	}
+
+	//Read response body into []byte
+	defer resp.Body.Close()
+	var body []byte
+	if body, err = ioutil.ReadAll(resp.Body); err != nil {
+		//"Error reading page photos edge resp."
+		return
+	}
+
+	//Unmarshall into struct
+	if err = json.Unmarshal(body, &photosEdge); err != nil {
+		//"Error unmarshaling page photos edge."
+		return
+	}
+
+	//displayMessageForTerminal(targetTerminal, "Read page photos edge.")
+
+	//fmt.Printf("%v\n", string(body))
+
+	//Check for error
+	if photosEdge.Error.Code != 0 {
+		err = fmt.Errorf("Code %v\nMessage %v", photosEdge.Error.Code, photosEdge.Error.Message)
+		return
+	}
+
+	return
+}
+
+//Request Photo node for Slide (info from Photo edge).
+func getPhotoNodeForSlide(sReference Slide) (photoNode PhotoNode, err error) {
+	//Create request url and parameters
+	apiUrl := GRAPH_API_URL
+	resource := fmt.Sprintf("%v/%v", GRAPH_API_VERSION, sReference.FBNodeId)
 	data := url.Values{}
 	data.Add(GRAPH_FIELDS_KEY, GRAPH_FIELD_IMAGES_KEY)
 	data.Add(GRAPH_ACCESS_TOKEN_KEY, GRAPH_ACCESS_TOKEN)
@@ -372,26 +388,22 @@ func downloadAndSaveSlide(sReference *Slide) (err error) {
 	}
 
 	//Unmarshall into struct
-	var photo PhotoNode
-	if err = json.Unmarshal(body, &photo); err != nil {
+	if err = json.Unmarshal(body, &photoNode); err != nil {
 		return
 	}
 
 	//Check for error
-	if photo.Error.Code != 0 {
-		err = fmt.Errorf("Code %v\nMessage %v", photo.Error.Code, photo.Error.Message)
-		return
-	}
-
-	if err = downloadAndSavePhotoNode(photo, sReference); err != nil {
+	if photoNode.Error.Code != 0 {
+		err = fmt.Errorf("Code %v\nMessage %v", photoNode.Error.Code, photoNode.Error.Message)
 		return
 	}
 
 	return
 }
 
-//Download Photo Node. Return error.
-func downloadAndSavePhotoNode(photoNode PhotoNode, sReference *Slide) (err error) {
+//Download first image for Photo node to IMAGE_TMP_DIRECTORY and Save in location for Slide.
+//Sets Extension for Slide based on http.DetectContentType()
+func downloadAndSaveImageForPhotoNode(photoNode PhotoNode, sReference *Slide) (err error) {
 
 	if len(photoNode.Images) == 0 {
 		err = errors.New(fmt.Sprintf("PhotoNode %v %v has no images.", (*sReference).Terminal.Title, (*sReference).FBNodeId))
