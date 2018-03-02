@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"errors"
 )
 
 //Find date of 72 hour slide in header by looking for month name
@@ -53,11 +54,17 @@ func findDateOfPhotoNodeSlides(slides []Slide) (slideDate time.Time, err error) 
 			//We found a close spelling, move onto finding bounding box
 
 			//Find month bounds in hOCR
-			var bbox image.Rectangle
-			bbox, err = getTextBounds(closestMonthSlide.HOCRText, closestMonthSpelling)
+			var bboxes []image.Rectangle
+			bboxes, err = getTextBounds(closestMonthSlide.HOCRText, closestMonthSpelling)
 			if err != nil {
 				return
 			}
+
+			if len(bboxes) == 0 {
+				err = fmt.Errorf("No bboxes found for month??.")
+				return
+			}
+			bbox := bboxes[0]
 
 			//Search for date in all slides using closest match spelling
 			for _, s := range slides {
@@ -193,11 +200,69 @@ func findDateFromPlainText(plainText string, closestMonthSpelling string, estima
 	return
 }
 
-func closerDate(target time.Time, one time.Time, two time.Time) (closerDate time.Time) {
-	if math.Abs(float64(target.Sub(one))) < math.Abs(float64(target.Sub(two))) {
-		closerDate = one
-	} else {
-		closerDate = two
+func findDestinationLabelBoundsOfPhotoNodeSlides(slides []Slide) (bbox image.Rectangle, err error) {
+	//Find closest spelling for KEYWORD_DESTINATION
+	var closestDestinationSpelling string
+	var closestDestinationSlide Slide
+	if closestDestinationSpelling, closestDestinationSlide, err = findKeywordClosestSpellingInPhotoInSaveImageTypes(KEYWORD_DESTINATION, slides); err != nil {
+		return
 	}
+
+	/*
+	if len(closestDestinationSpelling) == 0 {
+		displayMessageForTerminal(closestDestinationSlide.Terminal, fmt.Sprintf("No close dest spelling founds"));
+	} else {
+		displayMessageForTerminal(closestDestinationSlide.Terminal, fmt.Sprintf("Closest dest spelling %v in saveType %v", closestDestinationSpelling, closestDestinationSlide.SaveType));
+	}
+	*/
+
+	//Find KEYWORD_DESTINATION bounds in hOCR
+	bboxes, err := getTextBounds(closestDestinationSlide.HOCRText, closestDestinationSpelling)
+	if err != nil {
+		return
+	}
+
+	if len(bboxes) == 0 {
+		err = errors.New("No bbox found for findDestinationLabelBoundsOfPhotoNodeSlides")
+	}
+
+	bbox = bboxes[0]
+	
+
+	
+	return
+}
+
+
+func findDestinationsFromSlides(slides []Slide) (destinations []Destination, err error) {
+
+	var foundDestinations []Destination
+	//var foundRollCall []RollCall
+
+	for _, s := range slides {
+		var found map[string]TerminalKeywordsResult
+		found = make(map[string]TerminalKeywordsResult)
+		found = findTerminalKeywordsInPlainText(s.PlainText)
+
+		for spelling, result := range found {
+			var bboxes []image.Rectangle
+			if bboxes, err = getTextBounds(s.HOCRText, spelling); err != nil {
+				return
+			}
+
+
+
+			for _, bbox := range bboxes {
+				foundDestinations = append(foundDestinations, Destination{locationKeywordMap[result.Keyword], spelling, bbox})
+
+
+				//match to time 
+
+				//find duplicates
+			}
+		}
+	}
+
+	destinations = foundDestinations
 	return
 }

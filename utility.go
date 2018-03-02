@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
+	"math"
 )
 
 // exists returns whether the given file or directory exists or not
@@ -90,4 +92,14 @@ func photoPath(slide Slide) string {
 	photoFilename = fmt.Sprintf("%v_%v%v.%v", strippedTerminalTitle, slide.FBNodeId, suffix, slide.Extension)
 
 	return fmt.Sprintf("%v/%v", photoDirectory, photoFilename)
+}
+
+//Returns the closer time.Time to the target time.Time of two time.Time
+func closerDate(target time.Time, one time.Time, two time.Time) (closerDate time.Time) {
+	if math.Abs(float64(target.Sub(one))) < math.Abs(float64(target.Sub(two))) {
+		closerDate = one
+	} else {
+		closerDate = two
+	}
+	return
 }

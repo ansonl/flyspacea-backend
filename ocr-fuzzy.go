@@ -18,13 +18,95 @@ import (
 
 var fuzzyModelForKeyword map[string]*fuzzy.Model
 
-func createFuzzyModels(modelMap *map[string]*fuzzy.Model) {
+var locationKeywordMap map[string]string
+var fuzzyModelByDepth map[int]*fuzzy.Model
+var fuzzyBannedSpellings map[string]int
+
+//Create fuzzy models for slide labels and terminal keywords
+func createFuzzyModels() (err error) {
+	//Create fuzzy models for slide labels
 	var keywordList []string
 	keywordList = []string{KEYWORD_DESTINATION}
 	for i := time.January; i <= time.December; i++ {
 		keywordList = append(keywordList, i.String(), i.String()[0:3])
 	}
-	createFuzzyModelsForKeywords(keywordList, modelMap)
+	createFuzzyModelsForKeywords(keywordList, &fuzzyModelForKeyword)
+
+	//Create fuzzy models for terminal keywords
+	var terminalKeywordsArray []TerminalKeywords
+	if terminalKeywordsArray, err = readTerminalKeywordsFileToArray(TERMINAL_KEYWORDS_FILE); err != nil {
+		return
+	}
+
+	locationKeywordMap = make(map[string]string)
+	fuzzyModelByDepth = make(map[int]*fuzzy.Model)
+
+	//Add keyword to locationKeywordMap and fuzzyModelByDepth
+	addKeyword := func(keyword string, title string) {
+		keyword = strings.ToLower(keyword)
+
+		if (len(keyword) < 5) {
+			err = fmt.Errorf("Keyword length less than 5. %v", keyword)
+		}
+
+		//Add to keyword -> terminal title map
+		locationKeywordMap[keyword] = title
+
+		//Determine depth
+		depth := len(keyword) / 2
+
+		//Limit depth for speed and false positives
+		limit := 2
+		if depth > limit {
+			depth = limit
+		}
+
+		//Create fuzzy model at depth if needed
+		if fuzzyModelByDepth[depth] == nil {
+			fuzzyModelByDepth[depth] = fuzzy.NewModel()
+			fuzzyModelByDepth[depth].SetThreshold(1)
+			fuzzyModelByDepth[depth].SetDepth(depth)
+		}
+
+		//Add to fuzzy model at depth
+		log.Printf("training %v", keyword)
+		fuzzyModelByDepth[depth].TrainWord(keyword)
+		
+	}
+
+	//Split runes
+	splitRunes := func(r rune) bool {
+		return r == ' ' || r == '-'
+	}
+
+	for _, v := range terminalKeywordsArray {
+
+		//Determine title (ex: Hill AFB) without location (ex: Utah)
+		trimmed := strings.Split(v.Title, ",")[0]
+
+		//Add trimmed title
+		addKeyword(trimmed, v.Title)
+
+		//Add componenets of trimmed title with len() > 5 and not contains parens
+		components := strings.FieldsFunc(trimmed, splitRunes)
+		for _, k := range components {
+
+			if len(k) > 5  && !strings.Contains(k, "(") && !strings.Contains(k, ")") {
+				addKeyword(k, v.Title)
+			}
+		}
+
+		//Add special keywords
+		for _, k := range v.Keywords {
+			addKeyword(k, v.Title)
+		}
+	}
+
+	//Create ban spelling list to not match
+	fuzzyBannedSpellings = make(map[string]int)
+	fuzzyBannedSpellings["listed"] = 0
+
+	return
 }
 
 //Create separate fuzzy model object for each keyword. Store fuzzy models in map
@@ -46,7 +128,7 @@ func doOCRForSlide(s *Slide) (err error) {
 	client := gosseract.NewClient()
 	defer client.Close()
 	client.SetImage(filepath)
-	client.SetWhitelist("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ,:=().*-")
+	client.SetWhitelist("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ,:=().*-/")
 
 	if (*s).PlainText, err = client.Text(); err != nil {
 		return
@@ -124,7 +206,7 @@ func findKeywordClosestSpellingInPlainText(keyword string, plainText string) (cl
 
 	//Split by the special characters in our whitelist including \r and \n
 	ocrWords := strings.FieldsFunc(plainText, func(c rune) bool {
-		return c == ' ' || c == '\n' || c == '\r' || c == ',' || c == ':' || c == '=' || c == '(' || c == ')' || c == '.' || c == '*' || c == '-'
+		return c == ' ' || c == '\n' || c == '\r' || c == ',' || c == ':' || c == '=' || c == '(' || c == ')' || c == '.' || c == '*' || c == '-' || c == '/'
 	})
 
 	var closestSpellingDistance int
@@ -148,7 +230,147 @@ func findKeywordClosestSpellingInPlainText(keyword string, plainText string) (cl
 	return
 }
 
-func getTextBounds(hocr string, textSpelling string) (bounds image.Rectangle, err error) {
+//Find all best terminal keyword matches for every word in plaintext. Return map[spelling]TerminalKeywordsResult{Keyword, Distance}
+func findTerminalKeywordsInPlainText(plainText string) (found map[string]TerminalKeywordsResult) {
+	found = make(map[string]TerminalKeywordsResult)
+
+	//lowercase keyword and plaintext
+	plainText = strings.ToLower(plainText)
+	//log.Println(plainText)
+
+	//Split by the special characters in our whitelist including \r and \n
+	ocrWords := strings.FieldsFunc(plainText, func(c rune) bool {
+		return c == ' ' || c == '\n' || c == '\r' || c == ',' || c == ':' || c == '=' || c == '(' || c == ')' || c == '.' || c == '*' || c == '-' || c == '/'
+	})
+
+	//Search single word
+	for _, ocrWord := range ocrWords {
+
+
+
+		//If word exists in spelling ban list, ignore it
+		if _, ok := fuzzyBannedSpellings[ocrWord]; ok == true {
+			continue
+		}
+
+		//Find best match from all fuzzy models for current word
+		var closestSuggestion string
+		var closestSpelling string
+		var closestSpellingDistance int
+		for depth, fuzzyModel := range fuzzyModelByDepth {
+			if fuzzyModel == nil {
+				log.Fatal("No fuzzy model for depth %v", depth)
+			}
+
+			for _, suggestion := range fuzzyModel.Suggestions(ocrWord, true) {
+
+				distance := fuzzy.Levenshtein(&ocrWord, &suggestion)
+				if len(closestSpelling) == 0 && len(ocrWord) > 0 {
+					closestSuggestion = suggestion
+					closestSpelling = ocrWord
+					closestSpellingDistance = distance
+				} else if distance < closestSpellingDistance {
+					closestSuggestion = suggestion
+					closestSpelling = ocrWord
+					closestSpellingDistance = distance
+				}
+			}
+		}
+
+		/*
+		//Unneeded because we are running each spelling against all fuzzy models so optimal suggestion will be found the first time.
+		//Find best match of all found suggestions (keywords)
+		if len(closestSuggestion) > 0 && found[closestSpelling] != nil && closestSpellingDistance < found[closestSpelling].Distance  {
+			found[closestSpelling] = new TerminalKeyWordsResult{closestSuggestion, closestSpellingDistance}
+		}
+		*/
+
+		//Add to found spelling map
+		_, ok := found[closestSpelling]
+		if !ok && len(closestSuggestion) > 0 {
+			tmp := TerminalKeywordsResult{Keyword: closestSuggestion, Distance: closestSpellingDistance}
+			found[closestSpelling] = tmp
+		}
+	}
+
+	//Search two words
+	var prevWord string
+	for _, ocrWord := range ocrWords {
+		if len(prevWord) == 0 {
+			prevWord = ocrWord
+			continue
+		}
+
+		prevLength := len(prevWord)
+		curLength := len(ocrWord)
+		twoWord := fmt.Sprintf("%v %v", prevWord, ocrWord)
+		
+		//log.Println(twoWord)
+
+		//If word exists in spelling ban list, ignore it
+		if _, ok := fuzzyBannedSpellings[twoWord]; ok == true {
+			continue
+		}
+
+		//Find best match from all fuzzy models for current word
+		var closestSuggestion string
+		var closestSpelling string
+		var closestSpellingDistance int
+		for depth, fuzzyModel := range fuzzyModelByDepth {
+			if fuzzyModel == nil {
+				log.Fatal("No fuzzy model for depth %v", depth)
+			}
+
+			for _, suggestion := range fuzzyModel.Suggestions(twoWord, true) {
+				distance := fuzzy.Levenshtein(&twoWord, &suggestion)
+				if len(closestSpelling) == 0 && len(twoWord) > 0 {
+					closestSuggestion = suggestion
+
+					if prevLength >= curLength {
+						closestSpelling = prevWord
+					} else {
+						closestSpelling = ocrWord
+					}
+					
+					closestSpellingDistance = distance
+				} else if distance < closestSpellingDistance {
+					closestSuggestion = suggestion
+					
+					if prevLength >= curLength {
+						closestSpelling = prevWord
+					} else {
+						closestSpelling = ocrWord
+					}
+
+					closestSpellingDistance = distance
+				}
+			}
+		}
+
+		/*
+		//Unneeded because we are running each spelling against all fuzzy models so optimal suggestion will be found the first time.
+		//Find best match of all found suggestions (keywords)
+		if len(closestSuggestion) > 0 && found[closestSpelling] != nil && closestSpellingDistance < found[closestSpelling].Distance  {
+			found[closestSpelling] = new TerminalKeyWordsResult{closestSuggestion, closestSpellingDistance}
+		}
+		*/
+
+		//Add to found spelling map
+		_, ok := found[closestSpelling]
+		if !ok && len(closestSuggestion) > 0 {
+			tmp := TerminalKeywordsResult{Keyword: closestSuggestion, Distance: closestSpellingDistance}
+			found[closestSpelling] = tmp
+		}
+
+		prevWord = ocrWord
+	}
+
+	log.Println(found)
+	return
+
+}
+
+func getTextBounds(hocr string, textSpelling string) (bboxes []image.Rectangle, err error) {
 	var doc *html.HtmlDocument
 	doc, err = html.Parse([]byte(hocr), xml.DefaultEncodingBytes, nil, xml.DefaultParseOption, xml.DefaultEncodingBytes)
 	if err != nil {
@@ -165,11 +387,13 @@ func getTextBounds(hocr string, textSpelling string) (bounds image.Rectangle, er
 	var xPathQuery string
 	xPathQuery = fmt.Sprintf("//*[contains(translate(text(), '%v', '%v'), '%v')]/parent::*", strings.ToUpper(textSpelling), strings.ToLower(textSpelling), strings.ToLower(textSpelling))
 
-	results, err := html.Search(xPathQuery)
+	var results []xml.Node
+	results, err = html.Search(xPathQuery)
 	if err != nil {
 		return
 	}
 
+	
 	//If no results found, print xpathquery and write document to file for debugging
 	if len(results) == 0 {
 		err = fmt.Errorf("No %v found. Xpathquery %v", textSpelling, xPathQuery)
@@ -178,40 +402,41 @@ func getTextBounds(hocr string, textSpelling string) (bounds image.Rectangle, er
 		return
 	}
 
-	title := results[0].Attr("title")
-	//displayMessageForTerminal(targetTerminal, fmt.Sprintf("%v\n", len(results)))
-	//displayMessageForTerminal(targetTerminal, fmt.Sprintf("%v\n", results[0].String()))
 
-	bboxRegEx, err := regexp.Compile("bbox ([0-9]*) ([0-9]*) ([0-9]*) ([0-9]*);")
-	if err != nil {
-		return
-	}
+	for _, r := range results {
+		title := r.Attr("title")
+		//fmt.Printf("%v\n", len(results))
+		//fmt.Printf("%v\n", results[0].String())
 
-	bboxMatch := bboxRegEx.FindStringSubmatch(title)
+		var bboxRegEx *regexp.Regexp
+		if bboxRegEx, err = regexp.Compile("bbox ([0-9]*) ([0-9]*) ([0-9]*) ([0-9]*);"); err != nil {
+			return
+		}
 
-	if len(bboxMatch) == 0 {
-		err = errors.New("No bbox found in regex")
-		return
-	}
+		bboxMatch := bboxRegEx.FindStringSubmatch(title)
 
-	minX, err := strconv.Atoi(bboxMatch[1])
-	if err != nil {
-		return
-	}
-	minY, err := strconv.Atoi(bboxMatch[2])
-	if err != nil {
-		return
-	}
-	maxX, err := strconv.Atoi(bboxMatch[3])
-	if err != nil {
-		return
-	}
-	maxY, err := strconv.Atoi(bboxMatch[4])
-	if err != nil {
-		return
-	}
+		if len(bboxMatch) == 0 {
+			err = errors.New("No bbox found in regex")
+			return
+		}
 
-	bounds = image.Rectangle{image.Point{minX, minY}, image.Point{maxX, maxY}}
+		var minX, minY, maxX, maxY int
 
+		if minX, err = strconv.Atoi(bboxMatch[1]); err != nil {
+			return
+		}
+		if minY, err = strconv.Atoi(bboxMatch[2]); err != nil {
+			return
+		}
+		if maxX, err = strconv.Atoi(bboxMatch[3]); err != nil {
+			return
+		}
+		if maxY, err = strconv.Atoi(bboxMatch[4]); err != nil {
+			return
+		}
+
+		bboxes = append(bboxes, image.Rectangle{image.Point{minX, minY}, image.Point{maxX, maxY}})
+	}
+	
 	return
 }

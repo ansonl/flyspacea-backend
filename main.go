@@ -8,9 +8,12 @@ import (
 func main() {
 	//fmt.Printf("\n\u001b[1mboldtext\u001b[0m\r\u001b[2Fprevline\n\n\n")
 
-	createFuzzyModels(&fuzzyModelForKeyword)
+	var err error
+	if err = createFuzzyModels(); err != nil {
+		log.Fatal(err)
+	}
 
-	terminalArray, err := readTerminalFileToArray("terminals.json")
+	terminalArray, err := readTerminalFileToArray(TERMINAL_FILE)
 	if err != nil {
 		log.Fatal(err)
 	}

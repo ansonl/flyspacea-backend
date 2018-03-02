@@ -1,5 +1,11 @@
 package main
 
+//Terminal info files
+const (
+	TERMINAL_FILE string = "terminals.json"
+	TERMINAL_KEYWORDS_FILE string = "location_keywords.json"
+)
+
 //Graph API URL domain and path. Nodes and edges.
 const (
 	GRAPH_API_URL     string = "https://graph.facebook.com"

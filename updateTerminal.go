@@ -12,65 +12,20 @@ import (
 	"os"
 	"strconv"
 	"time"
-	//"sync"
+	"image"
 
-	//worker management
+	//Worker management
 	"context"
 	"golang.org/x/sync/semaphore"
 	"regexp"
 	"runtime"
 )
 
-func readTerminalFileToArray(terminalFilename string) (terminalArray []Terminal, err error) {
-	terminalsRaw, err := ioutil.ReadFile(terminalFilename)
-	if err != nil {
-		return
-	}
-
-	if err = json.Unmarshal(terminalsRaw, &terminalArray); err != nil {
-		return
-	}
-
-	return
-}
-
-func readTerminalArrayToMap(terminalArray []Terminal) (terminalMap map[string]Terminal) {
-	//set key to v.Title and set v.Index
-	terminalMap = make(map[string]Terminal)
-	for _, v := range terminalArray {
-		terminalMap[v.Title] = v
-	}
-
-	return
-}
-
 func updateAllTerminals(terminalMap map[string]Terminal) {
-	ctx := context.TODO()
-
-	var maxWorkers int
-	var sem *semaphore.Weighted
-	maxWorkers = runtime.GOMAXPROCS(0)
-	maxWorkers = 1
-	sem = semaphore.NewWeighted(int64(maxWorkers))
-
-	log.Printf("Starting update with %v workers.\n", maxWorkers)
-
 	for _, v := range terminalMap {
-		if err := sem.Acquire(ctx, 1); err != nil {
-			log.Printf("Failed to acquire semaphore: %v\n", err)
-			break
+		if err := updateTerminal(v); err != nil {
+			displayErrorForTerminal(v, err.Error())
 		}
-
-		go func(t Terminal) {
-			defer sem.Release(1)
-			if err := updateTerminal(t); err != nil {
-				displayErrorForTerminal(t, err.Error())
-			}
-		}(v)
-	}
-
-	if err := sem.Acquire(ctx, int64(maxWorkers)); err != nil {
-		log.Printf("Failed to acquire semaphore: %v\n", err)
 	}
 
 	log.Printf("Update ended.\n")
@@ -96,7 +51,7 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 	}
 	if len(albumId) == 0 {
 		albumId = targetTerminal.Id
-		displayMessageForTerminal(targetTerminal, "72 hour album not found.")
+		displayErrorForTerminal(targetTerminal, "72 hour album not found.")
 	} else {
 		displayMessageForTerminal(targetTerminal, "72 hour album found.")
 	}
@@ -109,118 +64,37 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 
 	//Look at the photo nodes returned by the photos edge
 	var limit int
-	limit = 4
+	limit = 1
 	if len(photosEdge.Data) < limit {
 		limit = len(photosEdge.Data)
 	}
 
+	//Spawn goroutine to download and process each image 
+	ctx := context.TODO()
+	var maxWorkers int
+	var sem *semaphore.Weighted
+	maxWorkers = runtime.GOMAXPROCS(0)
+	maxWorkers = 1
+	sem = semaphore.NewWeighted(int64(maxWorkers))
+
+	displayMessageForTerminal(targetTerminal, fmt.Sprintf("Starting update with %v workers.", maxWorkers))
+
 	for photoIndex := 0; photoIndex < limit; photoIndex++ {
-		incrementPhotosFound()
-		photo := photosEdge.Data[photoIndex]
+		if err := sem.Acquire(ctx, 1); err != nil {
+			log.Printf("Failed to acquire semaphore: %v\n", err)
+			break
+		}	
 
-		//Check if photo created within X timeframe (made recently?)
-		var photoCreatedTime time.Time
-		//http://stackoverflow.com/questions/24401901/time-parse-why-does-golang-parses-the-time-incorrectly
-		layout := "2006-01-02T15:04:05-0700"
-		if photoCreatedTime, err = time.Parse(layout, photo.CreatedTime); err != nil {
-			return
-		}
-
-		//If image is too old, ignore
-		if time.Since(photoCreatedTime) > time.Hour*72 {
-			continue
-		}
-
-		//displayMessageForTerminal(targetTerminal, fmt.Sprintf("Downloading recent photo %v",photoIndex+1))
-
-		var saveTypes []SaveImageType
-		saveTypes = []SaveImageType{SAVE_IMAGE_TRAINING, SAVE_IMAGE_TRAINING_PROCESSED_BLACK, SAVE_IMAGE_TRAINING_PROCESSED_WHITE}
-
-		tmpSlide := Slide{saveTypes[0], "", "", targetTerminal, photo.Id, "", ""}
-
-		//Request Photo node for slide
-		var photoNode PhotoNode
-		if photoNode, err = getPhotoNodeForSlide(tmpSlide); err != nil {
-			return
-		}
-
-		//Download and Save Image for Photo node
-		if err = downloadAndSaveImageForPhotoNode(photoNode, &tmpSlide); err != nil {
-			return
-		}
-
-		var slides []Slide
-		slides = make([]Slide, 0)
-		for _, currentSaveType := range saveTypes {
-			var newSlide Slide
-			newSlide.SaveType = currentSaveType
-			newSlide.Extension = tmpSlide.Extension
-			newSlide.Terminal = targetTerminal
-			newSlide.FBNodeId = photo.Id
-
-			/*
-				//Manual slide control
-				newSlide.Extension = "jpeg"
-				newSlide.FBNodeId = "1579091732160230"
-			*/
-
-			//create processed image in imagemagick IF slide created is not original slide
-			if currentSaveType != SAVE_IMAGE_TRAINING {
-				if err = runImageMagickColorProcess(SAVE_IMAGE_TRAINING, newSlide); err != nil {
-					return
-				}
+		go func(edgePhoto PhotosEdgePhoto, t Terminal) {
+			defer sem.Release(1)
+			if err := processPhotoNode(edgePhoto, t); err != nil {
+				displayErrorForTerminal(t, err.Error())
 			}
+		} (photosEdge.Data[photoIndex], targetTerminal)
+	}
 
-			if err = doOCRForSlide(&newSlide); err != nil {
-				return
-			}
-
-			slides = append(slides, newSlide)
-		}
-
-		var slideDate time.Time
-		if slideDate, err = findDateOfPhotoNodeSlides(slides); err != nil {
-			return
-		}
-
-		displayMessageForTerminal(slides[0].Terminal, fmt.Sprintf("%v \u001b[1m\u001b[31m%v\u001b[0m", slides[0].FBNodeId, slideDate.Format("02 Jan 2006 -0700")))
-
-		if slideDate.Equal(time.Time{}) == false {
-			incrementPhotosFoundDateHeader()
-		}
-
-		incrementPhotosProcessed()
-		/*
-			//Debugging print slides array
-			log.Printf("len(saveTypes) %v", len(saveTypes))
-			log.Printf("len(slides) %v", len(slides))
-			for _, s := range slides {
-				log.Printf("slide type %v", s.saveType)
-			}
-		*/
-
-		/*
-			//Find closest spelling for KEYWORD_DESTINATION
-			var closestDestinationSpelling string
-			var closestDestinationSlide Slide
-			if closestDestinationSpelling, closestDestinationSlide, err = findKeywordClosestSpellingInPhotoInSaveImageTypes(KEYWORD_DESTINATION, slides); err != nil {
-				return
-			}
-
-			if len(closestDestinationSpelling) == 0 {
-				displayMessageForTerminal(targetTerminal, fmt.Sprintf("No close dest spelling founds"));
-			} else {
-				displayMessageForTerminal(targetTerminal, fmt.Sprintf("Closest dest spelling %v in saveType %v", closestDestinationSpelling, closestDestinationSlide.saveType));
-			}
-
-			//Find KEYWORD_DESTINATION bounds in hOCR
-			bbox, err := getDestinationBounds(closestDestinationSlide.hHOCRText, closestDestinationSpelling)
-			if err != nil {
-				log.Println(err)
-			}
-
-			displayMessageForTerminal(targetTerminal, fmt.Sprintf("%v bbox %v %v %v %v", photoIndex, bbox.Min.X, bbox.Min.Y, bbox.Max.X, bbox.Max.Y))
-		*/
+	if err := sem.Acquire(ctx, int64(maxWorkers)); err != nil {
+		log.Printf("Failed to acquire semaphore: %v\n", err)
 	}
 
 	return
@@ -347,6 +221,135 @@ func getPhotosEdge(id string) (photosEdge PhotosEdge, err error) {
 		err = fmt.Errorf("Code %v\nMessage %v", photosEdge.Error.Code, photosEdge.Error.Message)
 		return
 	}
+
+	return
+}
+
+//Download, save, OCR a photo from Photos Edge
+func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err error) {
+	incrementPhotosFound()
+
+	//Check if photo created within X timeframe (made recently?)
+	var photoCreatedTime time.Time
+	//http://stackoverflow.com/questions/24401901/time-parse-why-does-golang-parses-the-time-incorrectly
+	layout := "2006-01-02T15:04:05-0700"
+	if photoCreatedTime, err = time.Parse(layout, edgePhoto.CreatedTime); err != nil {
+		return
+	}
+
+	//If image is too old, ignore
+	if time.Since(photoCreatedTime) > time.Hour*96 {
+		displayMessageForTerminal(targetTerminal, edgePhoto.Id + " over 96 hours old.")
+		return
+	}
+
+	//displayMessageForTerminal(targetTerminal, fmt.Sprintf("Downloading recent photo %v",photoIndex+1))
+
+	var saveTypes []SaveImageType
+	saveTypes = []SaveImageType{SAVE_IMAGE_TRAINING, SAVE_IMAGE_TRAINING_PROCESSED_BLACK, SAVE_IMAGE_TRAINING_PROCESSED_WHITE}
+
+	tmpSlide := Slide{saveTypes[0], "", "", targetTerminal, edgePhoto.Id, "", ""}
+
+	//Request Photo node for slide
+	var photoNode PhotoNode
+	if photoNode, err = getPhotoNodeForSlide(tmpSlide); err != nil {
+		return
+	}
+
+	//Download and Save Image for Photo node
+	if err = downloadAndSaveImageForPhotoNode(photoNode, &tmpSlide); err != nil {
+		return
+	}
+
+	var slides []Slide
+	slides = make([]Slide, 0)
+	for _, currentSaveType := range saveTypes {
+		var newSlide Slide
+		newSlide.SaveType = currentSaveType
+		newSlide.Extension = tmpSlide.Extension
+		newSlide.Terminal = targetTerminal
+		newSlide.FBNodeId = edgePhoto.Id
+
+		
+			//Manual slide control
+			newSlide.Extension = "jpeg"
+			newSlide.FBNodeId = "1584294231639980"
+		
+
+		//create processed image in imagemagick IF slide created is not original slide
+		if currentSaveType != SAVE_IMAGE_TRAINING {
+			if err = runImageMagickColorProcess(SAVE_IMAGE_TRAINING, newSlide); err != nil {
+				return
+			}
+		}
+
+		if err = doOCRForSlide(&newSlide); err != nil {
+			return
+		}
+
+		slides = append(slides, newSlide)
+	}
+
+	var slideDate time.Time
+	if slideDate, err = findDateOfPhotoNodeSlides(slides); err != nil {
+		return
+	}
+
+	//Check if date was found by comparing to "blank" time.Time
+	if slideDate.Equal(time.Time{}) == false {
+		incrementPhotosFoundDateHeader()
+	}
+
+	//Display found date
+	displayMessageForTerminal(slides[0].Terminal, fmt.Sprintf("%v \u001b[1m\u001b[31m%v\u001b[0m", slides[0].FBNodeId, slideDate.Format("02 Jan 2006 -0700")))
+
+	//Get dest bbox and crop
+	//TODO?
+	var destLabelBBox image.Rectangle
+	if destLabelBBox, err = findDestinationLabelBoundsOfPhotoNodeSlides(slides); err != nil {
+		return
+	}
+
+
+	displayMessageForTerminal(slides[0].Terminal, fmt.Sprintf(" dest bbox %v %v %v %v", destLabelBBox.Min.X, destLabelBBox.Min.Y, destLabelBBox.Max.X, destLabelBBox.Max.Y))
+	
+
+
+	//Find potential destinations from all slides
+	var destinations []Destination
+	if destinations, err = findDestinationsFromSlides(slides); err != nil {
+		return
+	}
+
+	fmt.Println(destinations)
+
+	for _, d := range destinations {
+		/*
+		yTolerance := 5
+		if d.BBox.Min.Y > destLabelBBox.Max.Y || destLabelBBox.Max.Y - d.BBox.Min.Y < yTolerance {
+			log.Println(d)
+		}
+		*/
+
+		log.Println(d)
+	}
+	
+	
+
+
+	incrementPhotosProcessed()
+	/*
+		//Debugging print slides array
+		log.Printf("len(saveTypes) %v", len(saveTypes))
+		log.Printf("len(slides) %v", len(slides))
+		for _, s := range slides {
+			log.Printf("slide type %v", s.saveType)
+		}
+	*/
+
+	/*
+		
+	*/
 
 	return
 }

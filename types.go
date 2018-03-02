@@ -1,5 +1,10 @@
 package main
 
+import (
+	"image"
+	"time"
+)
+
 //Facebook Graph API structs for retrieving page photos
 //https://developers.facebook.com/docs/graph-api/reference/page/photos/
 //?type=uploaded
@@ -62,9 +67,45 @@ type Departure struct {
 }
 */
 
+//Special keywords for a terminal in location_keywords.json
+type TerminalKeywords struct {
+	Title string `json:"title"`
+	Keywords []string `json:"keywords"`
+
+}
+
+//Returned when searching all terminal keywords in plaintext
+type TerminalKeywordsResult struct {
+	Keyword string
+	Distance int
+}
+
+//Terminal representation
 type Terminal struct {
 	Title string `json:"title"`
 	Id    string `json:"id"`
+}
+
+
+
+//Destination representation
+type Destination struct {
+	TerminalTitle string
+	Spelling string
+	BBox image.Rectangle
+}
+
+//RollCall representation
+type RollCall struct {
+	Time time.Time
+	BBox image.Rectangle
+}
+
+//SeatsAvailable representation
+type SeatsAvailable struct {
+	Number int
+	Letter string
+	BBox image.Rectangle
 }
 
 //Processed version of downloaded photo
