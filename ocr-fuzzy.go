@@ -24,6 +24,10 @@ var fuzzyBannedSpellings map[string]int
 
 //Create fuzzy models for slide labels and terminal keywords
 func createFuzzyModels() (err error) {
+	//Create ban spelling list to not match
+	fuzzyBannedSpellings = make(map[string]int)
+	fuzzyBannedSpellings["listed"] = 0
+
 	//Create fuzzy models for slide labels
 	var keywordList []string
 	keywordList = []string{KEYWORD_DESTINATION}
@@ -43,9 +47,15 @@ func createFuzzyModels() (err error) {
 
 	//Add keyword to locationKeywordMap and fuzzyModelByDepth
 	addKeyword := func(keyword string, title string) {
+		//If keyword exists in spelling ban list, do not add it to dict
+		//We must also check banned spellings when OCRing because a banned spelling may be too close to an actual keyword
+		if _, ok := fuzzyBannedSpellings[title]; ok == true {
+			return
+		}
+
 		keyword = strings.ToLower(keyword)
 
-		if (len(keyword) < 5) {
+		if len(keyword) < 5 {
 			err = fmt.Errorf("Keyword length less than 5. %v", keyword)
 		}
 
@@ -71,7 +81,7 @@ func createFuzzyModels() (err error) {
 		//Add to fuzzy model at depth
 		log.Printf("training %v", keyword)
 		fuzzyModelByDepth[depth].TrainWord(keyword)
-		
+
 	}
 
 	//Split runes
@@ -91,7 +101,7 @@ func createFuzzyModels() (err error) {
 		components := strings.FieldsFunc(trimmed, splitRunes)
 		for _, k := range components {
 
-			if len(k) > 5  && !strings.Contains(k, "(") && !strings.Contains(k, ")") {
+			if len(k) > 5 && !strings.Contains(k, "(") && !strings.Contains(k, ")") {
 				addKeyword(k, v.Title)
 			}
 		}
@@ -101,10 +111,6 @@ func createFuzzyModels() (err error) {
 			addKeyword(k, v.Title)
 		}
 	}
-
-	//Create ban spelling list to not match
-	fuzzyBannedSpellings = make(map[string]int)
-	fuzzyBannedSpellings["listed"] = 0
 
 	return
 }
@@ -246,11 +252,9 @@ func findTerminalKeywordsInPlainText(plainText string) (found map[string]Termina
 	//Search single word
 	for _, ocrWord := range ocrWords {
 
-
-
-		//If word exists in spelling ban list, ignore it
+		//If keyword exists in spelling ban list, do not add it
 		if _, ok := fuzzyBannedSpellings[ocrWord]; ok == true {
-			continue
+			return
 		}
 
 		//Find best match from all fuzzy models for current word
@@ -278,11 +282,11 @@ func findTerminalKeywordsInPlainText(plainText string) (found map[string]Termina
 		}
 
 		/*
-		//Unneeded because we are running each spelling against all fuzzy models so optimal suggestion will be found the first time.
-		//Find best match of all found suggestions (keywords)
-		if len(closestSuggestion) > 0 && found[closestSpelling] != nil && closestSpellingDistance < found[closestSpelling].Distance  {
-			found[closestSpelling] = new TerminalKeyWordsResult{closestSuggestion, closestSpellingDistance}
-		}
+			//Unneeded because we are running each spelling against all fuzzy models so optimal suggestion will be found the first time.
+			//Find best match of all found suggestions (keywords)
+			if len(closestSuggestion) > 0 && found[closestSpelling] != nil && closestSpellingDistance < found[closestSpelling].Distance  {
+				found[closestSpelling] = new TerminalKeyWordsResult{closestSuggestion, closestSpellingDistance}
+			}
 		*/
 
 		//Add to found spelling map
@@ -304,7 +308,7 @@ func findTerminalKeywordsInPlainText(plainText string) (found map[string]Termina
 		prevLength := len(prevWord)
 		curLength := len(ocrWord)
 		twoWord := fmt.Sprintf("%v %v", prevWord, ocrWord)
-		
+
 		//log.Println(twoWord)
 
 		//If word exists in spelling ban list, ignore it
@@ -331,11 +335,11 @@ func findTerminalKeywordsInPlainText(plainText string) (found map[string]Termina
 					} else {
 						closestSpelling = ocrWord
 					}
-					
+
 					closestSpellingDistance = distance
 				} else if distance < closestSpellingDistance {
 					closestSuggestion = suggestion
-					
+
 					if prevLength >= curLength {
 						closestSpelling = prevWord
 					} else {
@@ -348,11 +352,11 @@ func findTerminalKeywordsInPlainText(plainText string) (found map[string]Termina
 		}
 
 		/*
-		//Unneeded because we are running each spelling against all fuzzy models so optimal suggestion will be found the first time.
-		//Find best match of all found suggestions (keywords)
-		if len(closestSuggestion) > 0 && found[closestSpelling] != nil && closestSpellingDistance < found[closestSpelling].Distance  {
-			found[closestSpelling] = new TerminalKeyWordsResult{closestSuggestion, closestSpellingDistance}
-		}
+			//Unneeded because we are running each spelling against all fuzzy models so optimal suggestion will be found the first time.
+			//Find best match of all found suggestions (keywords)
+			if len(closestSuggestion) > 0 && found[closestSpelling] != nil && closestSpellingDistance < found[closestSpelling].Distance  {
+				found[closestSpelling] = new TerminalKeyWordsResult{closestSuggestion, closestSpellingDistance}
+			}
 		*/
 
 		//Add to found spelling map
@@ -393,7 +397,6 @@ func getTextBounds(hocr string, textSpelling string) (bboxes []image.Rectangle, 
 		return
 	}
 
-	
 	//If no results found, print xpathquery and write document to file for debugging
 	if len(results) == 0 {
 		err = fmt.Errorf("No %v found. Xpathquery %v", textSpelling, xPathQuery)
@@ -401,7 +404,6 @@ func getTextBounds(hocr string, textSpelling string) (bboxes []image.Rectangle, 
 		log.Fatal(err)
 		return
 	}
-
 
 	for _, r := range results {
 		title := r.Attr("title")
@@ -437,6 +439,6 @@ func getTextBounds(hocr string, textSpelling string) (bboxes []image.Rectangle, 
 
 		bboxes = append(bboxes, image.Rectangle{image.Point{minX, minY}, image.Point{maxX, maxY}})
 	}
-	
+
 	return
 }

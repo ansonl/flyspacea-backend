@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"image"
 	"math"
@@ -8,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"errors"
 )
 
 //Find date of 72 hour slide in header by looking for month name
@@ -209,11 +209,11 @@ func findDestinationLabelBoundsOfPhotoNodeSlides(slides []Slide) (bbox image.Rec
 	}
 
 	/*
-	if len(closestDestinationSpelling) == 0 {
-		displayMessageForTerminal(closestDestinationSlide.Terminal, fmt.Sprintf("No close dest spelling founds"));
-	} else {
-		displayMessageForTerminal(closestDestinationSlide.Terminal, fmt.Sprintf("Closest dest spelling %v in saveType %v", closestDestinationSpelling, closestDestinationSlide.SaveType));
-	}
+		if len(closestDestinationSpelling) == 0 {
+			displayMessageForTerminal(closestDestinationSlide.Terminal, fmt.Sprintf("No close dest spelling founds"));
+		} else {
+			displayMessageForTerminal(closestDestinationSlide.Terminal, fmt.Sprintf("Closest dest spelling %v in saveType %v", closestDestinationSpelling, closestDestinationSlide.SaveType));
+		}
 	*/
 
 	//Find KEYWORD_DESTINATION bounds in hOCR
@@ -227,12 +227,9 @@ func findDestinationLabelBoundsOfPhotoNodeSlides(slides []Slide) (bbox image.Rec
 	}
 
 	bbox = bboxes[0]
-	
 
-	
 	return
 }
-
 
 func findDestinationsFromSlides(slides []Slide) (destinations []Destination, err error) {
 
@@ -250,15 +247,51 @@ func findDestinationsFromSlides(slides []Slide) (destinations []Destination, err
 				return
 			}
 
-
-
 			for _, bbox := range bboxes {
-				foundDestinations = append(foundDestinations, Destination{locationKeywordMap[result.Keyword], spelling, bbox})
+				foundDestinations = append(foundDestinations, Destination{
+					TerminalTitle:    locationKeywordMap[result.Keyword],
+					Spelling:         spelling,
+					SpellingDistance: result.Distance,
+					BBox:             bbox})
 
+				//Find duplicates by checking if intersecting rect shares >50% of area of the smaller of the two rects
+				intersectThreshold := 0.5
+				for i := 0; i < len(foundDestinations); i++ {
+					destA := foundDestinations[i]
+					smallerArea := destA.BBox.Dx() * destA.BBox.Dy()
+					for j := i + 1; j < len(foundDestinations); j++ {
+						destB := foundDestinations[j]
+						destBArea := destA.BBox.Dx() * destA.BBox.Dy()
+						if destBArea < smallerArea {
+							smallerArea = destBArea
+						}
 
-				//match to time 
+						//Compare intersection image.Rectangle area to the smaller of destA and destB area
+						intersection := destA.BBox.Intersect(destB.BBox)
+						if float64(intersection.Dx())*float64(intersection.Dy()) > float64(smallerArea)*intersectThreshold {
 
-				//find duplicates
+							fmt.Println("duplicate found for ", destA.TerminalTitle)
+
+							//If destA spelling distance > destB spelling distance, replace destA location in array with destB.
+							if destA.SpellingDistance > destB.SpellingDistance {
+								foundDestinations[i] = foundDestinations[j]
+							}
+
+							//Delete destB location. Decrement j so that same index now with different element is checked on next loop
+							copy(foundDestinations[j:], foundDestinations[j+1:])
+							foundDestinations[len(foundDestinations)-1] = Destination{}
+							foundDestinations = foundDestinations[:len(foundDestinations)-1]
+							j--
+						}
+					}
+				}
+
+				//Create Grouping with nearest DestinationA to DestinationB
+
+				//Link GroupingA with nearest GroupingB so all Destinations in GroupingB are in GroupingA. Repeat until GroupingA contains a Destination that (horizontally) intersects a RollCall.
+
+				//match to time
+
 			}
 		}
 	}

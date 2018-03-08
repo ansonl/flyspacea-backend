@@ -2,10 +2,14 @@ package main
 
 import (
 	"image"
+	"log"
 	"time"
 )
 
-//Facebook Graph API structs for retrieving page photos
+/*
+ * Facebook Graph API structs for retrieving page photos
+ */
+
 //https://developers.facebook.com/docs/graph-api/reference/page/photos/
 //?type=uploaded
 type PhotosEdge struct {
@@ -69,14 +73,13 @@ type Departure struct {
 
 //Special keywords for a terminal in location_keywords.json
 type TerminalKeywords struct {
-	Title string `json:"title"`
+	Title    string   `json:"title"`
 	Keywords []string `json:"keywords"`
-
 }
 
 //Returned when searching all terminal keywords in plaintext
 type TerminalKeywordsResult struct {
-	Keyword string
+	Keyword  string
 	Distance int
 }
 
@@ -84,28 +87,6 @@ type TerminalKeywordsResult struct {
 type Terminal struct {
 	Title string `json:"title"`
 	Id    string `json:"id"`
-}
-
-
-
-//Destination representation
-type Destination struct {
-	TerminalTitle string
-	Spelling string
-	BBox image.Rectangle
-}
-
-//RollCall representation
-type RollCall struct {
-	Time time.Time
-	BBox image.Rectangle
-}
-
-//SeatsAvailable representation
-type SeatsAvailable struct {
-	Number int
-	Letter string
-	BBox image.Rectangle
 }
 
 //Processed version of downloaded photo
@@ -118,4 +99,62 @@ type Slide struct {
 
 	PlainText string
 	HOCRText  string
+}
+
+/*
+ * Representation of data in an image
+ */
+
+//Destination representation
+type Destination struct {
+	TerminalTitle    string
+	Spelling         string
+	SpellingDistance int
+	BBox             image.Rectangle
+
+	//RollCall for the Destination
+	LinkedRollCall RollCall
+}
+
+//RollCall representation
+type RollCall struct {
+	Time time.Time
+	BBox image.Rectangle
+}
+
+//SeatsAvailable representation
+type SeatsAvailable struct {
+	Number int
+	Letter string
+	BBox   image.Rectangle
+}
+
+//"Grouping" of multiples Destinations for single RollCall/SeatsAvailable
+type Grouping struct {
+	Destinations []Destination
+	BBox         image.Rectangle
+}
+
+//Update Grouping struct BBox to include all Destinations in grouping
+func (g Grouping) updateBBox() {
+	if len(g.Destinations) == 0 {
+		log.Fatal("Grouping empty. Cannot updateBBox")
+	}
+
+	g.BBox = g.Destinations[0].BBox
+
+	for _, d := range g.Destinations {
+		if d.BBox.Min.X < g.BBox.Min.X {
+			g.BBox.Min.X = d.BBox.Min.X
+		}
+		if d.BBox.Min.Y < g.BBox.Min.Y {
+			g.BBox.Min.Y = d.BBox.Min.Y
+		}
+		if d.BBox.Max.X > g.BBox.Max.X {
+			g.BBox.Max.X = d.BBox.Max.X
+		}
+		if d.BBox.Max.Y > g.BBox.Max.Y {
+			g.BBox.Max.Y = d.BBox.Max.Y
+		}
+	}
 }

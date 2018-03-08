@@ -2,7 +2,7 @@ package main
 
 //Terminal info files
 const (
-	TERMINAL_FILE string = "terminals.json"
+	TERMINAL_FILE          string = "terminals.json"
 	TERMINAL_KEYWORDS_FILE string = "location_keywords.json"
 )
 

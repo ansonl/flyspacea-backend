@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"os"
 	"strings"
 	"time"
-	"math"
 )
 
 // exists returns whether the given file or directory exists or not

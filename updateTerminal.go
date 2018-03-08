@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
 	"io"
 	"io/ioutil"
 	"log"
@@ -12,7 +13,6 @@ import (
 	"os"
 	"strconv"
 	"time"
-	"image"
 
 	//Worker management
 	"context"
@@ -64,12 +64,12 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 
 	//Look at the photo nodes returned by the photos edge
 	var limit int
-	limit = 1
+	limit = 5
 	if len(photosEdge.Data) < limit {
 		limit = len(photosEdge.Data)
 	}
 
-	//Spawn goroutine to download and process each image 
+	//Spawn goroutine to download and process each image
 	ctx := context.TODO()
 	var maxWorkers int
 	var sem *semaphore.Weighted
@@ -83,14 +83,14 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 		if err := sem.Acquire(ctx, 1); err != nil {
 			log.Printf("Failed to acquire semaphore: %v\n", err)
 			break
-		}	
+		}
 
 		go func(edgePhoto PhotosEdgePhoto, t Terminal) {
 			defer sem.Release(1)
 			if err := processPhotoNode(edgePhoto, t); err != nil {
 				displayErrorForTerminal(t, err.Error())
 			}
-		} (photosEdge.Data[photoIndex], targetTerminal)
+		}(photosEdge.Data[photoIndex], targetTerminal)
 	}
 
 	if err := sem.Acquire(ctx, int64(maxWorkers)); err != nil {
@@ -239,7 +239,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 
 	//If image is too old, ignore
 	if time.Since(photoCreatedTime) > time.Hour*96 {
-		displayMessageForTerminal(targetTerminal, edgePhoto.Id + " over 96 hours old.")
+		displayMessageForTerminal(targetTerminal, edgePhoto.Id+" over 96 hours old.")
 		return
 	}
 
@@ -270,11 +270,11 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		newSlide.Terminal = targetTerminal
 		newSlide.FBNodeId = edgePhoto.Id
 
-		
-			//Manual slide control
-			newSlide.Extension = "jpeg"
-			newSlide.FBNodeId = "1584294231639980"
-		
+		/*
+		//Manual slide control
+		newSlide.Extension = "jpeg"
+		newSlide.FBNodeId = "1600297943372942"
+		*/
 
 		//create processed image in imagemagick IF slide created is not original slide
 		if currentSaveType != SAVE_IMAGE_TRAINING {
@@ -310,10 +310,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		return
 	}
 
-
 	displayMessageForTerminal(slides[0].Terminal, fmt.Sprintf(" dest bbox %v %v %v %v", destLabelBBox.Min.X, destLabelBBox.Min.Y, destLabelBBox.Max.X, destLabelBBox.Max.Y))
-	
-
 
 	//Find potential destinations from all slides
 	var destinations []Destination
@@ -325,17 +322,14 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 
 	for _, d := range destinations {
 		/*
-		yTolerance := 5
-		if d.BBox.Min.Y > destLabelBBox.Max.Y || destLabelBBox.Max.Y - d.BBox.Min.Y < yTolerance {
-			log.Println(d)
-		}
+			yTolerance := 5
+			if d.BBox.Min.Y > destLabelBBox.Max.Y || destLabelBBox.Max.Y - d.BBox.Min.Y < yTolerance {
+				log.Println(d)
+			}
 		*/
 
 		log.Println(d)
 	}
-	
-	
-
 
 	incrementPhotosProcessed()
 	/*
@@ -348,8 +342,8 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 	*/
 
 	/*
-		
-	*/
+
+	 */
 
 	return
 }
