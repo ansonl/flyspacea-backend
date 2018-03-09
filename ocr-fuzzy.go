@@ -252,9 +252,9 @@ func findTerminalKeywordsInPlainText(plainText string) (found map[string]Termina
 	//Search single word
 	for _, ocrWord := range ocrWords {
 
-		//If keyword exists in spelling ban list, do not add it
+		//If found spelling exists in spelling ban list, skip it
 		if _, ok := fuzzyBannedSpellings[ocrWord]; ok == true {
-			return
+			continue
 		}
 
 		//Find best match from all fuzzy models for current word

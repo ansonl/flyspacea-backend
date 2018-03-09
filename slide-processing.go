@@ -254,37 +254,13 @@ func findDestinationsFromSlides(slides []Slide) (destinations []Destination, err
 					SpellingDistance: result.Distance,
 					BBox:             bbox})
 
-				//Find duplicates by checking if intersecting rect shares >50% of area of the smaller of the two rects
-				intersectThreshold := 0.5
-				for i := 0; i < len(foundDestinations); i++ {
-					destA := foundDestinations[i]
-					smallerArea := destA.BBox.Dx() * destA.BBox.Dy()
-					for j := i + 1; j < len(foundDestinations); j++ {
-						destB := foundDestinations[j]
-						destBArea := destA.BBox.Dx() * destA.BBox.Dy()
-						if destBArea < smallerArea {
-							smallerArea = destBArea
-						}
+				
 
-						//Compare intersection image.Rectangle area to the smaller of destA and destB area
-						intersection := destA.BBox.Intersect(destB.BBox)
-						if float64(intersection.Dx())*float64(intersection.Dy()) > float64(smallerArea)*intersectThreshold {
+			}
+		}
+	}
 
-							fmt.Println("duplicate found for ", destA.TerminalTitle)
-
-							//If destA spelling distance > destB spelling distance, replace destA location in array with destB.
-							if destA.SpellingDistance > destB.SpellingDistance {
-								foundDestinations[i] = foundDestinations[j]
-							}
-
-							//Delete destB location. Decrement j so that same index now with different element is checked on next loop
-							copy(foundDestinations[j:], foundDestinations[j+1:])
-							foundDestinations[len(foundDestinations)-1] = Destination{}
-							foundDestinations = foundDestinations[:len(foundDestinations)-1]
-							j--
-						}
-					}
-				}
+	deleteDuplicatesFromDestinationArray(&foundDestinations)
 
 				//Create Grouping with nearest DestinationA to DestinationB
 
@@ -292,10 +268,48 @@ func findDestinationsFromSlides(slides []Slide) (destinations []Destination, err
 
 				//match to time
 
+	destinations = foundDestinations
+	return
+}
+
+func deleteDuplicatesFromDestinationArray(destsArrayPointer *[]Destination) {
+	//Find duplicates by checking if intersecting rect shares >50% of area of the smaller of the two rects
+	intersectThreshold := 0.5
+	dests := *destsArrayPointer
+	for i := 0; i < len(dests); i++ {
+		destA := dests[i]
+		smallerArea := destA.BBox.Dx() * destA.BBox.Dy()
+		for j := i + 1; j < len(dests); j++ {
+			destB := dests[j]
+			destBArea := destA.BBox.Dx() * destA.BBox.Dy()
+			if destBArea < smallerArea {
+				smallerArea = destBArea
+			}
+
+			//Compare intersection image.Rectangle area to the smaller of destA and destB area
+			intersection := destA.BBox.Intersect(destB.BBox)
+			if float64(intersection.Dx())*float64(intersection.Dy()) > float64(smallerArea)*intersectThreshold {
+
+				fmt.Println("duplicate found for ", destA.TerminalTitle)
+
+				//If destA spelling distance > destB spelling distance, replace destA location in array with destB.
+				if destA.SpellingDistance > destB.SpellingDistance {
+					dests[i] = dests[j]
+				}
+
+				//Delete destB location. Decrement j so that same index now with different element is checked on next loop
+				copy(dests[j:], dests[j+1:])
+				dests[len(dests)-1] = Destination{}
+				dests = dests[:len(dests)-1]
+				j--
 			}
 		}
 	}
 
-	destinations = foundDestinations
-	return
+	//Create new slice to copy elements over because original slice will keep
+	tmp := make([]Destination, len(dests))
+	for i := 0; i < len(dests); i++ {
+		tmp[i] = dests[i]
+	}
+	*destsArrayPointer = tmp
 }
