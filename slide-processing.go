@@ -138,6 +138,7 @@ func findDateOfPhotoNodeSlides(slides []Slide) (slideDate time.Time, err error) 
 	return
 }
 
+//Return time.Time of detected date for slide.
 func findDateFromPlainText(plainText string, closestMonthSpelling string, estimatedMonth time.Month) (date time.Time, err error) {
 	//Lowercase closestMonthSpelling
 	closestMonthSpelling = strings.ToLower(closestMonthSpelling)
@@ -200,6 +201,7 @@ func findDateFromPlainText(plainText string, closestMonthSpelling string, estima
 	return
 }
 
+//Return bounds of KEYWORD_DESTINATION in slide.
 func findDestinationLabelBoundsOfPhotoNodeSlides(slides []Slide) (bbox image.Rectangle, err error) {
 	//Find closest spelling for KEYWORD_DESTINATION
 	var closestDestinationSpelling string
@@ -231,85 +233,128 @@ func findDestinationLabelBoundsOfPhotoNodeSlides(slides []Slide) (bbox image.Rec
 	return
 }
 
-func findDestinationsFromSlides(slides []Slide) (destinations []Destination, err error) {
-
-	var foundDestinations []Destination
-	//var foundRollCall []RollCall
-
+//Search slides in Slide slice for Destinations.
+//limitMinY is minimum Y coordinate needed to RollCall (destination keyword bbox)
+//Return a Destination slice with found and deduplicated Destinations.
+func findDestinationsFromSlides(slides []Slide, limitMinY int) (foundDestinations []Destination, err error) {
+	//Find location keyword spellings in image pointed to by each slide.
 	for _, s := range slides {
 		var found map[string]TerminalKeywordsResult
 		found = make(map[string]TerminalKeywordsResult)
 		found = findTerminalKeywordsInPlainText(s.PlainText)
 
+		//Get text bounds from hOCR for each potential spelling found.
 		for spelling, result := range found {
 			var bboxes []image.Rectangle
 			if bboxes, err = getTextBounds(s.HOCRText, spelling); err != nil {
 				return
 			}
 
+			//Skip result if bounding box too high. MinY too small.
+			//Append new Destination to foundDestinations for each bounding box found.
 			for _, bbox := range bboxes {
+				if bbox.Min.Y < limitMinY {
+					continue
+				}
+
 				foundDestinations = append(foundDestinations, Destination{
 					TerminalTitle:    locationKeywordMap[result.Keyword],
 					Spelling:         spelling,
 					SpellingDistance: result.Distance,
-					BBox:             bbox})
-
-				
-
+					SharedInfo:       SharedInfo{BBox: bbox}})
 			}
 		}
 	}
 
 	deleteDuplicatesFromDestinationArray(&foundDestinations)
 
-				//Create Grouping with nearest DestinationA to DestinationB
+	//Create Grouping with nearest DestinationA to DestinationB
 
-				//Link GroupingA with nearest GroupingB so all Destinations in GroupingB are in GroupingA. Repeat until GroupingA contains a Destination that (horizontally) intersects a RollCall.
+	//Link GroupingA with nearest GroupingB so all Destinations in GroupingB are in GroupingA. Repeat until GroupingA contains a Destination that (horizontally) intersects a RollCall.
 
-				//match to time
-
-	destinations = foundDestinations
+	//match to time
 	return
 }
 
-func deleteDuplicatesFromDestinationArray(destsArrayPointer *[]Destination) {
-	//Find duplicates by checking if intersecting rect shares >50% of area of the smaller of the two rects
-	intersectThreshold := 0.5
-	dests := *destsArrayPointer
-	for i := 0; i < len(dests); i++ {
-		destA := dests[i]
-		smallerArea := destA.BBox.Dx() * destA.BBox.Dy()
-		for j := i + 1; j < len(dests); j++ {
-			destB := dests[j]
-			destBArea := destA.BBox.Dx() * destA.BBox.Dy()
-			if destBArea < smallerArea {
-				smallerArea = destBArea
+//Search slides in Slide slice for RollCalls.
+//estimatedDay is passed in to set day for returned RollCall
+//limitMinY is minimum Y coordinate needed to RollCall (destination keyword bbox)
+//Return a RollCall slice with found and deduplicated RollCalls.
+func findRollCallTimesFromSlides(slides []Slide, estimatedDay time.Time, limitMinY int) (foundRCs []RollCall, err error) {
+	for _, s := range slides {
+		var found24HR []time.Time
+		//fmt.Println("date slide type ", s.SaveType)
+		if found24HR, err = find24HRFromPlainText(s.PlainText, estimatedDay); err != nil {
+			return
+		}
+
+		//Get text bounds from hOCR for each 24HR time text found.
+		for _, result := range found24HR {
+			var bboxes []image.Rectangle
+			if bboxes, err = getTextBounds(s.HOCRText, result.Format("1504")); err != nil {
+				return
 			}
 
-			//Compare intersection image.Rectangle area to the smaller of destA and destB area
-			intersection := destA.BBox.Intersect(destB.BBox)
-			if float64(intersection.Dx())*float64(intersection.Dy()) > float64(smallerArea)*intersectThreshold {
+			//fmt.Println("hocr result for ", result.Format("1504"), bboxes)
 
-				fmt.Println("duplicate found for ", destA.TerminalTitle)
-
-				//If destA spelling distance > destB spelling distance, replace destA location in array with destB.
-				if destA.SpellingDistance > destB.SpellingDistance {
-					dests[i] = dests[j]
+			//Add RollCalls to foundRCs slice
+			//Skip result if bounding box too high. MinY too small.
+			//Append new RollCall to foundRCs for each bounding box found.
+			for _, bbox := range bboxes {
+				if bbox.Min.Y < limitMinY {
+					continue
 				}
 
-				//Delete destB location. Decrement j so that same index now with different element is checked on next loop
-				copy(dests[j:], dests[j+1:])
-				dests[len(dests)-1] = Destination{}
-				dests = dests[:len(dests)-1]
-				j--
+				foundRCs = append(foundRCs, RollCall{
+					Time:       result,
+					SharedInfo: SharedInfo{BBox: bbox}})
 			}
 		}
 	}
 
-	//Create new slice to copy elements over because original slice will keep
-	tmp := make([]Destination, len(dests))
-	for i := 0; i < len(dests); i++ {
-		tmp[i] = dests[i]
+	deleteDuplicatesFromRCArray(&foundRCs)
+
+	return
+}
+
+//Search plain text for 24HR time. Return slice of time.Time of found 24HR time on estimatedDay.
+func find24HRFromPlainText(plainText string, estimatedDay time.Time) (found24HR []time.Time, err error) {
+	//Find 24hr time with Regexp
+	var HR24Regex *regexp.Regexp
+	//Match 24 hr time format
+	//original https://stackoverflow.com/a/1494700
+	if HR24Regex, err = regexp.Compile("\\b(?:[01]\\d|2[0-3])(?:[0-5]\\d)\\b"); err != nil {
+		return
 	}
-	*destsArrayPointer = tmp
+
+	//lowercase input string
+	var input = strings.ToLower(plainText)
+	var regexResult []string
+	if regexResult = HR24Regex.FindAllString(input, -1); regexResult == nil {
+		//No match, proceed to next processed slide
+		return
+	}
+
+	for _, result := range regexResult {
+		//fmt.Println("found regex", result)
+
+		var capturedHour int
+		var capturedMinute int
+		if capturedHour, err = strconv.Atoi(result[:2]); err != nil {
+			return
+		}
+		if capturedMinute, err = strconv.Atoi(result[2:]); err != nil {
+			return
+		}
+
+		found24HR = append(found24HR, time.Date(
+			estimatedDay.Year(),
+			estimatedDay.Month(),
+			estimatedDay.Day(),
+			capturedHour,
+			capturedMinute,
+			0, 0,
+			time.UTC))
+	}
+	return
 }

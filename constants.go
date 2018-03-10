@@ -65,3 +65,9 @@ const (
 	KEYWORD_TIME        string = "time"
 	KEYWORD_SEATS       string = "seats"
 )
+
+//Slide processing constants
+const (
+	OCR_WORD_CONFIDENCE_THRESHOLD int     = 10
+	DUPLICATE_AREA_THRESHOLD      float64 = 0.5
+)

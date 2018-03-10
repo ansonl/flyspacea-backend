@@ -105,12 +105,16 @@ type Slide struct {
  * Representation of data in an image
  */
 
+type SharedInfo struct {
+	BBox image.Rectangle
+}
+
 //Destination representation
 type Destination struct {
+	SharedInfo
 	TerminalTitle    string
 	Spelling         string
 	SpellingDistance int
-	BBox             image.Rectangle
 
 	//RollCall for the Destination
 	LinkedRollCall RollCall
@@ -119,20 +123,20 @@ type Destination struct {
 //RollCall representation
 type RollCall struct {
 	Time time.Time
-	BBox image.Rectangle
+	SharedInfo
 }
 
 //SeatsAvailable representation
 type SeatsAvailable struct {
 	Number int
 	Letter string
-	BBox   image.Rectangle
+	SharedInfo
 }
 
 //"Grouping" of multiples Destinations for single RollCall/SeatsAvailable
 type Grouping struct {
 	Destinations []Destination
-	BBox         image.Rectangle
+	SharedInfo
 }
 
 //Update Grouping struct BBox to include all Destinations in grouping

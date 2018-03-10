@@ -369,7 +369,7 @@ func findTerminalKeywordsInPlainText(plainText string) (found map[string]Termina
 		prevWord = ocrWord
 	}
 
-	log.Println(found)
+	//log.Println(found)
 	return
 
 }
@@ -388,16 +388,28 @@ func getTextBounds(hocr string, textSpelling string) (bboxes []image.Rectangle, 
 
 	html := doc.Root().FirstChild()
 
+	//XPath query to find ocrx_word element with text node containing target text.
 	var xPathQuery string
-	xPathQuery = fmt.Sprintf("//*[contains(translate(text(), '%v', '%v'), '%v')]/parent::*", strings.ToUpper(textSpelling), strings.ToLower(textSpelling), strings.ToLower(textSpelling))
+	xPathQuery = fmt.Sprintf("//*[@class='ocrx_word' and contains(translate(text(), '%v', '%v'), '%v')]", strings.ToUpper(textSpelling), strings.ToLower(textSpelling), strings.ToLower(textSpelling))
 
+	//XPath query to find parent element of element with text node containing target text. Used when target text enclosed in non hocr element.
+	var xPathQueryParent string
+	xPathQueryParent = fmt.Sprintf("//*[contains(translate(text(), '%v', '%v'), '%v')]/parent::*", strings.ToUpper(textSpelling), strings.ToLower(textSpelling), strings.ToLower(textSpelling))
+
+	//Try to search for .ocrx_word element containing target text.
+	//If no results found, element may be enclosed in <strong> tags, so look for parent.
 	var results []xml.Node
-	results, err = html.Search(xPathQuery)
-	if err != nil {
+	if results, err = html.Search(xPathQuery); err != nil {
 		return
+	}
+	if len(results) == 0 {
+		if results, err = html.Search(xPathQueryParent); err != nil {
+			return
+		}
 	}
 
 	//If no results found, print xpathquery and write document to file for debugging
+	//Testing http://www.xpathtester.com/xpath/f5f4ce066286d9fdd780998a67d73415
 	if len(results) == 0 {
 		err = fmt.Errorf("No %v found. Xpathquery %v", textSpelling, xPathQuery)
 		ioutil.WriteFile("xpath-debug.html", []byte(fmt.Sprintf("%v", doc)), 0644)
@@ -408,10 +420,11 @@ func getTextBounds(hocr string, textSpelling string) (bboxes []image.Rectangle, 
 	for _, r := range results {
 		title := r.Attr("title")
 		//fmt.Printf("%v\n", len(results))
-		//fmt.Printf("%v\n", results[0].String())
+		//fmt.Printf("%v\n", r.String())
 
+		//Regex search for bbox and optional confidence (x_wconf) attr.
 		var bboxRegEx *regexp.Regexp
-		if bboxRegEx, err = regexp.Compile("bbox ([0-9]*) ([0-9]*) ([0-9]*) ([0-9]*);"); err != nil {
+		if bboxRegEx, err = regexp.Compile("bbox ([0-9]*) ([0-9]*) ([0-9]*) ([0-9]*);(?: x_wconf )?(\\d\\d)?"); err != nil {
 			return
 		}
 
@@ -435,6 +448,18 @@ func getTextBounds(hocr string, textSpelling string) (bboxes []image.Rectangle, 
 		}
 		if maxY, err = strconv.Atoi(bboxMatch[4]); err != nil {
 			return
+		}
+
+		//Check if x_wconf > OCR_WORD_CONFIDENCE_THRESHOLD if word confidence provided by OCR.
+		//Skip element if confidence too low (<threshold)
+		if len(bboxMatch) > 5 {
+			var wconf int
+			if wconf, err = strconv.Atoi(bboxMatch[5]); err != nil {
+				return
+			}
+			if wconf < OCR_WORD_CONFIDENCE_THRESHOLD {
+				continue
+			}
 		}
 
 		bboxes = append(bboxes, image.Rectangle{image.Point{minX, minY}, image.Point{maxX, maxY}})

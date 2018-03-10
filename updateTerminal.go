@@ -64,7 +64,7 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 
 	//Look at the photo nodes returned by the photos edge
 	var limit int
-	limit = 5
+	limit = 1
 	if len(photosEdge.Data) < limit {
 		limit = len(photosEdge.Data)
 	}
@@ -270,11 +270,9 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		newSlide.Terminal = targetTerminal
 		newSlide.FBNodeId = edgePhoto.Id
 
-		/*
 		//Manual slide control
 		newSlide.Extension = "jpeg"
-		newSlide.FBNodeId = "1600297943372942"
-		*/
+		newSlide.FBNodeId = "1600297960039607"
 
 		//create processed image in imagemagick IF slide created is not original slide
 		if currentSaveType != SAVE_IMAGE_TRAINING {
@@ -290,6 +288,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		slides = append(slides, newSlide)
 	}
 
+	//Find date displayed in photo. Pick best date from slides.
 	var slideDate time.Time
 	if slideDate, err = findDateOfPhotoNodeSlides(slides); err != nil {
 		return
@@ -303,8 +302,8 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 	//Display found date
 	displayMessageForTerminal(slides[0].Terminal, fmt.Sprintf("%v \u001b[1m\u001b[31m%v\u001b[0m", slides[0].FBNodeId, slideDate.Format("02 Jan 2006 -0700")))
 
-	//Get dest bbox and crop
-	//TODO?
+	//Get dest bbox
+	//TODO: Find bounds of destination column and crop to get better OCR results.
 	var destLabelBBox image.Rectangle
 	if destLabelBBox, err = findDestinationLabelBoundsOfPhotoNodeSlides(slides); err != nil {
 		return
@@ -312,13 +311,19 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 
 	displayMessageForTerminal(slides[0].Terminal, fmt.Sprintf(" dest bbox %v %v %v %v", destLabelBBox.Min.X, destLabelBBox.Min.Y, destLabelBBox.Max.X, destLabelBBox.Max.Y))
 
-	//Find potential destinations from all slides
-	var destinations []Destination
-	if destinations, err = findDestinationsFromSlides(slides); err != nil {
+	//Find potential rollcall times from all slides
+	var rollCalls []RollCall
+	if rollCalls, err = findRollCallTimesFromSlides(slides, slideDate, destLabelBBox.Min.Y); err != nil {
 		return
 	}
 
-	fmt.Println(destinations)
+	fmt.Println("rollcalls", rollCalls)
+
+	//Find potential destinations from all slides
+	var destinations []Destination
+	if destinations, err = findDestinationsFromSlides(slides, destLabelBBox.Min.Y); err != nil {
+		return
+	}
 
 	for _, d := range destinations {
 		/*
@@ -340,10 +345,6 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 			log.Printf("slide type %v", s.saveType)
 		}
 	*/
-
-	/*
-
-	 */
 
 	return
 }
