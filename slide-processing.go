@@ -356,7 +356,8 @@ func find24HRFromPlainText(plainText string, estimatedDay time.Time) (found24HR 
 	return
 }
 
-//For each RollCall - link vertically closest Destination. Best effort match no threshold.
+//For each RollCall - link vertically closest Destination. Create 'anchors' for grouping. Best effort match no threshold.
+//Runtime: O(n*mlogm + n*m) n=len(rcs) m=len(destsArray)
 func linkRollCallsToNearestDestinations(rcs []RollCall, destsArray []Destination) {
 	getVerticalDistance := func(bbox1 image.Rectangle, bbox2 image.Rectangle) (verticalDistance int) {
 
@@ -463,9 +464,16 @@ func linkRollCallsToNearestDestinations(rcs []RollCall, destsArray []Destination
 	distances = make(map[*RollCall][]DestDist)
 
 	//Compute distances for each RollCall -> Destination.
+	//Runtime: O(n*mlogm) n=len(rcs) m=len(destsArray)
 	for rcIndex, _ := range rcs {
 		for dIndex, _ := range destsArray {
 			vertDist := getVerticalDistance(rcs[rcIndex].BBox, destsArray[dIndex].BBox)
+
+			//If vertical distance > ROLLCALLS_DESTINATION_LINK_VERTICAL_THRESHOLD, don't add Dest to distance array. 
+			//This is to prevent false 'anchor' when a destination is not found in OCR/fuzzy search and a RollCall is left without the correct 'anchor' Destination because that Destination was not found. Otherwise the RollCall will be matched with a Destination that should be grouped with another Destination (multiple Destination to 1 RollCall)
+			if vertDist > ROLLCALLS_DESTINATION_LINK_VERTICAL_THRESHOLD {
+				continue
+			}
 
 			distances[&rcs[rcIndex]] = append(distances[&rcs[rcIndex]], DestDist {
 				Destination: &destsArray[dIndex],
@@ -514,6 +522,7 @@ func linkRollCallsToNearestDestinations(rcs []RollCall, destsArray []Destination
 		}
 	}
 
+	//Runtime: O(n*m) n=len(rcs) m=len(destsArray)
 	for rcIndex, _ := range rcs {
 		findNearestDestForRollCall(&rcs[rcIndex])
 	}
