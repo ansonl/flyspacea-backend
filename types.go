@@ -117,7 +117,7 @@ type Destination struct {
 	SpellingDistance int
 
 	//RollCall for the Destination
-	LinkedRollCall RollCall
+	LinkedRollCall *RollCall
 }
 
 //RollCall representation

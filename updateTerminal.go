@@ -325,16 +325,29 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		return
 	}
 
+	fmt.Println("found dests in all slides")
 	for _, d := range destinations {
-		/*
-			yTolerance := 5
-			if d.BBox.Min.Y > destLabelBBox.Max.Y || destLabelBBox.Max.Y - d.BBox.Min.Y < yTolerance {
-				log.Println(d)
-			}
-		*/
-
 		log.Println(d)
 	}
+
+	linkRollCallsToNearestDestinations(rollCalls, destinations)
+
+	fmt.Println("After nearest rc to dest link")
+	for _, d := range destinations {
+		log.Println(d)
+		if d.LinkedRollCall != nil {
+			log.Println(*(d.LinkedRollCall))
+		}
+		
+	}
+
+	//Find vertically closest Destination for every RollCall
+
+	//Create Grouping with nearest DestinationA to DestinationB
+
+	//Link GroupingA with nearest GroupingB so all Destinations in GroupingB are in GroupingA. Repeat until GroupingA contains a Destination that (horizontally) intersects a RollCall.
+
+	//match to time
 
 	incrementPhotosProcessed()
 	/*

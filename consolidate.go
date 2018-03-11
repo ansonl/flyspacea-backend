@@ -1,3 +1,4 @@
+//Methods for consolidating (deduplicating) information found in Slides
 package main
 
 //Find duplicates by checking if intersecting rect shares >DUPLICATE_AREA_THRESHOLD of area of the smaller of the two rects.
