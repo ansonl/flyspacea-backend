@@ -68,7 +68,7 @@ const (
 
 //Slide processing constants
 const (
-	OCR_WORD_CONFIDENCE_THRESHOLD int     = 10
-	DUPLICATE_AREA_THRESHOLD      float64 = 0.5
-	ROLLCALLS_DESTINATION_LINK_VERTICAL_THRESHOLD      int = 50
+	OCR_WORD_CONFIDENCE_THRESHOLD                 int     = 10
+	DUPLICATE_AREA_THRESHOLD                      float64 = 0.5
+	ROLLCALLS_DESTINATION_LINK_VERTICAL_THRESHOLD int     = 50
 )

@@ -4,13 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"log"
 	"math"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
-	"log"
-	"sort"
 )
 
 //Find date of 72 hour slide in header by looking for month name
@@ -457,7 +457,7 @@ func linkRollCallsToNearestDestinations(rcs []RollCall, destsArray []Destination
 
 	type DestDist struct {
 		Destination *Destination
-		Distance int
+		Distance    int
 	}
 
 	var distances map[*RollCall][]DestDist
@@ -469,21 +469,21 @@ func linkRollCallsToNearestDestinations(rcs []RollCall, destsArray []Destination
 		for dIndex, _ := range destsArray {
 			vertDist := getVerticalDistance(rcs[rcIndex].BBox, destsArray[dIndex].BBox)
 
-			//If vertical distance > ROLLCALLS_DESTINATION_LINK_VERTICAL_THRESHOLD, don't add Dest to distance array. 
+			//If vertical distance > ROLLCALLS_DESTINATION_LINK_VERTICAL_THRESHOLD, don't add Dest to distance array.
 			//This is to prevent false 'anchor' when a destination is not found in OCR/fuzzy search and a RollCall is left without the correct 'anchor' Destination because that Destination was not found. Otherwise the RollCall will be matched with a Destination that should be grouped with another Destination (multiple Destination to 1 RollCall)
 			if vertDist > ROLLCALLS_DESTINATION_LINK_VERTICAL_THRESHOLD {
 				continue
 			}
 
-			distances[&rcs[rcIndex]] = append(distances[&rcs[rcIndex]], DestDist {
+			distances[&rcs[rcIndex]] = append(distances[&rcs[rcIndex]], DestDist{
 				Destination: &destsArray[dIndex],
-				Distance: vertDist})
+				Distance:    vertDist})
 		}
 
 		//Sort distances slice
 		sort.Slice(distances[&rcs[rcIndex]], func(i, j int) bool {
 			return distances[&rcs[rcIndex]][i].Distance < distances[&rcs[rcIndex]][j].Distance
-		});
+		})
 	}
 
 	//Find nearest Destination for RollCall
@@ -496,7 +496,7 @@ func linkRollCallsToNearestDestinations(rcs []RollCall, destsArray []Destination
 			currentDestP := distances[rcP][0].Destination
 			linkedRollCallP := (*distances[rcP][0].Destination).LinkedRollCall
 			if linkedRollCallP != nil {
-				
+
 				//If current RC is closer to the lowest Destination in distances[rc] than the linked RC
 				if getVerticalDistance((*rcP).BBox, (*currentDestP).BBox) < getVerticalDistance((*linkedRollCallP).BBox, (*currentDestP).BBox) {
 
@@ -508,7 +508,7 @@ func linkRollCallsToNearestDestinations(rcs []RollCall, destsArray []Destination
 
 					//Look for closest Dest for last linked RollCall. Break out of loop. Any further work for this RollCall will occur when contested by other RollCall.
 					findNearestDestForRollCall(linkedRollCallP)
-					break;
+					break
 				} else {
 					//look at next closest dest
 					distances[rcP] = distances[rcP][1:]
@@ -517,7 +517,7 @@ func linkRollCallsToNearestDestinations(rcs []RollCall, destsArray []Destination
 			} else { //No existing linked RollCall
 				//Set current RC as linked RollCall
 				(*currentDestP).LinkedRollCall = rcP
-				break;
+				break
 			}
 		}
 	}
@@ -526,22 +526,22 @@ func linkRollCallsToNearestDestinations(rcs []RollCall, destsArray []Destination
 	for rcIndex, _ := range rcs {
 		findNearestDestForRollCall(&rcs[rcIndex])
 	}
-	
-/*
-	for rcIndex, rc := range rcs {
-		var nearestDestIndex int
-		var nearestVertDist int
-		nearestDestIndex = -1
 
-		for dIndex, d := range destsArray {
-			vertDist := getVerticalDistance(rc.BBox, d.BBox)
-			if nearestDestIndex == -1 || vertDist < nearestVertDist {
-				nearestDestIndex = dIndex
-				nearestVertDist = vertDist
+	/*
+		for rcIndex, rc := range rcs {
+			var nearestDestIndex int
+			var nearestVertDist int
+			nearestDestIndex = -1
+
+			for dIndex, d := range destsArray {
+				vertDist := getVerticalDistance(rc.BBox, d.BBox)
+				if nearestDestIndex == -1 || vertDist < nearestVertDist {
+					nearestDestIndex = dIndex
+					nearestVertDist = vertDist
+				}
 			}
-		}
 
-		destsArray[nearestDestIndex].LinkedRollCall = &rcs[rcIndex]
-	}
+			destsArray[nearestDestIndex].LinkedRollCall = &rcs[rcIndex]
+		}
 	*/
 }

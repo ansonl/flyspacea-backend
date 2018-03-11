@@ -338,7 +338,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		if d.LinkedRollCall != nil {
 			log.Println(*(d.LinkedRollCall))
 		}
-		
+
 	}
 
 	//Find vertically closest Destination for every RollCall
