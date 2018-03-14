@@ -19,8 +19,27 @@ func deleteDuplicatesFromDestinationArray(destsArrayPointer *[]Destination) {
 			}
 
 			//Compare intersection image.Rectangle area to the smaller of destA and destB area
+			//OR if same destination terminal and on 50% same horizontal line due to fuzzy match individual words from same location
+			var horizontalDuplicate bool
+			smallerHeight := destA.BBox.Dy()
+			if destB.BBox.Dy() < smallerHeight {
+				smallerHeight = destB.BBox.Dy()
+			}
+
+			if (destA.TerminalTitle == destB.TerminalTitle) {
+				if (destA.BBox.Min.Y >= destB.BBox.Min.Y && float64(destB.BBox.Max.Y - destA.BBox.Min.Y) > float64(smallerHeight)*DUPLICATE_AREA_THRESHOLD) {
+					horizontalDuplicate = true
+				}
+
+				if (destB.BBox.Min.Y >= destA.BBox.Min.Y && float64(destA.BBox.Max.Y - destB.BBox.Min.Y) > float64(smallerHeight)*DUPLICATE_AREA_THRESHOLD) {
+					horizontalDuplicate = true
+				}
+			}
+
+
+
 			intersection := destA.BBox.Intersect(destB.BBox)
-			if float64(intersection.Dx())*float64(intersection.Dy()) > float64(smallerArea)*DUPLICATE_AREA_THRESHOLD {
+			if float64(intersection.Dx())*float64(intersection.Dy()) > float64(smallerArea)*DUPLICATE_AREA_THRESHOLD || horizontalDuplicate {
 
 				//If destA spelling distance > destB spelling distance, replace destA location in array with destB.
 				if destA.SpellingDistance > destB.SpellingDistance {

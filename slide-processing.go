@@ -456,7 +456,7 @@ func linkRollCallsToNearestDestinations(rcs []RollCall, destsArray []Destination
 func combineDestinationGroupsToAnchorDestinations(groups []Grouping) {
 	for growIndex := 0; growIndex < len(groups); growIndex++ {
 
-		fmt.Println("grow group ", groups[growIndex])
+		fmt.Println("grow group ", growIndex, groups[growIndex])
 
 		var deletedPreviousGroupCount int
 
@@ -505,7 +505,7 @@ func combineDestinationGroupsToAnchorDestinations(groups []Grouping) {
 			//If the removed group was at a lower index than current grow group, decrement loop counter by 1 so that next loop will start at same index that will point to the previously "next" element.
 			//If removed group at higher index, don't decrement because for loop counter will get the next element no matter what.
 			if nearestGroupIndex <= growIndex {
-				deletedPreviousGroupCount -= 1
+				deletedPreviousGroupCount++
 			}
 		}
 
