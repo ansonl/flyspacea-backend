@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	"log"
+	//"log"
 	"math"
 	"regexp"
 	"sort"
@@ -359,101 +359,6 @@ func find24HRFromPlainText(plainText string, estimatedDay time.Time) (found24HR 
 //For each RollCall - link vertically closest Destination. Create 'anchors' for grouping. Best effort match no threshold.
 //Runtime: O(n*mlogm + n*m) n=len(rcs) m=len(destsArray)
 func linkRollCallsToNearestDestinations(rcs []RollCall, destsArray []Destination) {
-	getVerticalDistance := func(bbox1 image.Rectangle, bbox2 image.Rectangle) (verticalDistance int) {
-
-		/*
-		 *			***
-		 *			*2*
-		 *			***
-		 *		 |
-		 * 	***
-		 *	*1*
-		 *	***
-		 */
-
-		if bbox1.Min.Y >= bbox2.Max.Y {
-			verticalDistance = bbox1.Min.Y - bbox2.Max.Y
-			return
-		}
-
-		/*
-		 *	***
-		 *	*1*
-		 *	***
-		 *		 |
-		 * 			***
-		 *			*2*
-		 *			***
-		 */
-
-		if bbox1.Max.Y <= bbox2.Min.Y {
-			verticalDistance = bbox2.Min.Y - bbox1.Max.Y
-			return
-		}
-
-		//Boxes overlap. Return negative distance.
-		if bbox1.Min.Y >= bbox2.Min.Y {
-
-			/*
-			 *			***
-			 *			*2*
-			 *	***` |	* *
-			 *	*1*	 |	* *
-			 *	***	 |	* *
-			 * 			***
-			 *
-			 */
-
-			/*
-			 *			***
-			 *			*2*
-			 *	***` |	* *
-			 *	*1*	 |	***
-			 *	* *
-			 * 	***
-			 *
-			 */
-
-			if bbox1.Max.Y <= bbox2.Max.Y {
-				verticalDistance = -1 * bbox1.Dy()
-				return
-			} else {
-				verticalDistance = bbox1.Min.Y - bbox2.Max.Y
-				return
-			}
-		} else {
-
-			/*
-			 *	***
-			 *	*1*
-			 *	* *` |	***
-			 *	* *	 |	*2*
-			 *	* *	 |	***
-			 * 	***
-			 *
-			 */
-
-			/*
-			 *	***
-			 *	*1*
-			 *	* *` |	***
-			 *	***	 |	*2*
-			 *		 	* *
-			 * 			***
-			 *
-			 */
-
-			if bbox1.Max.Y >= bbox2.Max.Y {
-				verticalDistance = -1 * bbox2.Dy()
-				return
-			} else {
-				verticalDistance = bbox2.Min.Y - bbox1.Max.Y
-				return
-			}
-		}
-		log.Fatal("No category matched ", bbox1, bbox2)
-		return
-	}
 
 	type DestDist struct {
 		Destination *Destination
@@ -528,6 +433,7 @@ func linkRollCallsToNearestDestinations(rcs []RollCall, destsArray []Destination
 	}
 
 	/*
+	//Naive implementation, incorrect for conflicts
 		for rcIndex, rc := range rcs {
 			var nearestDestIndex int
 			var nearestVertDist int
@@ -544,4 +450,65 @@ func linkRollCallsToNearestDestinations(rcs []RollCall, destsArray []Destination
 			destsArray[nearestDestIndex].LinkedRollCall = &rcs[rcIndex]
 		}
 	*/
+}
+
+//Group Destinations into Grouping{}. Pass Destinations into function as array of individual Grouping{}.
+func combineDestinationGroupsToAnchorDestinations(groups []Grouping) {
+	for growIndex := 0; growIndex < len(groups); growIndex++ {
+
+		fmt.Println("grow group ", groups[growIndex])
+
+		var deletedPreviousGroupCount int
+
+		//Keep growing group to include nearest groups while it is not including an anchor. Only grow groups that do not contain anchor.
+		for groups[growIndex].LinkedRollCall == nil {
+			//Look for nearest group
+			var nearestGroupP *Grouping
+			var nearestGroupIndex int //Needed to know where to delete
+			var nearestGroupDistance int
+			for j := 0; j < len(groups); j++ {
+				//If same group as growing group, skip. Don't combine group with itself.
+				if &groups[growIndex] == &groups[j] {
+					continue
+				}
+
+				//Check if group is the nearest group found so far
+				groupDist := getVerticalDistance(groups[growIndex].BBox, groups[j].BBox)
+
+				fmt.Println("check group ", groups[j], "dist", groupDist, "nearestDist", nearestGroupDistance)
+
+				if nearestGroupP == nil || groupDist < nearestGroupDistance {
+					nearestGroupP = &groups[j]
+					nearestGroupIndex = j
+					nearestGroupDistance = groupDist
+				}
+			}
+
+			//Only one group was passed into function
+			if nearestGroupP == nil {
+				break
+			}
+
+			//Copy nearest group Destinations to grow group Destinations
+			groups[growIndex].Destinations = append(groups[growIndex].Destinations, (*nearestGroupP).Destinations...)
+			//Copy RollCall to indicate anchor (if applicable)
+			groups[growIndex].LinkedRollCall = (*nearestGroupP).LinkedRollCall
+			//Update grow group BBox
+			groups[growIndex].updateBBox()
+
+			//Delete nearest group
+			copy(groups[nearestGroupIndex:], groups[nearestGroupIndex+1:])
+			groups[len(groups)-1] = Grouping{}
+			groups = groups[:len(groups)-1]
+
+			//Decrement for loop counter because we removed an element. 
+			//If the removed group was at a lower index than current grow group, decrement loop counter by 1 so that next loop will start at same index that will point to the previously "next" element.
+			//If removed group at higher index, don't decrement because for loop counter will get the next element no matter what.
+			if nearestGroupIndex <= growIndex {
+				deletedPreviousGroupCount -= 1
+			}
+		}
+
+		growIndex -= deletedPreviousGroupCount
+	}
 }

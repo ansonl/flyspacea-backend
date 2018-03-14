@@ -117,6 +117,7 @@ type Destination struct {
 	SpellingDistance int
 
 	//RollCall for the Destination
+	//non nil value indicates 'anchor' (same horizonal level RollCall) Destination for grouping Destinations to other nearby Destinations.
 	LinkedRollCall *RollCall
 }
 
@@ -136,29 +137,32 @@ type SeatsAvailable struct {
 //"Grouping" of multiples Destinations for single RollCall/SeatsAvailable
 type Grouping struct {
 	Destinations []Destination
+
+	//non nil value indicates Grouping contains 'anchor' Destination
+	LinkedRollCall *RollCall
 	SharedInfo
 }
 
 //Update Grouping struct BBox to include all Destinations in grouping
-func (g Grouping) updateBBox() {
-	if len(g.Destinations) == 0 {
+func (g *Grouping) updateBBox() {
+	if len((*g).Destinations) == 0 {
 		log.Fatal("Grouping empty. Cannot updateBBox")
 	}
 
-	g.BBox = g.Destinations[0].BBox
+	(*g).BBox = (*g).Destinations[0].BBox
 
-	for _, d := range g.Destinations {
-		if d.BBox.Min.X < g.BBox.Min.X {
-			g.BBox.Min.X = d.BBox.Min.X
+	for _, d := range (*g).Destinations {
+		if d.BBox.Min.X < (*g).BBox.Min.X {
+			(*g).BBox.Min.X = d.BBox.Min.X
 		}
-		if d.BBox.Min.Y < g.BBox.Min.Y {
-			g.BBox.Min.Y = d.BBox.Min.Y
+		if d.BBox.Min.Y < (*g).BBox.Min.Y {
+			(*g).BBox.Min.Y = d.BBox.Min.Y
 		}
-		if d.BBox.Max.X > g.BBox.Max.X {
-			g.BBox.Max.X = d.BBox.Max.X
+		if d.BBox.Max.X > (*g).BBox.Max.X {
+			(*g).BBox.Max.X = d.BBox.Max.X
 		}
-		if d.BBox.Max.Y > g.BBox.Max.Y {
-			g.BBox.Max.Y = d.BBox.Max.Y
+		if d.BBox.Max.Y > (*g).BBox.Max.Y {
+			(*g).BBox.Max.Y = d.BBox.Max.Y
 		}
 	}
 }

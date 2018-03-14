@@ -272,7 +272,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 
 		//Manual slide control
 		newSlide.Extension = "jpeg"
-		newSlide.FBNodeId = "1600297960039607"
+		newSlide.FBNodeId = "1600297986706271"
 
 		//create processed image in imagemagick IF slide created is not original slide
 		if currentSaveType != SAVE_IMAGE_TRAINING {
@@ -338,7 +338,25 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		if d.LinkedRollCall != nil {
 			log.Println(*(d.LinkedRollCall))
 		}
+	}
 
+	//Create array of individual Grouping for each Destination to pass into combine Destinations to Groupings stage
+	var destinationGroupings []Grouping
+	for _, d := range destinations {
+		destinationGroupings = append(destinationGroupings, Grouping{
+			Destinations: []Destination{d},
+			LinkedRollCall: d.LinkedRollCall})
+		destinationGroupings[len(destinationGroupings)-1].updateBBox()
+	}
+
+	combineDestinationGroupsToAnchorDestinations(destinationGroupings)
+
+	fmt.Println("After combine dests")
+	for _, dg := range destinationGroupings {
+		log.Println(dg)
+		if dg.LinkedRollCall != nil {
+			log.Println(*(dg.LinkedRollCall))
+		}
 	}
 
 	//Find vertically closest Destination for every RollCall

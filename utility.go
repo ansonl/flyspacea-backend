@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"image"
 )
 
 // exists returns whether the given file or directory exists or not
@@ -101,5 +102,102 @@ func closerDate(target time.Time, one time.Time, two time.Time) (closerDate time
 	} else {
 		closerDate = two
 	}
+	return
+}
+
+//Return int vertical distance between two image.Rectangle. Return negative distance if Rectangles intersect.
+func getVerticalDistance(bbox1 image.Rectangle, bbox2 image.Rectangle) (verticalDistance int) {
+
+	/*
+	 *			***
+	 *			*2*
+	 *			***
+	 *		 |
+	 * 	***
+	 *	*1*
+	 *	***
+	 */
+
+	if bbox1.Min.Y >= bbox2.Max.Y {
+		verticalDistance = bbox1.Min.Y - bbox2.Max.Y
+		return
+	}
+
+	/*
+	 *	***
+	 *	*1*
+	 *	***
+	 *		 |
+	 * 			***
+	 *			*2*
+	 *			***
+	 */
+
+	if bbox1.Max.Y <= bbox2.Min.Y {
+		verticalDistance = bbox2.Min.Y - bbox1.Max.Y
+		return
+	}
+
+	//Boxes overlap. Return negative distance.
+	if bbox1.Min.Y >= bbox2.Min.Y {
+
+		/*
+		 *			***
+		 *			*2*
+		 *	***` |	* *
+		 *	*1*	 |	* *
+		 *	***	 |	* *
+		 * 			***
+		 *
+		 */
+
+		/*
+		 *			***
+		 *			*2*
+		 *	***` |	* *
+		 *	*1*	 |	***
+		 *	* *
+		 * 	***
+		 *
+		 */
+
+		if bbox1.Max.Y <= bbox2.Max.Y {
+			verticalDistance = -1 * bbox1.Dy()
+			return
+		} else {
+			verticalDistance = bbox1.Min.Y - bbox2.Max.Y
+			return
+		}
+	} else {
+
+		/*
+		 *	***
+		 *	*1*
+		 *	* *` |	***
+		 *	* *	 |	*2*
+		 *	* *	 |	***
+		 * 	***
+		 *
+		 */
+
+		/*
+		 *	***
+		 *	*1*
+		 *	* *` |	***
+		 *	***	 |	*2*
+		 *		 	* *
+		 * 			***
+		 *
+		 */
+
+		if bbox1.Max.Y >= bbox2.Max.Y {
+			verticalDistance = -1 * bbox2.Dy()
+			return
+		} else {
+			verticalDistance = bbox2.Min.Y - bbox1.Max.Y
+			return
+		}
+	}
+	log.Fatal("No category matched ", bbox1, bbox2)
 	return
 }
