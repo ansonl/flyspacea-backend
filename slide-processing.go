@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 )
 
 //Find date of 72 hour slide in header by looking for month name
@@ -89,7 +90,7 @@ func findDateOfPhotoNodeSlides(slides []Slide) (slideDate time.Time, err error) 
 
 				//Try to find date on cropped image
 				//Crop current slide to only show the image line that month was found on
-				if err = runImageMagickDateCropProcess(s, bbox.Min.Y-5, (bbox.Max.Y-bbox.Min.Y)+10); err != nil {
+				if err = runImageMagickDateCropVerticalProcess(s, bbox.Min.Y-5, (bbox.Max.Y-bbox.Min.Y)+10); err != nil {
 					return
 				}
 				//Run OCR on cropped image for current slide using bbox
@@ -203,22 +204,16 @@ func findDateFromPlainText(plainText string, closestMonthSpelling string, estima
 	return
 }
 
-//Return bounds of KEYWORD_DESTINATION in slide.
-func findDestinationLabelBoundsOfPhotoNodeSlides(slides []Slide) (bbox image.Rectangle, err error) {
-	//Find closest spelling for KEYWORD_DESTINATION
+//Return bounds of KEYWORD_XXX in slide.
+func findLabelBoundsOfPhotoNodeSlides(slides []Slide, label string) (bbox image.Rectangle, err error) {
+	//Find closest spelling for label
 	var closestDestinationSpelling string
 	var closestDestinationSlide Slide
-	if closestDestinationSpelling, closestDestinationSlide, err = findKeywordClosestSpellingInPhotoInSaveImageTypes(KEYWORD_DESTINATION, slides); err != nil {
+	if closestDestinationSpelling, closestDestinationSlide, err = findKeywordClosestSpellingInPhotoInSaveImageTypes(label, slides); err != nil {
 		return
 	}
 
-	/*
-		if len(closestDestinationSpelling) == 0 {
-			displayMessageForTerminal(closestDestinationSlide.Terminal, fmt.Sprintf("No close dest spelling founds"));
-		} else {
-			displayMessageForTerminal(closestDestinationSlide.Terminal, fmt.Sprintf("Closest dest spelling %v in saveType %v", closestDestinationSpelling, closestDestinationSlide.SaveType));
-		}
-	*/
+	fmt.Println("closest spelling ", closestDestinationSpelling)
 
 	//Find KEYWORD_DESTINATION bounds in hOCR
 	bboxes, err := getTextBounds(closestDestinationSlide.HOCRText, closestDestinationSpelling)
@@ -227,7 +222,9 @@ func findDestinationLabelBoundsOfPhotoNodeSlides(slides []Slide) (bbox image.Rec
 	}
 
 	if len(bboxes) == 0 {
-		err = errors.New("No bbox found for findDestinationLabelBoundsOfPhotoNodeSlides")
+		err = errors.New("No bbox found for findLabelBoundsOfPhotoNodeSlides")
+	} else if len(bboxes) > 1 {
+		fmt.Println("multiple bbox", bboxes)
 	}
 
 	bbox = bboxes[0]
@@ -277,7 +274,7 @@ func findDestinationsFromSlides(slides []Slide, limitMinY int) (foundDestination
 //estimatedDay is passed in to set day for returned RollCall
 //limitMinY is minimum Y coordinate needed to RollCall (destination keyword bbox)
 //Return a RollCall slice with found and deduplicated RollCalls.
-func findRollCallTimesFromSlides(slides []Slide, estimatedDay time.Time, limitMinY int) (foundRCs []RollCall, err error) {
+func findRollCallTimesFromSlides(slides []Slide, estimatedDay time.Time, limitMinY int) (foundRCs []RollCall, foundNoBBoxRCs []RollCall, err error) {
 	for _, s := range slides {
 		var found24HR []time.Time
 		//fmt.Println("date slide type ", s.SaveType)
@@ -294,6 +291,12 @@ func findRollCallTimesFromSlides(slides []Slide, estimatedDay time.Time, limitMi
 
 			//fmt.Println("hocr result for ", result.Format("1504"), bboxes)
 
+			//Not found in hOCR. Probably because time had spaces in it. Keep time as possible time to display to user?
+			if len(bboxes) == 0 {
+				foundNoBBoxRCs = append(foundNoBBoxRCs, RollCall{
+					Time: result})
+			}
+
 			//Add RollCalls to foundRCs slice
 			//Skip result if bounding box too high. MinY too small.
 			//Append new RollCall to foundRCs for each bounding box found.
@@ -306,6 +309,7 @@ func findRollCallTimesFromSlides(slides []Slide, estimatedDay time.Time, limitMi
 					Time:       result,
 					SharedInfo: SharedInfo{BBox: bbox}})
 			}
+
 		}
 	}
 
@@ -316,6 +320,25 @@ func findRollCallTimesFromSlides(slides []Slide, estimatedDay time.Time, limitMi
 
 //Search plain text for 24HR time. Return slice of time.Time of found 24HR time on estimatedDay.
 func find24HRFromPlainText(plainText string, estimatedDay time.Time) (found24HR []time.Time, err error) {
+	//lowercase input string
+	var input = strings.ToLower(plainText)
+	//fmt.Println(input)
+
+	//Find whitespace between digits with Regexp\
+	//These will not be found in hOCR
+	var whitespaceBetweenDigitsRegex *regexp.Regexp
+	if whitespaceBetweenDigitsRegex, err = regexp.Compile("\\d( )\\d(?:( )\\d)?(?:( )\\d)?"); err != nil {
+		return
+	}
+	input = whitespaceBetweenDigitsRegex.ReplaceAllStringFunc(input, func(match string) string {
+		return strings.Map(func(r rune) rune {
+			if unicode.IsSpace(r) {
+				return -1
+			}
+			return r
+		}, match)
+	})
+
 	//Find 24hr time with Regexp
 	var HR24Regex *regexp.Regexp
 	//Match 24 hr time format
@@ -324,8 +347,6 @@ func find24HRFromPlainText(plainText string, estimatedDay time.Time) (found24HR 
 		return
 	}
 
-	//lowercase input string
-	var input = strings.ToLower(plainText)
 	var regexResult []string
 	if regexResult = HR24Regex.FindAllString(input, -1); regexResult == nil {
 		//No match, proceed to next processed slide
@@ -333,7 +354,7 @@ func find24HRFromPlainText(plainText string, estimatedDay time.Time) (found24HR 
 	}
 
 	for _, result := range regexResult {
-		//fmt.Println("found regex", result)
+		fmt.Println("found regex", result)
 
 		var capturedHour int
 		var capturedMinute int
@@ -356,10 +377,115 @@ func find24HRFromPlainText(plainText string, estimatedDay time.Time) (found24HR 
 	return
 }
 
+//Search slides in Slide slice for SeatsAvailable text.
+//seatsLabelBBox is KEYWORD_SEATS bbox for cropping
+//Return a SeatsAvailable slice with found and deduplicated SeatsAvailable.
+func findSeatsAvailableFromSlides(slides []Slide, seatsLabelBBox image.Rectangle) (foundSAs []SeatsAvailable, err error) {
+	for _, s := range slides {
+
+		//Try to find seats on cropped image
+		//Crop current slide to only show the image column downwards from where seats label was found on
+		if err = runImageMagickDateCropHorizontalProcess(s, image.Point{X: seatsLabelBBox.Min.X - SEATS_CROP_HORIZONTAL_BUFFER, Y: seatsLabelBBox.Max.X + SEATS_CROP_HORIZONTAL_BUFFER}, seatsLabelBBox.Min.Y); err != nil {
+			return
+		}
+
+		//Run OCR on cropped image for current slide
+		cropSlide := s
+		cropSlide.Suffix = IMAGE_SUFFIX_CROPPED
+		if err = doOCRForSlide(&cropSlide); err != nil {
+			return
+		}
+
+		//Regex search for seats counts
+		if foundSAs, err = findSeatsFromPlainText(cropSlide.PlainText); err != nil {
+			return
+		}
+
+		fmt.Println("look SA in slide", s.SaveType)
+
+		//Get text bounds from hOCR for each 24HR time text found.
+		for _, result := range foundSAs {
+			var bboxes []image.Rectangle
+
+			var searchString string
+			if result.Number == 0 {
+				searchString = fmt.Sprintf("%v", result.Letter)
+			} else {
+				searchString = fmt.Sprintf("%v%v", strconv.Itoa(result.Number), result.Letter)
+			}
+			if bboxes, err = getTextBounds(s.HOCRText, searchString); err != nil {
+				return
+			}
+
+			for _, bbox := range bboxes {
+				newSA := result
+				bbox.Min.Y += seatsLabelBBox.Min.Y
+				bbox.Max.Y += seatsLabelBBox.Min.Y
+				newSA.BBox = bbox
+
+				foundSAs = append(foundSAs, newSA)
+			}
+		}
+	}
+
+	deleteDuplicatesFromSAArray(&foundSAs)
+
+	return
+}
+
+//Search plain text for seat count text. Return slice of found SeatsAvailable without BBox.
+func findSeatsFromPlainText(plainText string) (foundSAs []SeatsAvailable, err error) {
+
+	var SeatsCountRegex *regexp.Regexp
+	if SeatsCountRegex, err = regexp.Compile("\\b(?:(?:(\\d{1,3})(f|t|sp)?)|(sp))\\b"); err != nil {
+		return
+	}
+
+	//lowercase input string
+	var input = strings.ToLower(plainText)
+	fmt.Println(input)
+	var regexResult [][]string
+	if regexResult = SeatsCountRegex.FindAllStringSubmatch(input, -1); regexResult == nil {
+		//No match, proceed to next processed slide
+		return
+	}
+
+	for _, result := range regexResult {
+		fmt.Println("found regex len ", len(result))
+		for n, r := range result {
+			fmt.Println(n, len(r), r)
+		}
+
+		var capturedSeatCount int
+		var capturedSeatLetter string //F/T/SP
+
+		//Check appropriate result indices for seat info
+		if len(result[1]) > 0 { //Check if number captured
+			if capturedSeatCount, err = strconv.Atoi(result[1]); err != nil {
+				return
+			}
+
+			if len(result[2]) > 0 { //Check for letter code
+				capturedSeatLetter = result[2]
+			}
+		} else if len(result[3]) > 0 { //No number, check for letter code
+			capturedSeatLetter = result[3]
+		}
+
+		sa := SeatsAvailable{
+			Number: capturedSeatCount,
+			Letter: capturedSeatLetter}
+
+		foundSAs = append(foundSAs, sa)
+	}
+	return
+}
+
 //For each RollCall - link vertically closest Destination. Create 'anchors' for grouping. Best effort match no threshold.
 //Runtime: O(n*mlogm + n*m) n=len(rcs) m=len(destsArray)
 func linkRollCallsToNearestDestinations(rcs []RollCall, destsArray []Destination) {
 
+	//Struct for holding Destination and (vertical) distance from target for comparison
 	type DestDist struct {
 		Destination *Destination
 		Distance    int
@@ -433,30 +559,38 @@ func linkRollCallsToNearestDestinations(rcs []RollCall, destsArray []Destination
 	}
 
 	/*
-	//Naive implementation, incorrect for conflicts
-		for rcIndex, rc := range rcs {
-			var nearestDestIndex int
-			var nearestVertDist int
-			nearestDestIndex = -1
+		//Naive implementation, incorrect for conflicts
+			for rcIndex, rc := range rcs {
+				var nearestDestIndex int
+				var nearestVertDist int
+				nearestDestIndex = -1
 
-			for dIndex, d := range destsArray {
-				vertDist := getVerticalDistance(rc.BBox, d.BBox)
-				if nearestDestIndex == -1 || vertDist < nearestVertDist {
-					nearestDestIndex = dIndex
-					nearestVertDist = vertDist
+				for dIndex, d := range destsArray {
+					vertDist := getVerticalDistance(rc.BBox, d.BBox)
+					if nearestDestIndex == -1 || vertDist < nearestVertDist {
+						nearestDestIndex = dIndex
+						nearestVertDist = vertDist
+					}
 				}
-			}
 
-			destsArray[nearestDestIndex].LinkedRollCall = &rcs[rcIndex]
-		}
+				destsArray[nearestDestIndex].LinkedRollCall = &rcs[rcIndex]
+			}
 	*/
 }
 
 //Group Destinations into Grouping{}. Pass Destinations into function as array of individual Grouping{}.
-func combineDestinationGroupsToAnchorDestinations(groups []Grouping) {
+//Runtime: O(n*n)
+func combineDestinationGroupsToAnchorDestinations(groupsP *[]Grouping) {
+	groups := *groupsP
+
 	for growIndex := 0; growIndex < len(groups); growIndex++ {
 
-		fmt.Println("grow group ", growIndex, groups[growIndex])
+		//fmt.Println("groups")
+		for _, g := range groups {
+			fmt.Println(g)
+		}
+
+		//fmt.Println("grow group ", growIndex, groups[growIndex])
 
 		var deletedPreviousGroupCount int
 
@@ -475,7 +609,7 @@ func combineDestinationGroupsToAnchorDestinations(groups []Grouping) {
 				//Check if group is the nearest group found so far
 				groupDist := getVerticalDistance(groups[growIndex].BBox, groups[j].BBox)
 
-				fmt.Println("check group ", groups[j], "dist", groupDist, "nearestDist", nearestGroupDistance)
+				//fmt.Println("check group ", groups[j], "dist", groupDist, "nearestDist", nearestGroupDistance)
 
 				if nearestGroupP == nil || groupDist < nearestGroupDistance {
 					nearestGroupP = &groups[j]
@@ -501,14 +635,48 @@ func combineDestinationGroupsToAnchorDestinations(groups []Grouping) {
 			groups[len(groups)-1] = Grouping{}
 			groups = groups[:len(groups)-1]
 
-			//Decrement for loop counter because we removed an element. 
+			//Decrement for loop counter because we removed an element.
 			//If the removed group was at a lower index than current grow group, decrement loop counter by 1 so that next loop will start at same index that will point to the previously "next" element.
 			//If removed group at higher index, don't decrement because for loop counter will get the next element no matter what.
 			if nearestGroupIndex <= growIndex {
 				deletedPreviousGroupCount++
 			}
+
+			growIndex -= deletedPreviousGroupCount
+
+			//fmt.Println("grow index ", growIndex, "len groups ", len(groups), "delete count", deletedPreviousGroupCount)
 		}
 
-		growIndex -= deletedPreviousGroupCount
+	}
+
+	//Create new slice to copy elements over. Original slice will have updated length but old elements in memory (displayed when printing).
+	tmp := make([]Grouping, len(groups))
+	for i := 0; i < len(groups); i++ {
+		tmp[i] = groups[i]
+	}
+	*groupsP = tmp
+}
+
+//For each RollCall - link to SeatsAvailable sharing > threshold vertical pixels. Similar to linkRollCallsToNearestDestinations but reduced for simplicity. There should be one to one relationship for RollCall and SeatsAvailable
+func linkRollCallsToNearestSeatsAvailable(rcs []RollCall, saArray []SeatsAvailable) {
+	for _, r := range rcs {
+		fmt.Println(r)
+	}
+	for _, s := range saArray {
+		fmt.Println(s)
+	}
+
+	//Link each SeatsAvailable. RollCall -> SeatsAvailable.
+	//Runtime: O(n*m)
+	for saIndex, _ := range saArray {
+		for rcIndex, _ := range rcs {
+			vertDist := getVerticalDistance(rcs[rcIndex].BBox, saArray[saIndex].BBox)
+
+			//If intersecting vertically enough, link
+			if vertDist < ROLLCALLS_SEATS_LINK_VERTICAL_THRESHOLD {
+				rcs[rcIndex].LinkedSeatsAvailable = &saArray[saIndex]
+				break
+			}
+		}
 	}
 }

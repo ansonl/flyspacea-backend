@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
+	"image"
 	"io"
 	"log"
 	"math"
 	"os"
 	"strings"
 	"time"
-	"image"
 )
 
 // exists returns whether the given file or directory exists or not
@@ -199,5 +199,25 @@ func getVerticalDistance(bbox1 image.Rectangle, bbox2 image.Rectangle) (vertical
 		}
 	}
 	log.Fatal("No category matched ", bbox1, bbox2)
+	return
+}
+
+//Check whether two bounding boxes share > DUPLICATE_AREA_THRESHOLD of the smaller box's height on the same horizontal line.
+func sameHorizontalLine(bbox1 image.Rectangle, bbox2 image.Rectangle) (horizontalDuplicate bool) {
+	smallerHeight := bbox1.Dy()
+	if bbox2.Dy() < smallerHeight {
+		smallerHeight = bbox2.Dy()
+	}
+
+	if bbox1.Min.Y >= bbox2.Min.Y && float64(bbox2.Max.Y-bbox1.Min.Y) > float64(smallerHeight)*DUPLICATE_AREA_THRESHOLD {
+		horizontalDuplicate = true
+		return
+	}
+
+	if bbox2.Min.Y >= bbox1.Min.Y && float64(bbox1.Max.Y-bbox2.Min.Y) > float64(smallerHeight)*DUPLICATE_AREA_THRESHOLD {
+		horizontalDuplicate = true
+		return
+	}
+
 	return
 }

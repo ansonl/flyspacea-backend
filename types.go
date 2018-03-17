@@ -71,6 +71,12 @@ type Departure struct {
 }
 */
 
+//Slide data header label keyword to train in fuzzy with customizable training depth
+type LabelKeyword struct {
+	Spelling     string
+	DepthToTrain int
+}
+
 //Special keywords for a terminal in location_keywords.json
 type TerminalKeywords struct {
 	Title    string   `json:"title"`
@@ -125,6 +131,9 @@ type Destination struct {
 type RollCall struct {
 	Time time.Time
 	SharedInfo
+
+	//SeatsAvailabe that is in the same row as RollCall
+	LinkedSeatsAvailable *SeatsAvailable
 }
 
 //SeatsAvailable representation

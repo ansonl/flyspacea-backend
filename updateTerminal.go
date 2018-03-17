@@ -272,7 +272,9 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 
 		//Manual slide control
 		newSlide.Extension = "jpeg"
-		newSlide.FBNodeId = "1600297986706271"
+		//newSlide.FBNodeId = "1600297986706271"
+		//newSlide.FBNodeId = "1600297960039607"
+		newSlide.FBNodeId = "1600298003372936"
 
 		//create processed image in imagemagick IF slide created is not original slide
 		if currentSaveType != SAVE_IMAGE_TRAINING {
@@ -305,19 +307,46 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 	//Get dest bbox
 	//TODO: Find bounds of destination column and crop to get better OCR results.
 	var destLabelBBox image.Rectangle
-	if destLabelBBox, err = findDestinationLabelBoundsOfPhotoNodeSlides(slides); err != nil {
+	if destLabelBBox, err = findLabelBoundsOfPhotoNodeSlides(slides, KEYWORD_DESTINATION); err != nil {
 		return
 	}
 
-	displayMessageForTerminal(slides[0].Terminal, fmt.Sprintf(" dest bbox %v %v %v %v", destLabelBBox.Min.X, destLabelBBox.Min.Y, destLabelBBox.Max.X, destLabelBBox.Max.Y))
+	//displayMessageForTerminal(slides[0].Terminal, fmt.Sprintf(" dest bbox %v %v %v %v", destLabelBBox.Min.X, destLabelBBox.Min.Y, destLabelBBox.Max.X, destLabelBBox.Max.Y))
 
 	//Find potential rollcall times from all slides
 	var rollCalls []RollCall
-	if rollCalls, err = findRollCallTimesFromSlides(slides, slideDate, destLabelBBox.Min.Y); err != nil {
+	var rollCallsNoBBox []RollCall
+	if rollCalls, rollCallsNoBBox, err = findRollCallTimesFromSlides(slides, slideDate, destLabelBBox.Min.Y); err != nil {
 		return
 	}
 
 	fmt.Println("rollcalls", rollCalls)
+	fmt.Println("rollcalls w/o bbox", rollCallsNoBBox)
+
+	//Get seats bbox
+	var seatsLabelBBox image.Rectangle
+	if seatsLabelBBox, err = findLabelBoundsOfPhotoNodeSlides(slides, KEYWORD_SEATS); err != nil {
+		return
+	}
+
+	//Find potential seats
+	var seatsAvailable []SeatsAvailable
+	if seatsAvailable, err = findSeatsAvailableFromSlides(slides, seatsLabelBBox); err != nil {
+		return
+	}
+
+	//displayMessageForTerminal(slides[0].Terminal, fmt.Sprintf(" dest bbox %v %v %v %v", destLabelBBox.Min.X, destLabelBBox.Min.Y, destLabelBBox.Max.X, destLabelBBox.Max.Y))
+
+	//Link SeatsAvailable with RollCalls on same line
+	linkRollCallsToNearestSeatsAvailable(rollCalls, seatsAvailable)
+
+	fmt.Println("After link seats")
+	for _, rc := range rollCalls {
+		log.Println(rc)
+		if rc.LinkedSeatsAvailable != nil {
+			log.Println(*(rc.LinkedSeatsAvailable))
+		}
+	}
 
 	//Find potential destinations from all slides
 	var destinations []Destination
@@ -330,6 +359,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		log.Println(d)
 	}
 
+	//Find vertically closest Destination for every RollCall
 	linkRollCallsToNearestDestinations(rollCalls, destinations)
 
 	fmt.Println("After nearest rc to dest link")
@@ -344,28 +374,38 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 	var destinationGroupings []Grouping
 	for _, d := range destinations {
 		destinationGroupings = append(destinationGroupings, Grouping{
-			Destinations: []Destination{d},
+			Destinations:   []Destination{d},
 			LinkedRollCall: d.LinkedRollCall})
 		destinationGroupings[len(destinationGroupings)-1].updateBBox()
 	}
 
-	combineDestinationGroupsToAnchorDestinations(destinationGroupings)
+	//Link GroupingA with nearest GroupingB so all Destinations in GroupingB are in GroupingA. Repeat until GroupingA contains a Destination that (horizontally) intersects a RollCall.
+	combineDestinationGroupsToAnchorDestinations(&destinationGroupings)
 
 	fmt.Println("After combine dests")
 	for _, dg := range destinationGroupings {
-		log.Println(dg)
 		if dg.LinkedRollCall != nil {
-			log.Println(*(dg.LinkedRollCall))
+			log.Printf("%v - ", *(dg.LinkedRollCall))
+
+			if (*dg.LinkedRollCall).LinkedSeatsAvailable != nil {
+				log.Printf("%v", *(*dg.LinkedRollCall).LinkedSeatsAvailable)
+			} else {
+				log.Printf("No seat text found.")
+			}
+		} else {
+			log.Printf("No time for grouping.")
+		}
+
+		log.Println()
+
+		for _, d := range dg.Destinations {
+			log.Println(d)
+		}
+
+		if dg.LinkedRollCall != nil {
+
 		}
 	}
-
-	//Find vertically closest Destination for every RollCall
-
-	//Create Grouping with nearest DestinationA to DestinationB
-
-	//Link GroupingA with nearest GroupingB so all Destinations in GroupingB are in GroupingA. Repeat until GroupingA contains a Destination that (horizontally) intersects a RollCall.
-
-	//match to time
 
 	incrementPhotosProcessed()
 	/*

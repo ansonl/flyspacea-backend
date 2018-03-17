@@ -29,10 +29,20 @@ func createFuzzyModels() (err error) {
 	fuzzyBannedSpellings["listed"] = 0
 
 	//Create fuzzy models for slide labels
-	var keywordList []string
-	keywordList = []string{KEYWORD_DESTINATION}
+	var keywordList []LabelKeyword
+	keywordList = []LabelKeyword{
+		LabelKeyword{Spelling: KEYWORD_DESTINATION,
+			DepthToTrain: 5},
+		LabelKeyword{Spelling: KEYWORD_SEATS,
+			DepthToTrain: 1}}
+
 	for i := time.January; i <= time.December; i++ {
-		keywordList = append(keywordList, i.String(), i.String()[0:3])
+		fullSpelling := LabelKeyword{Spelling: i.String(),
+			DepthToTrain: len(i.String()) / 2}
+		shortSpelling := LabelKeyword{Spelling: i.String()[0:3],
+			DepthToTrain: len(i.String()[0:3]) / 2}
+
+		keywordList = append(keywordList, fullSpelling, shortSpelling)
 	}
 	createFuzzyModelsForKeywords(keywordList, &fuzzyModelForKeyword)
 
@@ -116,14 +126,14 @@ func createFuzzyModels() (err error) {
 }
 
 //Create separate fuzzy model object for each keyword. Store fuzzy models in map
-func createFuzzyModelsForKeywords(keywords []string, modelMap *map[string]*fuzzy.Model) {
+func createFuzzyModelsForKeywords(keywords []LabelKeyword, modelMap *map[string]*fuzzy.Model) {
 	*modelMap = make(map[string]*fuzzy.Model)
 	for _, v := range keywords {
-		v = strings.ToLower(v)
-		(*modelMap)[v] = fuzzy.NewModel()
-		(*modelMap)[v].SetThreshold(1)
-		(*modelMap)[v].SetDepth(len(v) / 2)
-		(*modelMap)[v].TrainWord(v)
+		v.Spelling = strings.ToLower(v.Spelling)
+		(*modelMap)[v.Spelling] = fuzzy.NewModel()
+		(*modelMap)[v.Spelling].SetThreshold(1)
+		(*modelMap)[v.Spelling].SetDepth(v.DepthToTrain)
+		(*modelMap)[v.Spelling].TrainWord(v.Spelling)
 	}
 }
 
@@ -411,10 +421,13 @@ func getTextBounds(hocr string, textSpelling string) (bboxes []image.Rectangle, 
 	//If no results found, print xpathquery and write document to file for debugging
 	//Testing http://www.xpathtester.com/xpath/f5f4ce066286d9fdd780998a67d73415
 	if len(results) == 0 {
-		err = fmt.Errorf("No %v found. Xpathquery %v", textSpelling, xPathQuery)
+		errorText := fmt.Sprintf("No %v found. Xpathquery %v", textSpelling, xPathQuery)
+		//err = fmt.Errorf("No %v found. Xpathquery %v", textSpelling, xPathQuery)
 		ioutil.WriteFile("xpath-debug.html", []byte(fmt.Sprintf("%v", doc)), 0644)
-		log.Fatal(err)
-		return
+		//log.Fatal(err)
+
+		//Display OCR issue
+		fmt.Printf("\u001b[1m\u001b[31m%v\u001b[0m\n", errorText)
 	}
 
 	for _, r := range results {
@@ -452,7 +465,7 @@ func getTextBounds(hocr string, textSpelling string) (bboxes []image.Rectangle, 
 
 		//Check if x_wconf > OCR_WORD_CONFIDENCE_THRESHOLD if word confidence provided by OCR.
 		//Skip element if confidence too low (<threshold)
-		if len(bboxMatch) > 5 {
+		if len(bboxMatch[5]) > 0 {
 			var wconf int
 			if wconf, err = strconv.Atoi(bboxMatch[5]); err != nil {
 				return

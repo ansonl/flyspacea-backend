@@ -62,13 +62,18 @@ const (
 //OCR keywords
 const (
 	KEYWORD_DESTINATION string = "destination"
-	KEYWORD_TIME        string = "time"
 	KEYWORD_SEATS       string = "seats"
 )
 
 //Slide processing constants
 const (
-	OCR_WORD_CONFIDENCE_THRESHOLD                 int     = 10
-	DUPLICATE_AREA_THRESHOLD                      float64 = 0.5
-	ROLLCALLS_DESTINATION_LINK_VERTICAL_THRESHOLD int     = 50
+	IMAGE_PROCESSING_TMP_COLOR string = "purple"
+
+	OCR_WORD_CONFIDENCE_THRESHOLD int     = 10
+	DUPLICATE_AREA_THRESHOLD      float64 = 0.5
+
+	SEATS_CROP_HORIZONTAL_BUFFER int = 5
+
+	ROLLCALLS_DESTINATION_LINK_VERTICAL_THRESHOLD int = 50
+	ROLLCALLS_SEATS_LINK_VERTICAL_THRESHOLD       int = -5
 )

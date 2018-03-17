@@ -21,22 +21,9 @@ func deleteDuplicatesFromDestinationArray(destsArrayPointer *[]Destination) {
 			//Compare intersection image.Rectangle area to the smaller of destA and destB area
 			//OR if same destination terminal and on 50% same horizontal line due to fuzzy match individual words from same location
 			var horizontalDuplicate bool
-			smallerHeight := destA.BBox.Dy()
-			if destB.BBox.Dy() < smallerHeight {
-				smallerHeight = destB.BBox.Dy()
+			if destA.TerminalTitle == destB.TerminalTitle {
+				horizontalDuplicate = sameHorizontalLine(destA.BBox, destB.BBox)
 			}
-
-			if (destA.TerminalTitle == destB.TerminalTitle) {
-				if (destA.BBox.Min.Y >= destB.BBox.Min.Y && float64(destB.BBox.Max.Y - destA.BBox.Min.Y) > float64(smallerHeight)*DUPLICATE_AREA_THRESHOLD) {
-					horizontalDuplicate = true
-				}
-
-				if (destB.BBox.Min.Y >= destA.BBox.Min.Y && float64(destA.BBox.Max.Y - destB.BBox.Min.Y) > float64(smallerHeight)*DUPLICATE_AREA_THRESHOLD) {
-					horizontalDuplicate = true
-				}
-			}
-
-
 
 			intersection := destA.BBox.Intersect(destB.BBox)
 			if float64(intersection.Dx())*float64(intersection.Dy()) > float64(smallerArea)*DUPLICATE_AREA_THRESHOLD || horizontalDuplicate {
@@ -101,6 +88,53 @@ func deleteDuplicatesFromRCArray(arrayPointer *[]RollCall) {
 	if len(dests) != originalLength {
 		//Create new slice to copy elements over. Original slice will have updated length but old elements in memory (displayed when printing).
 		tmp := make([]RollCall, len(dests))
+		for i := 0; i < len(dests); i++ {
+			tmp[i] = dests[i]
+		}
+		*arrayPointer = tmp
+	}
+}
+
+//Find duplicates by checking if intersecting rect shares >DUPLICATE_AREA_THRESHOLD of area of the smaller of the two rects.
+//Passed in pointer to SeatsAvailable slice is reassigned to new slice.
+//Same function as deleteDuplicatesFromDestinationArray
+//Run time O(n^2). n = number of SeatsAvailable
+func deleteDuplicatesFromSAArray(arrayPointer *[]SeatsAvailable) {
+	dests := *arrayPointer
+	originalLength := len(dests)
+
+	for i := 0; i < len(dests); i++ {
+		destA := dests[i]
+		smallerArea := destA.BBox.Dx() * destA.BBox.Dy()
+		for j := i + 1; j < len(dests); j++ {
+			destB := dests[j]
+			destBArea := destA.BBox.Dx() * destA.BBox.Dy()
+			if destBArea < smallerArea {
+				smallerArea = destBArea
+			}
+
+			//Compare intersection image.Rectangle area to the smaller of destA and destB area
+			intersection := destA.BBox.Intersect(destB.BBox)
+			if float64(intersection.Dx())*float64(intersection.Dy()) > float64(smallerArea)*DUPLICATE_AREA_THRESHOLD {
+
+				//If destA has no number found and destB found a number replace
+				if destA.Number == 0 && destB.Number != 0 {
+					dests[i] = dests[j]
+				}
+
+				//Delete destB location. Decrement j so that same index now with different element is checked on next loop
+				copy(dests[j:], dests[j+1:])
+				dests[len(dests)-1] = SeatsAvailable{}
+				dests = dests[:len(dests)-1]
+				j--
+			}
+		}
+	}
+
+	//If duplicates were found, alloc new Destination slice and reassign passed in slice pointer
+	if len(dests) != originalLength {
+		//Create new slice to copy elements over. Original slice will have updated length but old elements in memory (displayed when printing).
+		tmp := make([]SeatsAvailable, len(dests))
 		for i := 0; i < len(dests); i++ {
 			tmp[i] = dests[i]
 		}
