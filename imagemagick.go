@@ -26,18 +26,15 @@ func runImageMagickColorProcess(sourceSaveType SaveImageType, sReference Slide) 
 	workingSavePath := processedSavePath + "m"
 
 	//variables for replace color
-	var replaceColor bool
 	var fill string
 	var opaque1, opaque2 string
 	var fuzz string
 
 	//variables for invert color
-	var invertColor bool
 
 	var args []string
 	switch sReference.SaveType {
 	case SAVE_IMAGE_TRAINING_PROCESSED_BLACK:
-		replaceColor = true
 		opaque1 = "black"
 		opaque2 = "white"
 		fill = "black"
@@ -66,25 +63,20 @@ func runImageMagickColorProcess(sourceSaveType SaveImageType, sReference Slide) 
 
 		break
 	case SAVE_IMAGE_TRAINING_PROCESSED_WHITE:
-		replaceColor = true
 		fill = "black"
 		opaque1 = "white"
-		invertColor = true
+		fuzz = "35%"
 
-		if replaceColor {
-			args := []string{"-alpha", "off", "-fuzz", "35%", "-fill", fill, "+opaque", opaque1, originalSavePath, processedSavePath}
+			args = []string{"-alpha", "off", "-fuzz", fuzz, "-fill", fill, "+opaque", opaque1, originalSavePath, processedSavePath}
 			//log.Printf("%v", args)
 			if err = exec.Command(cmd, args...).Run(); err != nil {
 				return
 			}
-		}
 
-		if invertColor {
-			args := []string{processedSavePath, "-negate", processedSavePath}
+			args = []string{processedSavePath, "-negate", processedSavePath}
 			if err = exec.Command(cmd, args...).Run(); err != nil {
 				return
 			}
-		}
 
 		break
 	default:
@@ -157,7 +149,7 @@ func runImageMagickCropProcess(sReference Slide, cropGeometry []int) (err error)
 	//{size}{+-}x{+-}y
 	cmd := "convert"
 	args := []string{"-crop", fmt.Sprintf("%vx%v+%v+%v", cropGeometry[0], cropGeometry[1], cropGeometry[2], cropGeometry[3]), originalSavePath, processedSavePath}
-	//log.Printf("%v", args)
+	fmt.Printf("%v", args)
 	if err = exec.Command(cmd, args...).Run(); err != nil {
 		return
 	}

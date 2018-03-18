@@ -118,7 +118,7 @@ func deleteDuplicatesFromSAArray(arrayPointer *[]SeatsAvailable) {
 			if float64(intersection.Dx())*float64(intersection.Dy()) > float64(smallerArea)*DUPLICATE_AREA_THRESHOLD {
 
 				//If destA has no number found and destB found a number replace
-				if destA.Number == 0 && destB.Number != 0 {
+				if destA.Number == 0 && destB.Number != 0 || destB.Number > destA.Number {
 					dests[i] = dests[j]
 				}
 

@@ -59,6 +59,14 @@ const (
 	IMAGE_SUFFIX_CROPPED string = "c"
 )
 
+//OCR whitelist names
+type OCRWhiteListType int
+
+const (
+	OCR_WHITELIST_NORMAL OCRWhiteListType = iota
+	OCR_WHITELIST_SA
+)
+
 //OCR keywords
 const (
 	KEYWORD_DESTINATION string = "destination"

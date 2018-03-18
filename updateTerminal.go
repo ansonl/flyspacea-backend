@@ -283,7 +283,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 			}
 		}
 
-		if err = doOCRForSlide(&newSlide); err != nil {
+		if err = doOCRForSlide(&newSlide, OCR_WHITELIST_NORMAL); err != nil {
 			return
 		}
 
@@ -335,11 +335,10 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		return
 	}
 
-	//displayMessageForTerminal(slides[0].Terminal, fmt.Sprintf(" dest bbox %v %v %v %v", destLabelBBox.Min.X, destLabelBBox.Min.Y, destLabelBBox.Max.X, destLabelBBox.Max.Y))
-
 	//Link SeatsAvailable with RollCalls on same line
 	linkRollCallsToNearestSeatsAvailable(rollCalls, seatsAvailable)
 
+	/*
 	fmt.Println("After link seats")
 	for _, rc := range rollCalls {
 		log.Println(rc)
@@ -347,6 +346,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 			log.Println(*(rc.LinkedSeatsAvailable))
 		}
 	}
+	*/
 
 	//Find potential destinations from all slides
 	var destinations []Destination
@@ -354,14 +354,17 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		return
 	}
 
+	/*
 	fmt.Println("found dests in all slides")
 	for _, d := range destinations {
 		log.Println(d)
 	}
+	*/
 
 	//Find vertically closest Destination for every RollCall
 	linkRollCallsToNearestDestinations(rollCalls, destinations)
 
+	/*
 	fmt.Println("After nearest rc to dest link")
 	for _, d := range destinations {
 		log.Println(d)
@@ -369,6 +372,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 			log.Println(*(d.LinkedRollCall))
 		}
 	}
+	*/
 
 	//Create array of individual Grouping for each Destination to pass into combine Destinations to Groupings stage
 	var destinationGroupings []Grouping
@@ -382,28 +386,22 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 	//Link GroupingA with nearest GroupingB so all Destinations in GroupingB are in GroupingA. Repeat until GroupingA contains a Destination that (horizontally) intersects a RollCall.
 	combineDestinationGroupsToAnchorDestinations(&destinationGroupings)
 
-	fmt.Println("After combine dests")
+	fmt.Println("After combine dests:")
 	for _, dg := range destinationGroupings {
 		if dg.LinkedRollCall != nil {
-			log.Printf("%v - ", *(dg.LinkedRollCall))
+			fmt.Printf("%v - ", (*dg.LinkedRollCall).Time.Format("\u001b[1m\u001b[35m‣ 02JAN2006 1504 MST -0700\u001b[0m"))
 
 			if (*dg.LinkedRollCall).LinkedSeatsAvailable != nil {
-				log.Printf("%v", *(*dg.LinkedRollCall).LinkedSeatsAvailable)
+				fmt.Printf("%v%v\n", (*(*dg.LinkedRollCall).LinkedSeatsAvailable).Number, (*(*dg.LinkedRollCall).LinkedSeatsAvailable).Letter)
 			} else {
-				log.Printf("No seat text found.")
+				fmt.Println("No seat text found.")
 			}
 		} else {
-			log.Printf("No time for grouping.")
+			fmt.Println("No time for grouping.")
 		}
-
-		log.Println()
 
 		for _, d := range dg.Destinations {
-			log.Println(d)
-		}
-
-		if dg.LinkedRollCall != nil {
-
+			fmt.Println(d.TerminalTitle)
 		}
 	}
 

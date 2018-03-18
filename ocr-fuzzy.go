@@ -138,13 +138,25 @@ func createFuzzyModelsForKeywords(keywords []LabelKeyword, modelMap *map[string]
 }
 
 //Perform OCR on file for slide and set s.PlainText and s.HOCRText
-func doOCRForSlide(s *Slide) (err error) {
+func doOCRForSlide(s *Slide, wl OCRWhiteListType) (err error) {
 	filepath := photoPath(*s)
 
 	client := gosseract.NewClient()
 	defer client.Close()
+	client.SetPageSegMode(gosseract.PSM_AUTO) //C++ API may have different PSM than command line. https://groups.google.com/d/msg/tesseract-ocr/bD1zJNiDubY/kb7NZPIV38AJ
 	client.SetImage(filepath)
-	client.SetWhitelist("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ,:=().*-/")
+
+	switch(wl) {
+	case OCR_WHITELIST_NORMAL:
+		client.SetWhitelist("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ,:=().*-/")
+		break;
+	case OCR_WHITELIST_SA:
+		client.SetWhitelist("1234567890TFSP")
+		break;
+	default:
+		log.Fatal("Unknown white list type ", wl)
+	}
+	
 
 	if (*s).PlainText, err = client.Text(); err != nil {
 		return
@@ -404,7 +416,7 @@ func getTextBounds(hocr string, textSpelling string) (bboxes []image.Rectangle, 
 
 	//XPath query to find parent element of element with text node containing target text. Used when target text enclosed in non hocr element.
 	var xPathQueryParent string
-	xPathQueryParent = fmt.Sprintf("//*[contains(translate(text(), '%v', '%v'), '%v')]/parent::*", strings.ToUpper(textSpelling), strings.ToLower(textSpelling), strings.ToLower(textSpelling))
+	xPathQueryParent = fmt.Sprintf("//*[contains(translate(text(), '%v', '%v'), '%v')]/ancestor::span[@class='ocrx_word']", strings.ToUpper(textSpelling), strings.ToLower(textSpelling), strings.ToLower(textSpelling))
 
 	//Try to search for .ocrx_word element containing target text.
 	//If no results found, element may be enclosed in <strong> tags, so look for parent.
@@ -433,7 +445,7 @@ func getTextBounds(hocr string, textSpelling string) (bboxes []image.Rectangle, 
 	for _, r := range results {
 		title := r.Attr("title")
 		//fmt.Printf("%v\n", len(results))
-		//fmt.Printf("%v\n", r.String())
+		fmt.Printf("%v\n", r.String())
 
 		//Regex search for bbox and optional confidence (x_wconf) attr.
 		var bboxRegEx *regexp.Regexp

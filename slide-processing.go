@@ -96,7 +96,7 @@ func findDateOfPhotoNodeSlides(slides []Slide) (slideDate time.Time, err error) 
 				//Run OCR on cropped image for current slide using bbox
 				copySlide := s
 				copySlide.Suffix = IMAGE_SUFFIX_CROPPED
-				if err = doOCRForSlide(&copySlide); err != nil {
+				if err = doOCRForSlide(&copySlide, OCR_WHITELIST_NORMAL); err != nil {
 					return
 				}
 
@@ -385,14 +385,14 @@ func findSeatsAvailableFromSlides(slides []Slide, seatsLabelBBox image.Rectangle
 
 		//Try to find seats on cropped image
 		//Crop current slide to only show the image column downwards from where seats label was found on
-		if err = runImageMagickDateCropHorizontalProcess(s, image.Point{X: seatsLabelBBox.Min.X - SEATS_CROP_HORIZONTAL_BUFFER, Y: seatsLabelBBox.Max.X + SEATS_CROP_HORIZONTAL_BUFFER}, seatsLabelBBox.Min.Y); err != nil {
+		if err = runImageMagickDateCropHorizontalProcess(s, image.Point{X: seatsLabelBBox.Min.X - SEATS_CROP_HORIZONTAL_BUFFER, Y: seatsLabelBBox.Max.X + SEATS_CROP_HORIZONTAL_BUFFER}, seatsLabelBBox.Max.Y); err != nil {
 			return
 		}
 
 		//Run OCR on cropped image for current slide
 		cropSlide := s
 		cropSlide.Suffix = IMAGE_SUFFIX_CROPPED
-		if err = doOCRForSlide(&cropSlide); err != nil {
+		if err = doOCRForSlide(&cropSlide, OCR_WHITELIST_SA); err != nil {
 			return
 		}
 
@@ -401,7 +401,7 @@ func findSeatsAvailableFromSlides(slides []Slide, seatsLabelBBox image.Rectangle
 			return
 		}
 
-		fmt.Println("look SA in slide", s.SaveType)
+		fmt.Println("look SA in slide", s.SaveType, cropSlide.HOCRText)
 
 		//Get text bounds from hOCR for each 24HR time text found.
 		for _, result := range foundSAs {
@@ -413,14 +413,14 @@ func findSeatsAvailableFromSlides(slides []Slide, seatsLabelBBox image.Rectangle
 			} else {
 				searchString = fmt.Sprintf("%v%v", strconv.Itoa(result.Number), result.Letter)
 			}
-			if bboxes, err = getTextBounds(s.HOCRText, searchString); err != nil {
+			if bboxes, err = getTextBounds(cropSlide.HOCRText, searchString); err != nil {
 				return
 			}
 
 			for _, bbox := range bboxes {
 				newSA := result
-				bbox.Min.Y += seatsLabelBBox.Min.Y
-				bbox.Max.Y += seatsLabelBBox.Min.Y
+				bbox.Min.Y += seatsLabelBBox.Max.Y
+				bbox.Max.Y += seatsLabelBBox.Max.Y
 				newSA.BBox = bbox
 
 				foundSAs = append(foundSAs, newSA)

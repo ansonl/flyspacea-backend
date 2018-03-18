@@ -19,7 +19,7 @@ func main() {
 	}
 	terminalMap := readTerminalArrayToMap(terminalArray)
 
-	log.Printf("\u001b[1m\u001b[31m%v\u001b[0m\n", "Starting Update")
+	log.Printf("\u001b[1m\u001b[35m%v\u001b[0m\n", "Starting Update")
 	updateAllTerminals(terminalMap)
 
 	/*
