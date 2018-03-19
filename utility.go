@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"database/sql"
 )
 
 // exists returns whether the given file or directory exists or not
@@ -219,5 +220,20 @@ func sameHorizontalLine(bbox1 image.Rectangle, bbox2 image.Rectangle) (horizonta
 		return
 	}
 
+	return
+}
+
+//Check *(sql.DB) handle initialized and connected
+func checkDatabaseHandleValid(targetHandle *(sql.DB)) (err error) {
+	if db == nil {
+		err = fmt.Errorf("DB handle is nil")
+		return
+
+	}
+	
+	if err = db.Ping(); err != nil {
+		err = fmt.Errorf("DB ping failed.")
+		return
+	}
 	return
 }

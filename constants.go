@@ -85,3 +85,9 @@ const (
 	ROLLCALLS_DESTINATION_LINK_VERTICAL_THRESHOLD int = 50
 	ROLLCALLS_SEATS_LINK_VERTICAL_THRESHOLD       int = -5
 )
+
+//Storage Database constants
+const (
+	LOCATIONS_TABLE string = "locations"
+	FLIGHTS_72HR_TABLE string = "HR72_flights"
+)

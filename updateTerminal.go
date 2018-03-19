@@ -405,6 +405,8 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		}
 	}
 
+
+
 	incrementPhotosProcessed()
 	/*
 		//Debugging print slides array

@@ -9,6 +9,12 @@ func main() {
 	//fmt.Printf("\n\u001b[1mboldtext\u001b[0m\r\u001b[2Fprevline\n\n\n")
 
 	var err error
+	if err = setupDatabase(); err != nil {
+		log.Println(err)
+	}
+
+	return
+
 	if err = createFuzzyModels(); err != nil {
 		log.Fatal(err)
 	}

@@ -77,8 +77,8 @@ type LabelKeyword struct {
 	DepthToTrain int
 }
 
-//Special keywords for a terminal in location_keywords.json
-type TerminalKeywords struct {
+//Special keywords for a location in location_keywords.json
+type LocationKeywords struct {
 	Title    string   `json:"title"`
 	Keywords []string `json:"keywords"`
 }
@@ -174,4 +174,15 @@ func (g *Grouping) updateBBox() {
 			(*g).BBox.Max.Y = d.BBox.Max.Y
 		}
 	}
+}
+
+//Representation of a specific flight
+type Flight struct {
+	Origin string
+	Destination string
+	RollCall time.Time
+	SeatCount int
+	SeatType string
+	Cancelled bool
+	PhotoSource string
 }

@@ -47,8 +47,8 @@ func createFuzzyModels() (err error) {
 	createFuzzyModelsForKeywords(keywordList, &fuzzyModelForKeyword)
 
 	//Create fuzzy models for terminal keywords
-	var terminalKeywordsArray []TerminalKeywords
-	if terminalKeywordsArray, err = readTerminalKeywordsFileToArray(TERMINAL_KEYWORDS_FILE); err != nil {
+	var locationKeywordsArray []LocationKeywords
+	if locationKeywordsArray, err = readLocationKeywordsFileToArray(TERMINAL_KEYWORDS_FILE); err != nil {
 		return
 	}
 
@@ -99,7 +99,7 @@ func createFuzzyModels() (err error) {
 		return r == ' ' || r == '-'
 	}
 
-	for _, v := range terminalKeywordsArray {
+	for _, v := range locationKeywordsArray {
 
 		//Determine title (ex: Hill AFB) without location (ex: Utah)
 		trimmed := strings.Split(v.Title, ",")[0]
