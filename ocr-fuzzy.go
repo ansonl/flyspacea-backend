@@ -48,7 +48,7 @@ func createFuzzyModels() (err error) {
 
 	//Create fuzzy models for terminal keywords
 	var locationKeywordsArray []LocationKeywords
-	if locationKeywordsArray, err = readLocationKeywordsFileToArray(TERMINAL_KEYWORDS_FILE); err != nil {
+	if locationKeywordsArray, err = readKeywordsToArrayFromFiles(TERMINAL_FILE, LOCATION_KEYWORDS_FILE); err != nil {
 		return
 	}
 

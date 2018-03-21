@@ -1,7 +1,725 @@
 [
-{
+    {
+        "title": "Baltimore-Washington IAP, Maryland",
+        "keywords": [],
+        "id": "318390778252811",
+        "url": "http://www.facebook.com/BWIPassengerTerminal",
+        "location": {
+            "latitude": 39.1774,
+            "longitude": -76.6684
+        }
+    },
+    {
+        "title": "Dover AFB, Delaware",
+        "keywords": [],
+        "id": "265575266830349",
+        "url": "https://www.facebook.com/pages/Dover-Passenger-Terminal/265575266830349",
+        "location": {
+            "latitude": 39.1277,
+            "longitude": -75.4684
+        }
+    },
+    {
+        "title": "Fairchild AFB, Washington",
+        "keywords": [],
+        "id": "273240896207319",
+        "url": "https://www.facebook.com/FairchildPaxTerminal",
+        "location": {
+            "latitude": 47.6183,
+            "longitude": -117.6439
+        }
+    },
+    {
+        "title": "Jacksonville NAS, Florida",
+        "keywords": [],
+        "id": "336306123104715",
+        "url": "http://www.facebook.com/Jacksonvillepassengerterminal",
+        "location": {
+            "latitude": 30.2236,
+            "longitude": -81.6857
+        }
+    },
+    {
+        "title": "JB Andrews, Maryland",
+        "keywords": [],
+        "id": "204595186255795",
+        "url": "https://www.facebook.com/pages/Andrews-Passenger-Terminal/204595186255795",
+        "location": {
+            "latitude": 38.7965,
+            "longitude": -76.8836
+        }
+    },
+    {
+        "title": "JB Charleston, South Carolina",
+        "keywords": [],
+        "id": "1768570710123989",
+        "url": "https://www.facebook.com/JBCharlestonPassengerTerminalSC/",
+        "location": {
+            "latitude": 32.8910,
+            "longitude": -80.0692
+        }
+    },
+    {
+        "title": "JB Lewis-McChord, Washington",
+        "keywords": [],
+        "id": "206163169474783",
+        "url": "https://www.facebook.com/mcchordpt",
+        "location": {
+            "latitude": 47.1342,
+            "longitude": -122.4857
+        }
+    },
+    {
+        "title": "JB McGuire-Dix-Lakehurst, New Jersey",
+        "keywords": [],
+        "id": "338615492862399",
+        "url": "http://www.facebook.com/JBMDLPaxTerm",
+        "location": {
+            "latitude": 40.0378,
+            "longitude": -74.5885
+        }
+    },
+    {
+        "title": "Little Rock AFB, Arkansas",
+        "keywords": [],
+        "id": "173212306112777",
+        "url": "https://www.facebook.com/pages/Little-Rock-Passenger-Terminal/173212306112777",
+        "location": {
+            "latitude": 34.8880,
+            "longitude": -92.1100
+        }
+    },
+    {
+        "title": "MacDill AFB, Florida",
+        "keywords": [],
+        "id": "199961380096392",
+        "url": "https://www.facebook.com/pages/MacDill-Passenger-Terminal/199961380096392",
+        "location": {
+            "latitude": 27.8642,
+            "longitude": -82.4976
+        }
+    },
+    {
+        "title": "McConnell AFB, Kansas",
+        "keywords": [],
+        "id": "McConnellPassengerTerminal",
+        "url": "http://www.facebook.com/McConnellPassengerTerminal",
+        "location": {
+            "latitude": 37.6319,
+            "longitude": -97.2514
+        }
+    },
+    {
+        "title": "NS Norfolk, Virginia",
+        "keywords": [],
+        "id": "313903465336244",
+        "url": "http://www.facebook.com/NorfolkPassengerTerminal",
+        "location": {
+            "latitude": 36.9448,
+            "longitude": -76.3191
+        }
+    },
+    {
+        "title": "Pope Field, North Carolina",
+        "keywords": [],
+        "id": "141510739211178",
+        "url": "https://www.facebook.com/pages/Pope-Passenger-Terminal/141510739211178",
+        "location": {
+            "latitude": 35.1714,
+            "longitude": -79.0173
+        }
+    },
+    {
+        "title": "Scott AFB, Illinois",
+        "keywords": [],
+        "id": "302813853094915",
+        "url": "https://www.facebook.com/pages/Scott-Passenger-Terminal/302813853094915",
+        "location": {
+            "latitude": 38.5427,
+            "longitude": -89.8552
+        }
+    },
+    {
+        "title": "Seattle-Tacoma IAP, Washington",
+        "keywords": [],
+        "id": "435158439841848",
+        "url": "http://www.facebook.com/SeaTacAmcPassengerTerminal",
+        "location": {
+            "latitude": 47.4502,
+            "longitude": -122.3088
+        }
+    },
+    {
+        "title": "Travis AFB, California",
+        "keywords": [],
+        "id": "198770373536846",
+        "url": "https://www.facebook.com/travispassengerterminal",
+        "location": {
+            "latitude": 38.2721,
+            "longitude": -121.9399
+        }
+    },
+    {
+        "title": "Andersen AB, Guam",
+        "keywords": [],
+        "id": "321748637899280",
+        "url": "http://www.facebook.com/AndersenPassengerTerminal",
+        "location": {
+            "latitude": 13.5838842,
+            "longitude": -144.9300569
+        }
+    },
+    {
+        "title": "Aviano AB, Italy",
+        "keywords": [],
+        "id": "340217489359669",
+        "url": "http://www.facebook.com/pages/Aviano-Passenger-Terminal/340217489359669",
+        "location": {
+            "latitude": 46.0360,
+            "longitude": -12.6145
+        }
+    },
+    {
+        "title": "Eielson AFB, Alaska",
+        "keywords": [],
+        "id": "299826893832183",
+        "url": "https://www.facebook.com/EielsonSpaceA/",
+        "location": {
+            "latitude": 64.6431,
+            "longitude": -147.0638
+        }
+    },
+    {
+        "title": "Incirlik AB, Turkey",
+        "keywords": [],
+        "id": "291639120893124",
+        "url": "https://www.facebook.com/728AMSTROP",
+        "location": {
+            "latitude": 37.001944,
+            "longitude": -35.425833
+        }
+    },
+    {
+        "title": "JB Elmendorf-Richardson, Alaska",
+        "keywords": [],
+        "id": "204965679537720",
+        "url": "https://www.facebook.com/pages/Joint-Base-ElmendorfRichardson-Passenger-Terminal/204965679537720",
+        "location": {
+            "latitude": 61.2530,
+            "longitude": -149.7781
+        }
+    },
+    {
+        "title": "JB Pearl Harbor-Hickam, Hawaii",
+        "keywords": [],
+        "id": "246992995370117",
         "url": "https://www.facebook.com/HickamAMC",
-        "title": "Pearl Harbor-Hickam (JB) Pax Term",
-        "id": "246992995370117"
+        "location": {
+            "latitude": 21.3488,
+            "longitude": -157.9436
+        }
+    },
+    {
+        "title": "Kadena AB, Okinawa, Japan",
+        "keywords": [],
+        "id": "147943911913988",
+        "url": "https://www.facebook.com/AMCKadena",
+        "location": {
+            "latitude": 26.3557,
+            "longitude": -127.7679
+        }
+    },
+    {
+        "title": "Lajes AB, Azores Portugal",
+        "keywords": [],
+        "id": "365136066860819",
+        "url": "http://www.facebook.com/pages/Lajes-Passenger-Terminal-Azores-Portugal/365136066860819",
+        "location": {
+            "latitude": 38.7539,
+            "longitude": -27.0869
+        }
+    },
+    {
+        "title": "MCAS Iwakuni, Japan",
+        "keywords": [],
+        "id": "529952733689642",
+        "url": "https://www.facebook.com/IwakuniPassengerTerminal",
+        "location": {
+            "latitude": 34.1440,
+            "longitude": -132.2306
+        }
+    },
+    {
+        "title": "Misawa AB, Japan",
+        "keywords": [],
+        "id": "239878726122443",
+        "url": "http://www.facebook.com/MisawaPassengerTerminal",
+        "location": {
+            "latitude": 40.7043,
+            "longitude": -141.3696
+        }
+    },
+    {
+        "title": "NAS Sigonella, Italy",
+        "keywords": [],
+        "id": "332837856791726",
+        "url": "http://www.facebook.com/pages/Sigonella-Passenger-Terminal/332837856791726",
+        "location": {
+            "latitude": 37.4112,
+            "longitude": -14.9091
+        }
+    },
+    {
+        "title": "NS Guantanamo Bay, Cuba",
+        "keywords": [],
+        "id": "297798750277960",
+        "url": "http://www.facebook.com/pages/Guantanamo-Bay-Passenger-Terminal/297798750277960",
+        "location": {
+            "latitude": 20.0117,
+            "longitude": -75.1216
+        }
+    },
+    {
+        "title": "NS Rota, Spain",
+        "keywords": [],
+        "id": "331027433647109",
+        "url": "http://www.facebook.com/NavalStationRotaSpainPassengerTerminal",
+        "location": {
+            "latitude": 36.6385,
+            "longitude": -6.3354
+        }
+    },
+    {
+        "title": "NSA Bahrain, Bahrain",
+        "keywords": [],
+        "id": "373094102736572",
+        "url": "http://www.facebook.com/BahrainPassengerTerminal",
+        "location": {
+            "latitude": 26.2072,
+            "longitude": -50.6100
+        }
+    },
+    {
+        "title": "NSA Naples, Italy",
+        "keywords": [],
+        "id": "228247760626570",
+        "url": "http://www.facebook.com/pages/Naples-Passenger-Terminal/228247760626570",
+        "location": {
+            "latitude": 40.8821,
+            "longitude": -14.2923
+        }
+    },
+    {
+        "title": "NSA Souda Bay, Crete Greece",
+        "keywords": [],
+        "id": "118078975001312",
+        "url": "http://www.facebook.com/soudabaypassengerterminal1",
+        "location": {
+            "latitude": 35.240117,
+            "longitude": -24.809269
+        }
+    },
+    {
+        "title": "NSF Diego Garcia, British Indian Ocean",
+        "keywords": [],
+        "id": "242934902443795",
+        "url": "https://www.facebook.com/pages/Diego-Garcia-Passenger-Terminal/242934902443795",
+        "location": {
+            "latitude": -7.3132381,
+            "longitude": -72.4121331
+        }
+    },
+    {
+        "title": "Osan AB, Rep of Korea",
+        "keywords": [],
+        "id": "138524916263746",
+        "url": "https://www.facebook.com/OsanPassengerTerminal",
+        "location": {
+            "latitude": 37.090556,
+            "longitude": -127.029722
+        }
+    },
+    {
+        "title": "RAAF Base Richmond, Australia",
+        "keywords": [],
+        "id": "151993091614262",
+        "url": "https://www.facebook.com/RichmondAMC/info",
+        "location": {
+            "latitude": -33.5999976,
+            "longitude": -150.774663568
+        }
+    },
+    {
+        "title": "RAF Mildenhall, United Kingdom",
+        "keywords": [],
+        "id": "378514095530837",
+        "url": "http://www.facebook.com/RAFMildenhallPassengerTerminal",
+        "location": {
+            "latitude": 52.3614,
+            "longitude": -0.4866
+        }
+    },
+    {
+        "title": "Ramstein AB, Germany",
+        "keywords": [],
+        "id": "139447339417453",
+        "url": "https://www.facebook.com/pages/Ramstein-Passenger-Terminal/139447339417453",
+        "location": {
+            "latitude": 49.4400,
+            "longitude": -7.5971
+        }
+    },
+    {
+        "title": "Spangdahlem AB, Germany",
+        "keywords": [],
+        "id": "391131680899620",
+        "url": "https://www.facebook.com/SpangdahlemPassengerTerminal",
+        "location": {
+            "latitude": 49.9748,
+            "longitude": -6.7008
+        }
+    },
+    {
+        "title": "Yokota AB, Japan",
+        "keywords": [],
+        "id": "158690937578006",
+        "url": "https://www.facebook.com/YokotaPassengerTerminal",
+        "location": {
+            "latitude": 35.7332,
+            "longitude": -139.3418
+        }
+    },
+    {
+        "title": "Altus AFB (AETC), Oklahoma",
+        "keywords": [],
+        "id": "581499138711719",
+        "url": "https://www.facebook.com/altuspassengerterminal/",
+        "location": {
+            "latitude": 34.6639582,
+            "longitude": -99.2742518
+        }
+    },
+    {
+        "title": "Beale AFB (ACC), California",
+        "keywords": [],
+        "id": "1725407560818285",
+        "url": "https://www.facebook.com/BealeSpaceA/",
+        "location": {
+            "latitude": 39.1115,
+            "longitude": -121.3599
+        }
+    },
+    {
+        "title": "Nellis AFB (ACC), Nevada",
+        "keywords": [],
+        "id": "1715183205388293",
+        "url": "https://www.facebook.com/NellisPassengerTerminal/",
+        "location": {
+            "latitude": 36.2414,
+            "longitude": -115.0508
+        }
+    },
+    {
+        "title": "Seymour-Johnson AFB (ACC), North Carolina",
+        "keywords": [],
+        "id": "181427605321634",
+        "url": "https://www.facebook.com/seymourjohnsonpax",
+        "location": {
+            "latitude": 35.3513,
+            "longitude": -77.9653
+        }
+    },
+    {
+        "title": "Holloman AFB (ACC), New Mexico",
+        "keywords": [],
+        "id": "1081086338603490",
+        "url": "https://www.facebook.com/HollomanSpaceA/",
+        "location": {
+            "latitude": 32.8440,
+            "longitude": -106.0993
+        }
+    },
+    {
+        "title": "JB San Antonio (AETC), Texas",
+        "keywords": [],
+        "id": "453594698056139",
+        "url": "https://www.facebook.com/JBSAPAXTERMINAL",
+        "formatBad": true,
+        "location": {
+            "latitude": 29.448889,
+            "longitude": -98.448889
+        }
+    },
+    {
+        "title": "Maxwell AFB (AETC), Alabama",
+        "keywords": [],
+        "id": "305028033225275",
+        "url": "https://www.facebook.com/MaxwellPassengerTerminal/",
+        "location": {
+            "latitude": 32.3791,
+            "longitude": -86.3626
+        }
+    },
+    {
+        "title": "Eglin AFB (AFMC), Florida",
+        "keywords": [],
+        "id": "336935336394330",
+        "url": "https://www.facebook.com/EglinSpaceA",
+        "location": {
+            "latitude": 30.4636,
+            "longitude": -86.5533
+        }
+    },
+    {
+        "title": "Hill AFB (AFMC), Utah",
+        "keywords": [],
+        "id": "216946702131360",
+        "url": "https://www.facebook.com/Hill-AFB-Passenger-Terminal-216946702131360/",
+        "location": {
+            "latitude": 41.1097,
+            "longitude": -111.9827
+        }
+    },
+    {
+        "title": "Robins AFB (AFMC), Georgia",
+        "keywords": [],
+        "id": "912221208869451",
+        "url": "https://www.facebook.com/Robins-AFB-Passenger-Terminal-912221208869451/",
+        "location": {
+            "latitude": 32.6106,
+            "longitude": -83.5822
+        }
+    },
+    {
+        "title": "Tinker AFB (AFMC), Oklahoma",
+        "keywords": [],
+        "id": "1489448298040693",
+        "url": "https://www.facebook.com/tinkerairforcebasepassengerterminal/",
+        "location": {
+            "latitude": 35.4236,
+            "longitude": -97.3709
+        }
+    },
+    {
+        "title": "Cannon AFB (AFSOC), New Mexico",
+        "keywords": [],
+        "id": "891057361027702",
+        "url": "https://www.facebook.com/cannonpax/",
+        "location": {
+            "latitude": 34.3898,
+            "longitude": -103.3183
+        }
+    },
+    {
+        "title": "Hurlburt Field (AFSOC), Florida",
+        "keywords": [],
+        "id": "1944071739212721",
+        "url": "https://www.facebook.com/Hurlburt-Field-Passenger-Terminal-1944071739212721/",
+        "location": {
+            "latitude": 30.427618,
+            "longitude": -86.696952
+        }
+    },
+    {
+        "title": "Patrick AFB (AFSPC), Florida",
+        "keywords": [],
+        "id": "349856821767345",
+        "url": "https://www.facebook.com/PatrickPassengerTerminal",
+        "location": {
+            "latitude": 28.2395,
+            "longitude": -80.6075
+        }
+    },
+    {
+        "title": "Peterson AFB (AFSPC), Colorado",
+        "keywords": [],
+        "id": "576051055838695",
+        "location": {
+            "latitude": 38.8239,
+            "longitude": -104.7001
+        }
+    },
+    {
+        "title": "Niagara Falls ARS, New York",
+        "keywords": [],
+        "id": "709078269213991",
+        "location": {
+            "latitude": 43.1163,
+            "longitude": -78.9416
+        }
+    },
+    {
+        "title": "MCAS Futenma, Okinawa, Japan",
+        "keywords": [],
+        "id": "1572890302947201",
+        "location": {
+            "latitude": 26.2760,
+            "longitude": -127.7488
+        }
+    },
+    {
+        "title": "NAF Atsugi Air Terminal, Japan",
+        "keywords": [],
+        "id": "139500199531378",
+        "location": {
+            "latitude": 35.460983,
+            "longitude": -139.447948
+        }
+    },
+    {
+        "title": "NAS North Island, California",
+        "keywords": [],
+        "id": "198319997003818",
+        "url": "https://www.facebook.com/pages/NASNI-Air-Terminal/198319997003818",
+        "location": {
+            "latitude": 32.6978,
+            "longitude": -117.2044
+        }
+    },
+    {
+        "title": "NAS Whidbey Island, Washington",
+        "keywords": [],
+        "id": "394731833981845",
+        "url": "https://www.facebook.com/NASWIairTerminal/",
+        "location": {
+            "latitude": 48.3452,
+            "longitude": -122.6697
+        }
+    },
+    {
+        "title": "161 ARW (ANG, Arizona",
+        "keywords": ["goldwater", "phoenix sky"],
+        "id": "1579843832264326",
+        "location": {
+            "latitude": 33.424994,
+            "longitude": -112.012631
+        }
+    },
+    {
+        "title": "101 ARW (ANG), Maine",
+        "keywords": ["bangor"],
+        "id": "1512021085771385",
+        "location": {
+            "latitude": 44.814167,
+            "longitude": -68.830833
+        }
+    },
+    {
+        "title": "103 AW (ANG), Connecticut",
+        "keywords": ["bradley"],
+        "id": "1505029769823060",
+        "location": {
+            "latitude": 41.939167,
+            "longitude": -72.683333
+        }
+    },
+    {
+        "title": "128 ARW (ANG), Milwaukee, Wisconsin",
+        "keywords": ["general mitchell"],
+        "id": "128ARW.SpaceA",
+        "formatBad": true,
+        "location": {
+            "latitude": 42.947222,
+            "longitude": -87.896667
+        }
+    },
+    {
+        "title": "Pease ANGB, New Hampshire (ANG)",
+        "keywords": [],
+        "id": "260404457338396",
+        "url": "http://www.facebook.com/PEASESPACEA",
+        "location": {
+            "latitude": 43.073499706,
+            "longitude": -70.820663384
+        }
+    },
+    {
+        "title": "133 AW (ANG), St Paul, Minnesota",
+        "keywords": ["Minneapolis-St Paul"],
+        "id": "278753925530460",
+        "url": "http://www.facebook.com/133rdSpaceA",
+        "location": {
+            "latitude": 44.8848,
+            "longitude": -93.2223
+        }
+    },
+    {
+        "title": "Will Rogers (ANG), Oklahoma",
+        "keywords": ["Oklahoma City"],
+        "id": "525421190805282",
+        "url": "https://www.facebook.com/WillRogersAngPassengerTerminal/info",
+        "location": {
+            "latitude": 35.393056,
+            "longitude": -97.600833
+        }
+    },
+    {
+        "title": "155 ARW Nebraska ANG, Lincoln, Nebraska",
+        "keywords": ["Lincoln"],
+        "id": "325750330848888",
+        "url": "https://www.facebook.com/155arw.smallairterminal",
+        "location": {
+            "latitude": 40.8406,
+            "longitude": -96.7557
+        }
+    },
+    {
+        "title": "164 AW (ANG), Memphis, Tennessee",
+        "keywords": ["Memphis"],
+        "id": "332376246896348",
+        "url": "https://www.facebook.com/MemphisANGPassengerTerminal",
+        "location": {
+            "latitude": 35.0226,
+            "longitude": -89.9659
+        }
+    },
+    {
+        "title": "190 ARW (ANG), Topeka, Kansas",
+        "keywords": ["topeka"],
+        "id": "205969256215676",
+        "location": {
+            "latitude": 38.950833,
+            "longitude": -95.663611
+        }
+    },
+    {
+        "title": "Selfridge ANGB (ANG), Michigan",
+        "keywords": [],
+        "id": "773194056058560",
+        "location": {
+            "latitude": 42.6105,
+            "longitude": -82.8317
+        }
+    },
+    {
+        "title": "Dyess AFB Pax Term",
+        "id": "1473369099622926",
+        "url": "http://www.facebook.com/DyessPaxTerminal",
+        "special-schedule-url": "http://www.dyess.af.mil/Portals/145/Docs/Space-A/Space-A.pdf",
+        "formatBad": true,
+        "location": {
+            "latitude": 32.4224,
+            "longitude": -99.8419
+        }
+    },
+    {
+        "title": "Fort Worth (NAS)",
+        "id": "121264007952051",
+        "url": "https://www.facebook.com/NASFortWorthJRB",
+        "formatBad": true,
+        "location": {
+            "latitude": 32.7691861,
+            "longitude": -97.4415347
+        }
+    },
+    {
+        "url": "https://www.facebook.com/pages/Moron-AB-Spain-Passenger-Terminal/414779615225368",
+        "title": "Morón Pax Term",
+        "id": "414779615225368",
+        "formatBad": true,
+        "location": {
+            "latitude": 37.1746,
+            "longitude": -5.6138
+        }
     }
 ]

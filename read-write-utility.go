@@ -28,14 +28,19 @@ func readTerminalArrayToMap(terminalArray []Terminal) (terminalMap map[string]Te
 	return
 }
 
-func readLocationKeywordsFileToArray(filename string) (locationKeywordsArray []LocationKeywords, err error) {
-	locationsRaw, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return
-	}
+func readKeywordsToArrayFromFiles(filenames ...string) (keywordsArray []LocationKeywords, err error) {
+	for _, filename := range filenames {
+		var locationsRaw []byte
+		locationsRaw, err = ioutil.ReadFile(filename)
+		if err != nil {
+			return
+		}
 
-	if err = json.Unmarshal(locationsRaw, &locationKeywordsArray); err != nil {
-		return
+		var tmp []LocationKeywords
+		if err = json.Unmarshal(locationsRaw, &tmp); err != nil {
+			return
+		}
+		keywordsArray = append(keywordsArray, tmp...)
 	}
 
 	return

@@ -92,7 +92,7 @@ func populateLocationsTable() (err error) {
 
 	//Read in location keyword file
 	var locationKeywordsArray []LocationKeywords
-	if locationKeywordsArray, err = readLocationKeywordsFileToArray(TERMINAL_KEYWORDS_FILE); err != nil {
+	if locationKeywordsArray, err = readKeywordsToArrayFromFiles(TERMINAL_FILE, LOCATION_KEYWORDS_FILE); err != nil {
 		return
 	}
 
