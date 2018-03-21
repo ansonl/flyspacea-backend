@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
+	//"log"
 )
 
 func readTerminalFileToArray(filename string) (terminalArray []Terminal, err error) {
@@ -40,6 +41,9 @@ func readKeywordsToArrayFromFiles(filenames ...string) (keywordsArray []Location
 		if err = json.Unmarshal(locationsRaw, &tmp); err != nil {
 			return
 		}
+
+		//log.Printf("%v locations in file %v", len(tmp), filenames)
+
 		keywordsArray = append(keywordsArray, tmp...)
 	}
 
