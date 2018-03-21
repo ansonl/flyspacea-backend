@@ -71,18 +71,6 @@ type Departure struct {
 }
 */
 
-//Slide data header label keyword to train in fuzzy with customizable training depth
-type LabelKeyword struct {
-	Spelling     string
-	DepthToTrain int
-}
-
-//Special keywords for a location in location_keywords.json
-type LocationKeywords struct {
-	Title    string   `json:"title"`
-	Keywords []string `json:"keywords"`
-}
-
 //Returned when searching all terminal keywords in plaintext
 type TerminalKeywordsResult struct {
 	Keyword  string
@@ -90,9 +78,11 @@ type TerminalKeywordsResult struct {
 }
 
 //Terminal representation
+//Used for both Terminal list and keywords list depending on which files loaded from.
 type Terminal struct {
 	Title string `json:"title"`
 	Id    string `json:"id"`
+	Keywords []string `json:"keywords"`
 }
 
 //Processed version of downloaded photo

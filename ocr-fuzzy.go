@@ -28,6 +28,24 @@ func createFuzzyModels() (err error) {
 	fuzzyBannedSpellings = make(map[string]int)
 	fuzzyBannedSpellings["listed"] = 0
 
+	//Slide data header label keyword to train in fuzzy with customizable training depth
+	type LabelKeyword struct {
+		Spelling     string
+		DepthToTrain int
+	}
+
+	//Create separate fuzzy model object for each keyword. Store fuzzy models in map
+	createFuzzyModelsForKeywords := func (keywords []LabelKeyword, modelMap *map[string]*fuzzy.Model) {
+		*modelMap = make(map[string]*fuzzy.Model)
+		for _, v := range keywords {
+			v.Spelling = strings.ToLower(v.Spelling)
+			(*modelMap)[v.Spelling] = fuzzy.NewModel()
+			(*modelMap)[v.Spelling].SetThreshold(1)
+			(*modelMap)[v.Spelling].SetDepth(v.DepthToTrain)
+			(*modelMap)[v.Spelling].TrainWord(v.Spelling)
+		}
+	}
+
 	//Create fuzzy models for slide labels
 	var keywordList []LabelKeyword
 	keywordList = []LabelKeyword{
@@ -47,7 +65,7 @@ func createFuzzyModels() (err error) {
 	createFuzzyModelsForKeywords(keywordList, &fuzzyModelForKeyword)
 
 	//Create fuzzy models for terminal keywords
-	var locationKeywordsArray []LocationKeywords
+	var locationKeywordsArray []Terminal
 	if locationKeywordsArray, err = readKeywordsToArrayFromFiles(TERMINAL_FILE, LOCATION_KEYWORDS_FILE); err != nil {
 		return
 	}
@@ -123,18 +141,6 @@ func createFuzzyModels() (err error) {
 	}
 
 	return
-}
-
-//Create separate fuzzy model object for each keyword. Store fuzzy models in map
-func createFuzzyModelsForKeywords(keywords []LabelKeyword, modelMap *map[string]*fuzzy.Model) {
-	*modelMap = make(map[string]*fuzzy.Model)
-	for _, v := range keywords {
-		v.Spelling = strings.ToLower(v.Spelling)
-		(*modelMap)[v.Spelling] = fuzzy.NewModel()
-		(*modelMap)[v.Spelling].SetThreshold(1)
-		(*modelMap)[v.Spelling].SetDepth(v.DepthToTrain)
-		(*modelMap)[v.Spelling].TrainWord(v.Spelling)
-	}
 }
 
 //Perform OCR on file for slide and set s.PlainText and s.HOCRText

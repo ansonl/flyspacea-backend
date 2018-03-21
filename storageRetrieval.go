@@ -91,14 +91,14 @@ func populateLocationsTable() (err error) {
 	}
 
 	//Read in location keyword file
-	var locationKeywordsArray []LocationKeywords
+	var locationKeywordsArray []Terminal
 	if locationKeywordsArray, err = readKeywordsToArrayFromFiles(TERMINAL_FILE, LOCATION_KEYWORDS_FILE); err != nil {
 		return
 	}
 
 	//Insert locations into table
 	var rowsAffected int64
-	fmt.Printf("Inserting %v locations into %v table...", len(locationKeywordsArray), LOCATIONS_TABLE)
+	fmt.Println("Inserting %v locations into %v table...", len(locationKeywordsArray), LOCATIONS_TABLE)
 
 	//spawn go routine to continuously read and run functions in the channel
 	var printChannel chan func()
@@ -111,7 +111,7 @@ func populateLocationsTable() (err error) {
 	}()
 
 	defer func() {
-		fmt.Printf("\rInserted %v locations into %v table.\n", rowsAffected, LOCATIONS_TABLE)
+		log.Printf("\r\u001b[1AInserted %v locations into %v table.\n", rowsAffected, LOCATIONS_TABLE)
 		}()
 	for i, lk := range locationKeywordsArray {
 		var result sql.Result
@@ -129,7 +129,7 @@ func populateLocationsTable() (err error) {
 		rowsAffected += affected
 
 		printChannel <- func() {
-			fmt.Printf("\r\u001b[0KInserted %v locations into %v table%v", rowsAffected, LOCATIONS_TABLE, strings.Repeat(".", i % 4))
+			fmt.Printf("\r\u001b[1A\u001b[0KInserted %v/%v locations into %v table%v\n", rowsAffected, len(locationKeywordsArray), LOCATIONS_TABLE, strings.Repeat(".", i % 10))
 		}
 
 	}
