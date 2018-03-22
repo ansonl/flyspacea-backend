@@ -30,3 +30,14 @@ SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled
 SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled 
  FROM flights 
  WHERE Origin=$1 AND RollCall <= to_timestamp('2016-04-18 17:50:00', 'YY-MM-DD HH24:MI:SS') + INTERVAL '14 day' AND RollCall > to_timestamp('2016-04-18 17:50:00', 'YY-MM-DD HH24:MI:SS') - INTERVAL '14 day';
+
+#delete in current day
+DELETE FROM %v 
+ WHERE Origin=$1 AND RollCall >= now() AND RollCall <= SELECT CURRENT_DATE + INTERVAL '1 DAY';
+
+#delete in future day
+DELETE FROM %v 
+ WHERE Origin=$1 AND RollCall >= $2 AND RollCall <= $2 + INTERVAL '1 DAY';
+
+
+ RollCall > to_timestamp('2016-04-18 17:50:00', 'YYYY-MM-DD') - INTERVAL '14 day';

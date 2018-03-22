@@ -92,7 +92,7 @@ func populateLocationsTable() (err error) {
 
 	//Read in location keyword file
 	var locationKeywordsArray []Terminal
-	if locationKeywordsArray, err = readKeywordsToArrayFromFiles(TERMINAL_FILE, LOCATION_KEYWORDS_FILE); err != nil {
+	if locationKeywordsArray, err = readTerminalArrayFromFiles(TERMINAL_FILE, LOCATION_KEYWORDS_FILE); err != nil { //same files reread when building fuzzy models in ocr-fuzzy.go. Maybe pass data in future.
 		return
 	}
 
@@ -101,18 +101,24 @@ func populateLocationsTable() (err error) {
 	fmt.Println("Inserting %v locations into %v table...", len(locationKeywordsArray), LOCATIONS_TABLE)
 
 	//spawn go routine to continuously read and run functions in the channel
-	var printChannel chan func()
-	printChannel = make(chan func())
+	//Stop reading from channel when read function returns false boolean
+	//https://golang.org/doc/codewalk/functions/
+	type printFunc func() bool
+	var printChannel chan printFunc
+	printChannel = make(chan printFunc)
 	go func() {
 		for true {
 			tmp := <-printChannel
-			tmp()
+			if !tmp() {
+				break
+			}
 		}
 	}()
 
 	defer func() {
-		log.Printf("\r\u001b[1AInserted %v locations into %v table.\n", rowsAffected, LOCATIONS_TABLE)
+		log.Printf("\r\u001b[1A\u001b[0KInserted %v locations into %v table.\n", rowsAffected, LOCATIONS_TABLE)
 		}()
+	
 	for i, lk := range locationKeywordsArray {
 		var result sql.Result
 		if result, err = db.Exec(fmt.Sprintf(`
@@ -128,10 +134,49 @@ func populateLocationsTable() (err error) {
 		}
 		rowsAffected += affected
 
-		printChannel <- func() {
+		printChannel <- func() bool {
 			fmt.Printf("\r\u001b[1A\u001b[0KInserted %v/%v locations into %v table%v\n", rowsAffected, len(locationKeywordsArray), LOCATIONS_TABLE, strings.Repeat(".", i % 10))
+			return true
 		}
+	}
+	
 
+	printChannel <- func() bool {
+		return false
 	}
 	return
+}
+
+//Pass in time in local TZ
+func deleteFlightsFromTableForDay(table string, targetDay time.Time) {
+
+	dateEqual := func(date1, date2 time.Time) bool {
+	    y1, m1, d1 := date1.Date()
+	    y2, m2, d2 := date2.Date()
+	    return y1 == y2 && m1 == m2 && d1 == d2
+	}
+
+	targetDay = targetDay.UTC()
+
+	var start, end time.Time
+	currentTime := time.Now()
+	if dateEqual(targetDay, currentTime) {
+		start = currentTime
+		end = currentTime.Round(time.Hour*24)
+	} else if targetDay.After(currentTime) {
+		year, month, day := targetDay.Date()
+		start = time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
+		end = start.Add(time.Hour * 24)
+	}
+
+	deleteFlightsFromTableBetweenTimes
+}
+
+//Inclusive of start, exclusive of end
+func deleteFlightsFromTableBetweenTimes(table string, start time.Time, end time.Time) (err error) {
+	if err = checkDatabaseHandleValid(db); err != nil {
+		return
+	}
+
+
 }

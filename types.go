@@ -77,12 +77,19 @@ type TerminalKeywordsResult struct {
 	Distance int
 }
 
+//Represents location map in terminal/location keyword file
+type TerminalLocation struct {
+	Latitude float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
 //Terminal representation
 //Used for both Terminal list and keywords list depending on which files loaded from.
 type Terminal struct {
 	Title string `json:"title"`
 	Id    string `json:"id"`
 	Keywords []string `json:"keywords"`
+	Location TerminalLocation `json:"location"`
 }
 
 //Processed version of downloaded photo
@@ -114,6 +121,7 @@ type Destination struct {
 
 	//RollCall for the Destination
 	//non nil value indicates 'anchor' (same horizonal level RollCall) Destination for grouping Destinations to other nearby Destinations.
+	//later linked for all Destinations in Grouping for insertion of flight to database
 	LinkedRollCall *RollCall
 }
 

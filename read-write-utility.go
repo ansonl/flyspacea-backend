@@ -6,19 +6,6 @@ import (
 	//"log"
 )
 
-func readTerminalFileToArray(filename string) (terminalArray []Terminal, err error) {
-	terminalsRaw, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return
-	}
-
-	if err = json.Unmarshal(terminalsRaw, &terminalArray); err != nil {
-		return
-	}
-
-	return
-}
-
 func readTerminalArrayToMap(terminalArray []Terminal) (terminalMap map[string]Terminal) {
 	//set key to v.Title and set v.Index
 	terminalMap = make(map[string]Terminal)
@@ -29,7 +16,7 @@ func readTerminalArrayToMap(terminalArray []Terminal) (terminalMap map[string]Te
 	return
 }
 
-func readKeywordsToArrayFromFiles(filenames ...string) (keywordsArray []Terminal, err error) {
+func readTerminalArrayFromFiles(filenames ...string) (keywordsArray []Terminal, err error) {
 	for _, filename := range filenames {
 		var locationsRaw []byte
 		locationsRaw, err = ioutil.ReadFile(filename)

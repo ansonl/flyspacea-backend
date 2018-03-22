@@ -19,7 +19,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	terminalArray, err := readTerminalFileToArray(TERMINAL_FILE)
+	terminalArray, err := readTerminalArrayFromFiles(TERMINAL_FILE)
 	if err != nil {
 		log.Fatal(err)
 	}

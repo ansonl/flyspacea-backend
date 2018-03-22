@@ -386,6 +386,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 	//Link GroupingA with nearest GroupingB so all Destinations in GroupingB are in GroupingA. Repeat until GroupingA contains a Destination that (horizontally) intersects a RollCall.
 	combineDestinationGroupsToAnchorDestinations(&destinationGroupings)
 
+	//Print out found flights
 	fmt.Println("After combine dests:")
 	for _, dg := range destinationGroupings {
 		if dg.LinkedRollCall != nil {
@@ -405,6 +406,22 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		}
 	}
 
+	//Create list of flights, each Destination is a flight. 
+	//Structure: flight -> Destination -> LinkedRollCall * -> LinkedSeatsAvailable *
+	var finalFlights []Destination
+	for dgIndex, _ := range destinationGroupings {
+		//Link RollCall to all Destinations in Grouping (if RollCall linked)
+		//Add to each Destination final flights list
+		for dIndex, _ := range destinationGroupings[dgIndex].Destinations {
+			if destinationGroupings[dgIndex].LinkedRollCall != nil {
+				destinationGroupings[dgIndex].Destinations[dIndex].LinkedRollCall = destinationGroupings[dgIndex].LinkedRollCall
+			}
+
+			finalFlights = append(finalFlights, destinationGroupings[dgIndex].Destinations[dIndex])
+		}
+	}
+
+	
 
 
 	incrementPhotosProcessed()
