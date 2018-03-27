@@ -153,6 +153,17 @@ type Grouping struct {
 	SharedInfo
 }
 
+//Representation of a specific flight
+type Flight struct {
+	Origin string
+	Destination string
+	RollCall time.Time
+	SeatCount int
+	SeatType string
+	Cancelled bool
+	PhotoSource string
+}
+
 //Update Grouping struct BBox to include all Destinations in grouping
 func (g *Grouping) updateBBox() {
 	if len((*g).Destinations) == 0 {
@@ -177,13 +188,3 @@ func (g *Grouping) updateBBox() {
 	}
 }
 
-//Representation of a specific flight
-type Flight struct {
-	Origin string
-	Destination string
-	RollCall time.Time
-	SeatCount int
-	SeatType string
-	Cancelled bool
-	PhotoSource string
-}

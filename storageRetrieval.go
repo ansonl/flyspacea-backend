@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"fmt"
+	"time"
 	"strings"
 )
 
@@ -146,9 +147,38 @@ func populateLocationsTable() (err error) {
 	}
 	return
 }
-/*
+
+//Insert []Flight into table.
+func insertFlightsIntoTable(table string, flights []Flight) (err error) {
+	if err = checkDatabaseHandleValid(db); err != nil {
+		return
+	}
+
+	//Insert flights into table
+	var rowsAffected int64
+	for _, flight := range flights {
+		var result sql.Result
+		if result, err = db.Exec(fmt.Sprintf(`
+			INSERT INTO %v (Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource) 
+	    	VALUES ($1, $2, $3, $4, $5, $6, $7);
+	 		`, table), flight.Origin, flight.Destination, flight.RollCall.Format("2006-01-02 15:04:05"), flight.SeatCount, flight.SeatType, false, flight.PhotoSource); err != nil {
+			return
+		} 
+
+		var affected int64
+		if affected, err = result.RowsAffected(); err != nil {
+			return
+		}
+		rowsAffected += affected
+	}
+	
+	fmt.Printf("INSERT []Flights to %v len %v\n%v rows affected\n", table, len(flights), rowsAffected)
+
+	return
+}
+
 //Pass in time in local TZ
-func deleteFlightsFromTableForDay(table string, targetDay time.Time) {
+func deleteFlightsFromTableForDayForOrigin(table string, targetDay time.Time, origin string) (err error) {
 
 	dateEqual := func(date1, date2 time.Time) bool {
 	    y1, m1, d1 := date1.Date()
@@ -169,13 +199,30 @@ func deleteFlightsFromTableForDay(table string, targetDay time.Time) {
 		end = start.Add(time.Hour * 24)
 	}
 
-	deleteFlightsFromTableBetweenTimes
+	err = deleteFlightsFromTableBetweenTimesForOrigin(table, start, end, origin)
+
+	return
 }
 
-//Inclusive of start, exclusive of end
-func deleteFlightsFromTableBetweenTimes(table string, start time.Time, end time.Time) (err error) {
+//DELETE Inclusive of start, exclusive of end. Can input 0000 of start date and 0000 end date and get all times up but no including 0000 of end date.
+func deleteFlightsFromTableBetweenTimesForOrigin(table string, start time.Time, end time.Time, origin string) (err error) {
 	if err = checkDatabaseHandleValid(db); err != nil {
 		return
 	}
+
+	var result sql.Result
+	if result, err = db.Exec(fmt.Sprintf(`
+		DELETE FROM %v 
+ 		WHERE Origin=$1 AND RollCall >= $2 AND RollCall < $3;
+ 		`, table), origin, start.Format("2006-01-02"), end.Format("2006-01-02")); err != nil {
+		return
+	} 
+	var affected int64
+	if affected, err = result.RowsAffected(); err != nil {
+		return
+	}
+
+	fmt.Printf("Delete flights between times for origin %v %v %v %v\n%v rows affected\n", table, start, end, origin, affected)
+
+	return
 }
-*/

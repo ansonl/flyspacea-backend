@@ -41,3 +41,12 @@ DELETE FROM %v
 
 
  RollCall > to_timestamp('2016-04-18 17:50:00', 'YYYY-MM-DD') - INTERVAL '14 day';
+
+ #delete in future day
+DELETE FROM %v 
+ WHERE Origin=$1 AND RollCall >= $2 AND RollCall < $2;
+
+
+#Insert new flight
+INSERT INTO %v (Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource) 
+    VALUES ($1, $2, $3, $4, $5, $6, $7);

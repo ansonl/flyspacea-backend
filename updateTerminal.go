@@ -427,9 +427,11 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		}
 	}
 
-	//Create list of flights, each Destination is a flight. 
+	//Create list of flights, 
+	//Initially Destination is a flight. 
 	//Structure: flight -> Destination -> LinkedRollCall * -> LinkedSeatsAvailable *
-	var finalFlights []Destination
+	//Convert Destinations to Flight struct and add
+	var finalFlights []Flight
 	for dgIndex, _ := range destinationGroupings {
 		//Link RollCall to all Destinations in Grouping (if RollCall linked)
 		//Add to each Destination final flights list
@@ -443,8 +445,36 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 				}
 			}
 
-			finalFlights = append(finalFlights, destinationGroupings[dgIndex].Destinations[dIndex])
+			/*
+			//Do not add any destinations without roll calls
+			if destinationGroupings[dgIndex].Destinations[dIndex].LinkedRollCall == nil {
+				continue
+			}
+			*/
+
+			//Create Flight struct to add to slice
+			tmpFlight := Flight{
+				Origin: slides[0].Terminal.Title,
+				Destination: destinationGroupings[dgIndex].Destinations[dIndex].TerminalTitle,
+				RollCall: (*destinationGroupings[dgIndex].Destinations[dIndex].LinkedRollCall).Time,
+				SeatCount: (*destinationGroupings[dgIndex].Destinations[dIndex].LinkedSeatsAvailable).Number,
+				SeatType: (*destinationGroupings[dgIndex].Destinations[dIndex].LinkedSeatsAvailable).Letter,
+				PhotoSource: slides[0].FBNodeId}
+
+			finalFlights = append(finalFlights, tmpFlight)
 		}
+	}
+
+	for _, ff := range finalFlights {
+		fmt.Println(ff)
+	}
+
+	if err = deleteFlightsFromTableForDayForOrigin(FLIGHTS_72HR_TABLE, slideDate, slides[0].Terminal.Title); err != nil {
+		return
+	}
+
+	if err = insertFlightsIntoTable(FLIGHTS_72HR_TABLE, finalFlights); err != nil {
+		return
 	}
 
 
