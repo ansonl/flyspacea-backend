@@ -141,3 +141,27 @@ func deleteDuplicatesFromSAArray(arrayPointer *[]SeatsAvailable) {
 		*arrayPointer = tmp
 	}
 }
+
+func deleteTerminalFromDestArray(arrayPointer *[]Destination, targetTerminal Terminal) {
+	dests := *arrayPointer
+	originalLength := len(dests)
+
+	//Find and remove any matching dests
+	for i := 0; i < len(dests); i++ {
+		if dests[i].TerminalTitle == targetTerminal.Title {
+			copy(dests[i:], dests[i+1:])
+			dests[len(dests)-1] = Destination{}
+			dests = dests[:len(dests)-1]
+			i--
+		}
+	}
+	//If duplicates were found, alloc new Destination slice and reassign passed in slice pointer
+	if len(dests) != originalLength {
+		//Create new slice to copy elements over. Original slice will have updated length but old elements in memory (displayed when printing).
+		tmp := make([]Destination, len(dests))
+		for i := 0; i < len(dests); i++ {
+			tmp[i] = dests[i]
+		}
+		*arrayPointer = tmp
+	}
+}

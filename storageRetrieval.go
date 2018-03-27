@@ -146,7 +146,7 @@ func populateLocationsTable() (err error) {
 	}
 	return
 }
-
+/*
 //Pass in time in local TZ
 func deleteFlightsFromTableForDay(table string, targetDay time.Time) {
 
@@ -177,6 +177,5 @@ func deleteFlightsFromTableBetweenTimes(table string, start time.Time, end time.
 	if err = checkDatabaseHandleValid(db); err != nil {
 		return
 	}
-
-
 }
+*/

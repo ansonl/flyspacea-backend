@@ -34,5 +34,25 @@
 	{
 		"title": "Kwajalein Atoll",
 		"keywords": []
+	},
+	{
+		"title": "Yuma MCAS Yuma IAP, AZ",
+		"keywords": ["yuma mcas", "yuma intl"]
+	},
+	{
+		"title": "Alice Springs, Australia",
+		"keywords": []
+	},
+	{
+		"title": "Richmond, Australia",
+		"keywords": []
+	},
+	{
+		"title": "March ARB, CA",
+		"keywords": []
+	},
+	{
+		"title": "Sioux Gateway, IA",
+		"keywords": []
 	}
 ]

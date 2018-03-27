@@ -2,6 +2,7 @@ package main
 
 //Terminal info files
 const (
+	TERMINAL_SINGLE_FILE          string = "terminals-single.json"
 	TERMINAL_FILE          string = "terminals.json"
 	LOCATION_KEYWORDS_FILE string = "location_keywords.json"
 )
@@ -59,6 +60,11 @@ const (
 	IMAGE_SUFFIX_CROPPED string = "c"
 )
 
+//OCR config constants
+const (
+	FUZZY_MODEL_KEYWORD_MIN_LENGTH int = 5
+)
+
 //OCR whitelist names
 type OCRWhiteListType int
 
@@ -75,14 +81,25 @@ const (
 
 //Slide processing constants
 const (
+	//Working color for image processing.
 	IMAGE_PROCESSING_TMP_COLOR string = "purple"
 
+	//Minimum OCR word confidence threshold 0-100 to process a result.
 	OCR_WORD_CONFIDENCE_THRESHOLD int     = 10
+
+	//Max DestinationLabel.YCoord/ImageTotalHeight to detect incorrect Destination label matches.
+	DESTINATION_TEXT_VERTICAL_THRESHOLD float64 = 0.5
+
+	//Percentage of area between two bounding boxes to overlap to be considered duplicates. 
 	DUPLICATE_AREA_THRESHOLD      float64 = 0.5
 
+	//Horizontal distance to add to left and right of seats bounds when cropping seats text.
 	SEATS_CROP_HORIZONTAL_BUFFER int = 5
 
+	//Furthest vertical distance of destination bounding boxes to be linked. 
 	ROLLCALLS_DESTINATION_LINK_VERTICAL_THRESHOLD int = 50
+
+	//Minimum vertical overlap required between seats and rollcall text to be linked. Negative value is positive overlap.
 	ROLLCALLS_SEATS_LINK_VERTICAL_THRESHOLD       int = -5
 )
 

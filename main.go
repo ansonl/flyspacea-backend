@@ -13,13 +13,13 @@ func main() {
 		log.Println(err)
 	}
 
-	return
+	
 
 	if err = createFuzzyModels(); err != nil {
 		log.Fatal(err)
 	}
 
-	terminalArray, err := readTerminalArrayFromFiles(TERMINAL_FILE)
+	terminalArray, err := readTerminalArrayFromFiles(TERMINAL_SINGLE_FILE)
 	if err != nil {
 		log.Fatal(err)
 	}

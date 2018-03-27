@@ -27,6 +27,7 @@ func createFuzzyModels() (err error) {
 	//Create ban spelling list to not match
 	fuzzyBannedSpellings = make(map[string]int)
 	fuzzyBannedSpellings["listed"] = 0
+	fuzzyBannedSpellings["island"] = 0
 
 	//Slide data header label keyword to train in fuzzy with customizable training depth
 	type LabelKeyword struct {
@@ -83,7 +84,7 @@ func createFuzzyModels() (err error) {
 
 		keyword = strings.ToLower(keyword)
 
-		if len(keyword) < 5 {
+		if len(keyword) < FUZZY_MODEL_KEYWORD_MIN_LENGTH {
 			err = fmt.Errorf("Keyword length less than 5. %v", keyword)
 		}
 
@@ -451,7 +452,7 @@ func getTextBounds(hocr string, textSpelling string) (bboxes []image.Rectangle, 
 	for _, r := range results {
 		title := r.Attr("title")
 		//fmt.Printf("%v\n", len(results))
-		fmt.Printf("%v\n", r.String())
+		//fmt.Printf("%v\n", r.String())
 
 		//Regex search for bbox and optional confidence (x_wconf) attr.
 		var bboxRegEx *regexp.Regexp

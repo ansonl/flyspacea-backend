@@ -272,9 +272,9 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 
 		//Manual slide control
 		newSlide.Extension = "jpeg"
-		//newSlide.FBNodeId = "1600297986706271"
+		newSlide.FBNodeId = "1614074308661972"
 		//newSlide.FBNodeId = "1600297960039607"
-		newSlide.FBNodeId = "1600298003372936"
+		//newSlide.FBNodeId = "1600298003372936"
 
 		//create processed image in imagemagick IF slide created is not original slide
 		if currentSaveType != SAVE_IMAGE_TRAINING {
@@ -289,6 +289,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 
 		slides = append(slides, newSlide)
 	}
+
 
 	//Find date displayed in photo. Pick best date from slides.
 	var slideDate time.Time
@@ -311,17 +312,27 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		return
 	}
 
-	//displayMessageForTerminal(slides[0].Terminal, fmt.Sprintf(" dest bbox %v %v %v %v", destLabelBBox.Min.X, destLabelBBox.Min.Y, destLabelBBox.Max.X, destLabelBBox.Max.Y))
-
 	//Find potential rollcall times from all slides
 	var rollCalls []RollCall
 	var rollCallsNoBBox []RollCall
+
+	//Check if Destination label is over 0.5 (threshold constant) of total image height. If too low on image, Destination Label may be incorrect. 
+	var destLabelValid bool
+	if destLabelValid, err = slides[0].isYCoordinateInHeightPercentage(destLabelBBox.Min.Y, DESTINATION_TEXT_VERTICAL_THRESHOLD); err != nil {
+		return
+	}
+	if !destLabelValid {
+		destLabelBBox.Min.Y = 0
+	}
+
 	if rollCalls, rollCallsNoBBox, err = findRollCallTimesFromSlides(slides, slideDate, destLabelBBox.Min.Y); err != nil {
 		return
 	}
 
-	fmt.Println("rollcalls", rollCalls)
-	fmt.Println("rollcalls w/o bbox", rollCallsNoBBox)
+	//Print any not found in hOCR rollcalls
+	if len(rollCallsNoBBox) > 0 {
+		fmt.Println("rollcalls w/o bbox", rollCallsNoBBox)
+	}
 
 	//Get seats bbox
 	var seatsLabelBBox image.Rectangle
@@ -334,6 +345,37 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 	if seatsAvailable, err = findSeatsAvailableFromSlides(slides, seatsLabelBBox); err != nil {
 		return
 	}
+
+	//Find potential destinations from all slides
+	var destinations []Destination
+	if destinations, err = findDestinationsFromSlides(slides, destLabelBBox.Min.Y); err != nil {
+		return
+	}
+
+	deleteTerminalFromDestArray(&destinations, slides[0].Terminal)
+
+
+	/*
+	fmt.Println("found dests in all slides")
+	for _, d := range destinations {
+		log.Println(d)
+	}
+	return
+	*/
+	
+
+	//Find vertically closest Destination for every RollCall
+	linkRollCallsToNearestDestinations(rollCalls, destinations)
+
+	/*
+	fmt.Println("After nearest rc to dest link")
+	for _, d := range destinations {
+		log.Println(d)
+		if d.LinkedRollCall != nil {
+			log.Println(*(d.LinkedRollCall))
+		}
+	}
+	*/
 
 	//Link SeatsAvailable with RollCalls on same line
 	linkRollCallsToNearestSeatsAvailable(rollCalls, seatsAvailable)
@@ -348,31 +390,10 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 	}
 	*/
 
-	//Find potential destinations from all slides
-	var destinations []Destination
-	if destinations, err = findDestinationsFromSlides(slides, destLabelBBox.Min.Y); err != nil {
-		return
-	}
+	//Find vertically closest Destination for every SeatsAvailable
+	linkDestinationsToNearestSeatsAvailable(destinations, seatsAvailable)
 
-	/*
-	fmt.Println("found dests in all slides")
-	for _, d := range destinations {
-		log.Println(d)
-	}
-	*/
-
-	//Find vertically closest Destination for every RollCall
-	linkRollCallsToNearestDestinations(rollCalls, destinations)
-
-	/*
-	fmt.Println("After nearest rc to dest link")
-	for _, d := range destinations {
-		log.Println(d)
-		if d.LinkedRollCall != nil {
-			log.Println(*(d.LinkedRollCall))
-		}
-	}
-	*/
+	
 
 	//Create array of individual Grouping for each Destination to pass into combine Destinations to Groupings stage
 	var destinationGroupings []Grouping
@@ -415,13 +436,16 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		for dIndex, _ := range destinationGroupings[dgIndex].Destinations {
 			if destinationGroupings[dgIndex].LinkedRollCall != nil {
 				destinationGroupings[dgIndex].Destinations[dIndex].LinkedRollCall = destinationGroupings[dgIndex].LinkedRollCall
+			
+				//Link Destination to Grouping.LinkedRollCall.LinkedSeatsAvailable if no Destination linked seats already
+				if destinationGroupings[dgIndex].Destinations[dIndex].LinkedSeatsAvailable == nil {
+					destinationGroupings[dgIndex].Destinations[dIndex].LinkedSeatsAvailable = (*destinationGroupings[dgIndex].LinkedRollCall).LinkedSeatsAvailable
+				}
 			}
 
 			finalFlights = append(finalFlights, destinationGroupings[dgIndex].Destinations[dIndex])
 		}
 	}
-
-	
 
 
 	incrementPhotosProcessed()

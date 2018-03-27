@@ -123,6 +123,9 @@ type Destination struct {
 	//non nil value indicates 'anchor' (same horizonal level RollCall) Destination for grouping Destinations to other nearby Destinations.
 	//later linked for all Destinations in Grouping for insertion of flight to database
 	LinkedRollCall *RollCall
+	//SeatsAvailable for Destination. 
+	//NOT used to indicate 'anchor'. Use LinkedRollCall to indicate anchor.
+	LinkedSeatsAvailable *SeatsAvailable
 }
 
 //RollCall representation

@@ -238,9 +238,11 @@ func findLabelBoundsOfPhotoNodeSlides(slides []Slide, label string) (bbox image.
 func findDestinationsFromSlides(slides []Slide, limitMinY int) (foundDestinations []Destination, err error) {
 	//Find location keyword spellings in image pointed to by each slide.
 	for _, s := range slides {
-		var found map[string]TerminalKeywordsResult
+		var found map[string]TerminalKeywordsResult //map[spelling]{Title, Distance}
 		found = make(map[string]TerminalKeywordsResult)
 		found = findTerminalKeywordsInPlainText(s.PlainText)
+
+		fmt.Println("found keywords", found)
 
 		//Get text bounds from hOCR for each potential spelling found.
 		for spelling, result := range found {
@@ -248,6 +250,8 @@ func findDestinationsFromSlides(slides []Slide, limitMinY int) (foundDestination
 			if bboxes, err = getTextBounds(s.HOCRText, spelling); err != nil {
 				return
 			}
+
+			fmt.Println("found bbox for ", spelling, bboxes, "\nmin y ", limitMinY)
 
 			//Skip result if bounding box too high. MinY too small.
 			//Append new Destination to foundDestinations for each bounding box found.
@@ -354,7 +358,7 @@ func find24HRFromPlainText(plainText string, estimatedDay time.Time) (found24HR 
 	}
 
 	for _, result := range regexResult {
-		fmt.Println("found regex", result)
+		//fmt.Println("found regex", result)
 
 		var capturedHour int
 		var capturedMinute int
@@ -401,7 +405,7 @@ func findSeatsAvailableFromSlides(slides []Slide, seatsLabelBBox image.Rectangle
 			return
 		}
 
-		fmt.Println("look SA in slide", s.SaveType, cropSlide.HOCRText)
+		//fmt.Println("look SA in slide", s.SaveType, cropSlide.HOCRText)
 
 		//Get text bounds from hOCR for each 24HR time text found.
 		for _, result := range foundSAs {
@@ -451,10 +455,12 @@ func findSeatsFromPlainText(plainText string) (foundSAs []SeatsAvailable, err er
 	}
 
 	for _, result := range regexResult {
+		/*
 		fmt.Println("found regex len ", len(result))
 		for n, r := range result {
 			fmt.Println(n, len(r), r)
 		}
+		*/
 
 		var capturedSeatCount int
 		var capturedSeatLetter string //F/T/SP
@@ -659,12 +665,14 @@ func combineDestinationGroupsToAnchorDestinations(groupsP *[]Grouping) {
 
 //For each RollCall - link to SeatsAvailable sharing > threshold vertical pixels. Similar to linkRollCallsToNearestDestinations but reduced for simplicity. There should be one to one relationship for RollCall and SeatsAvailable
 func linkRollCallsToNearestSeatsAvailable(rcs []RollCall, saArray []SeatsAvailable) {
+	/*
 	for _, r := range rcs {
 		fmt.Println(r)
 	}
 	for _, s := range saArray {
 		fmt.Println(s)
 	}
+	*/
 
 	//Link each SeatsAvailable. RollCall -> SeatsAvailable.
 	//Runtime: O(n*m)
@@ -675,6 +683,30 @@ func linkRollCallsToNearestSeatsAvailable(rcs []RollCall, saArray []SeatsAvailab
 			//If intersecting vertically enough, link
 			if vertDist < ROLLCALLS_SEATS_LINK_VERTICAL_THRESHOLD {
 				rcs[rcIndex].LinkedSeatsAvailable = &saArray[saIndex]
+				break
+			}
+		}
+	}
+}
+
+//For each Destination - link to SeatsAvailable sharing > threshold vertical pixels. Similar to linkRollCallsToNearestDestinations but reduced for simplicity. There MAY be a one to one relationship for RollCall and SeatsAvailable. Not guaranteed since there may be only one seat label for multiple destinations (ex: in a grouping).
+func linkDestinationsToNearestSeatsAvailable(dests []Destination, saArray []SeatsAvailable) {
+	for _, r := range dests {
+		fmt.Println(r)
+	}
+	for _, s := range saArray {
+		fmt.Println(s)
+	}
+
+	//Link each SeatsAvailable. RollCall -> SeatsAvailable.
+	//Runtime: O(n*m)
+	for saIndex, _ := range saArray {
+		for dIndex, _ := range dests {
+			vertDist := getVerticalDistance(dests[dIndex].BBox, saArray[saIndex].BBox)
+
+			//If intersecting vertically enough, link
+			if vertDist < ROLLCALLS_SEATS_LINK_VERTICAL_THRESHOLD {
+				dests[dIndex].LinkedSeatsAvailable = &saArray[saIndex]
 				break
 			}
 		}

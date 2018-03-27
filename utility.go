@@ -203,6 +203,22 @@ func getVerticalDistance(bbox1 image.Rectangle, bbox2 image.Rectangle) (vertical
 	return
 }
 
+func (sReference Slide) getImageConfig() (im image.Config, err error) {
+	//find original dimensions
+	originalSavePath := photoPath(sReference)
+	var reader *os.File
+	if reader, err = os.Open(originalSavePath); err != nil {
+		return
+	}
+
+	//load image
+	defer reader.Close()
+	if im, _, err = image.DecodeConfig(reader); err != nil {
+		return
+	}
+	return
+}
+
 //Check whether two bounding boxes share > DUPLICATE_AREA_THRESHOLD of the smaller box's height on the same horizontal line.
 func sameHorizontalLine(bbox1 image.Rectangle, bbox2 image.Rectangle) (horizontalDuplicate bool) {
 	smallerHeight := bbox1.Dy()
@@ -220,6 +236,21 @@ func sameHorizontalLine(bbox1 image.Rectangle, bbox2 image.Rectangle) (horizonta
 		return
 	}
 
+	return
+}
+
+//Return true if Y coordinate is less/greater than a certain percentage of slide image height. True = lteq. False = greater
+func (sReference Slide) isYCoordinateInHeightPercentage(yCoord int, maxPercentage float64) (valid bool, err error) {
+	var im image.Config
+	if im, err = sReference.getImageConfig(); err != nil {
+		return
+	}
+
+	if float64(yCoord) > float64(im.Height) * maxPercentage {
+		valid = false
+	} else {
+		valid = true
+	}
 	return
 }
 

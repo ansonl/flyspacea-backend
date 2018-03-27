@@ -114,17 +114,8 @@ func runImageMagickDateCropVerticalProcess(sReference Slide, cropVerticalOffset 
 //Crop horizontal starting top at cropVerticalOffset to form vertical column image
 func runImageMagickDateCropHorizontalProcess(sReference Slide, cropHorizontalMinMax image.Point, cropVerticalOffset int) (err error) {
 
-	//find original dimensions
-	originalSavePath := photoPath(sReference)
-	var reader *os.File
-	if reader, err = os.Open(originalSavePath); err != nil {
-		return
-	}
-
-	//load image
-	defer reader.Close()
 	var im image.Config
-	if im, _, err = image.DecodeConfig(reader); err != nil {
+	if im, err = sReference.getImageConfig(); err != nil {
 		return
 	}
 
