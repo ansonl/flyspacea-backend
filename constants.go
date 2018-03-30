@@ -106,5 +106,5 @@ const (
 //Storage Database constants
 const (
 	LOCATIONS_TABLE string = "locations"
-	FLIGHTS_72HR_TABLE string = "HR72_flights"
+	FLIGHTS_72HR_TABLE string = "hr72_flights"
 )

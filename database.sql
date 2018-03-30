@@ -1,17 +1,19 @@
 DROP TABLE IF EXISTS flights;
 CREATE TABLE HR72_flights (
- Origin VARCHAR(50),
- Destination VARCHAR(50),
- RollCall TIMESTAMP,
- SeatCount INT,
- SeatType VARCHAR(3), 
- Cancelled BOOLEAN,
- PhotoSource VARCHAR(2048),
- CONSTRAINT flights_pk PRIMARY KEY (Origin, Destination, RollCall));
+Origin VARCHAR(100),
+Destination VARCHAR(100),
+RollCall TIMESTAMP,
+SeatCount INT,
+SeatType VARCHAR(3), 
+Cancelled BOOLEAN,
+PhotoSource VARCHAR(2048),
+CONSTRAINT flights_pk PRIMARY KEY (Origin, Destination, RollCall),
+CONSTRAINT flights_origin_fk FOREIGN KEY (Origin) REFERENCES Locations(Title),
+CONSTRAINT flights_dest_fk FOREIGN KEY (Destination) REFERENCES Locations(Title));
 
-DROP TABLE IF EXISTS locations;
-CREATE TABLE locations (
- Title VARCHAR(50),
+DROP TABLE IF EXISTS Locations;
+CREATE TABLE Locations (
+ Title VARCHAR(100),
  URL VARCHAR(2048),
  CONSTRAINT locations_pk PRIMARY KEY (Title));
 
@@ -44,9 +46,29 @@ DELETE FROM %v
 
  #delete in future day
 DELETE FROM %v 
- WHERE Origin=$1 AND RollCall >= $2 AND RollCall < $2;
+ WHERE Origin=$1 AND RollCall >= $2 AND RollCall < $3;
 
 
 #Insert new flight
 INSERT INTO %v (Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource) 
     VALUES ($1, $2, $3, $4, $5, $6, $7);
+
+#select flights from origin
+SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource
+FROM %v
+WHERE Origin=$1 AND RollCall >= $2 AND RollCall < $3;
+
+#select flights to destination
+SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource
+FROM %v
+WHERE Destination=$1 AND RollCall >= $2 AND RollCall < $3;
+
+#select flights from origin to destination
+SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource
+FROM %v
+WHERE Origin=$1 AND Destination=$2 AND RollCall >= $3 AND RollCall < $4;
+
+#select flights from time start to end
+SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource
+FROM %v
+WHERE RollCall >= $1 AND RollCall < $2;

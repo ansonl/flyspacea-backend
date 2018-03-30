@@ -108,7 +108,7 @@ func createFuzzyModels() (err error) {
 		}
 
 		//Add to fuzzy model at depth
-		log.Printf("training %v", keyword)
+		//log.Printf("training %v", keyword)
 		fuzzyModelByDepth[depth].TrainWord(keyword)
 
 	}

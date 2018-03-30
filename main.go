@@ -13,7 +13,7 @@ func main() {
 		log.Println(err)
 	}
 
-	
+	selectFlightsFromTableWithOriginDestTimeDuration
 
 	if err = createFuzzyModels(); err != nil {
 		log.Fatal(err)

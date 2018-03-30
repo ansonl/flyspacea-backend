@@ -26,30 +26,10 @@ func setupDatabase() (err error) {
 }
 
 func setupRequiredTables() (err error){
-	var flightsTableAlreadyExist bool
-	if flightsTableAlreadyExist, err = setupTable(FLIGHTS_72HR_TABLE, fmt.Sprintf(`
-		CREATE TABLE IF NOT EXISTS %v (
-		Origin VARCHAR(50),
-		Destination VARCHAR(50),
-		RollCall TIMESTAMP,
-		SeatCount INT,
-		SeatType VARCHAR(3), 
-		Cancelled BOOLEAN,
-		PhotoSource VARCHAR(2048),
-		CONSTRAINT flights_pk PRIMARY KEY (Origin, Destination, RollCall));
-		`, FLIGHTS_72HR_TABLE)); err != nil {
-		return
-	}
-	if (flightsTableAlreadyExist) {
-		log.Println(FLIGHTS_72HR_TABLE + " table already exists.")
-	} else {
-		log.Println(FLIGHTS_72HR_TABLE + " table created.")
-	}
-
 	var locationsAlreadyExist bool
 	if locationsAlreadyExist, err = setupTable(LOCATIONS_TABLE, fmt.Sprintf(`
 		CREATE TABLE %v (
-		Title VARCHAR(50),
+		Title VARCHAR(100),
 		URL VARCHAR(2048),
 		CONSTRAINT locations_pk PRIMARY KEY (Title));
 		`, LOCATIONS_TABLE)); err != nil {
@@ -63,6 +43,30 @@ func setupRequiredTables() (err error){
 			return
 		}
 	}
+
+	var flightsTableAlreadyExist bool
+	if flightsTableAlreadyExist, err = setupTable(FLIGHTS_72HR_TABLE, fmt.Sprintf(`
+			CREATE TABLE %v (
+			Origin VARCHAR(100),
+			Destination VARCHAR(100),
+			RollCall TIMESTAMP,
+			SeatCount INT,
+			SeatType VARCHAR(3), 
+			Cancelled BOOLEAN,
+			PhotoSource VARCHAR(2048),
+			CONSTRAINT flights_pk PRIMARY KEY (Origin, Destination, RollCall),
+			CONSTRAINT flights_origin_fk FOREIGN KEY (Origin) REFERENCES Locations(Title),
+			CONSTRAINT flights_dest_fk FOREIGN KEY (Destination) REFERENCES Locations(Title));
+		`, FLIGHTS_72HR_TABLE)); err != nil {
+		return
+	}
+	if (flightsTableAlreadyExist) {
+		log.Println(FLIGHTS_72HR_TABLE + " table already exists.")
+	} else {
+		log.Println(FLIGHTS_72HR_TABLE + " table created.")
+	}
+
+	
 	return
 }
 
@@ -76,9 +80,12 @@ func setupTable(tableName string, query string) (tableAlreadyExist bool, err err
 		return
 	}
 
+	//fmt.Println(tableName, " exist", tableAlreadyExist)
+
 	//If table does not exist, run query to create table
 	if !tableAlreadyExist {
 		if _, err = db.Exec(query); err != nil {
+			fmt.Println(query)
 			return
 		}
 	}
@@ -145,6 +152,74 @@ func populateLocationsTable() (err error) {
 	printChannel <- func() bool {
 		return false
 	}
+	return
+}
+
+/*
+//SELECT flights from table.
+ * Parameters
+ * table SQL DB table name
+ * origin Location title (optional)
+ * dest Location title (optional)
+ * start Time to search from (inclusive)
+ * duration Duration to add to start Time (exclusive) 1Day=time.Hour*24
+ */
+func selectFlightsFromTableWithOriginDestTimeDuration(table string, origin string, dest string, start time.Time, duration time.Duration) (flights []Flight, err error) {
+	if err = checkDatabaseHandleValid(db); err != nil {
+		return
+	}
+
+	var flightRows *sql.Rows
+	//Determine which query to use
+	if len(origin) > 0 && len(dest) == 0 { //Search by only Origin
+		if flightRows, err = db.Query(fmt.Sprintf(`
+			SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource
+			FROM %v
+			WHERE Origin=$1 AND RollCall >= $2 AND RollCall < $3;
+ 		`, table), origin, start.Format("2006-01-02"), start.Add(duration).Format("2006-01-02")); err != nil {
+			return
+		}
+	} else if len(origin) == 0 && len(dest) > 0 { //Search by only Destination
+		if flightRows, err = db.Query(fmt.Sprintf(`
+			SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource
+			FROM %v
+			WHERE Destination=$1 AND RollCall >= $2 AND RollCall < $3;
+ 		`, table), origin, start.Format("2006-01-02"), start.Add(duration).Format("2006-01-02")); err != nil {
+			return
+		}
+	} else if len(origin) > 0 && len(dest) > 0 { //Search by Origin and Destination
+		if flightRows, err = db.Query(fmt.Sprintf(`
+			SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource
+			FROM %v
+			WHERE Origin=$1 AND Destination=$2 AND RollCall >= $3 AND RollCall < $4;
+ 		`, table), origin, dest, start.Format("2006-01-02"), start.Add(duration).Format("2006-01-02")); err != nil {
+			return
+		}
+	} else { //Search all in time duration
+		if flightRows, err = db.Query(fmt.Sprintf(`
+			SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource
+			FROM %v
+			WHERE RollCall >= $1 AND RollCall < $2;
+ 		`, table), start.Format("2006-01-02"), start.Add(duration).Format("2006-01-02")); err != nil {
+			return
+		}
+	}
+
+	var countOfRows = 0
+	for flightRows.Next() {
+		var flight Flight
+
+		if err = flightRows.Scan(&flight.Origin, &flight.Destination, &flight.RollCall, &flight.SeatCount, &flight.SeatType, &flight.Cancelled, &flight.PhotoSource); err != nil {
+			return
+		}
+		
+		flights = append(flights, flight)
+		countOfRows++
+	}
+	flightRows.Close()
+
+	fmt.Printf("SELECT flights %v between origin %v dest %v times %v %v\n%v rows counted.", table, origin, start, start.Add(duration), countOfRows)
+
 	return
 }
 
