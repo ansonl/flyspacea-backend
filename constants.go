@@ -2,7 +2,7 @@ package main
 
 //Terminal info files
 const (
-	TERMINAL_SINGLE_FILE          string = "terminals-single.json"
+	TERMINAL_SINGLE_FILE   string = "terminals-single.json"
 	TERMINAL_FILE          string = "terminals.json"
 	LOCATION_KEYWORDS_FILE string = "location_keywords.json"
 )
@@ -85,26 +85,39 @@ const (
 	IMAGE_PROCESSING_TMP_COLOR string = "purple"
 
 	//Minimum OCR word confidence threshold 0-100 to process a result.
-	OCR_WORD_CONFIDENCE_THRESHOLD int     = 10
+	OCR_WORD_CONFIDENCE_THRESHOLD int = 10
 
 	//Max DestinationLabel.YCoord/ImageTotalHeight to detect incorrect Destination label matches.
 	DESTINATION_TEXT_VERTICAL_THRESHOLD float64 = 0.5
 
-	//Percentage of area between two bounding boxes to overlap to be considered duplicates. 
-	DUPLICATE_AREA_THRESHOLD      float64 = 0.5
+	//Percentage of area between two bounding boxes to overlap to be considered duplicates.
+	DUPLICATE_AREA_THRESHOLD float64 = 0.5
 
 	//Horizontal distance to add to left and right of seats bounds when cropping seats text.
 	SEATS_CROP_HORIZONTAL_BUFFER int = 5
 
-	//Furthest vertical distance of destination bounding boxes to be linked. 
+	//Furthest vertical distance of destination bounding boxes to be linked.
 	ROLLCALLS_DESTINATION_LINK_VERTICAL_THRESHOLD int = 50
 
 	//Minimum vertical overlap required between seats and rollcall text to be linked. Negative value is positive overlap.
-	ROLLCALLS_SEATS_LINK_VERTICAL_THRESHOLD       int = -5
+	ROLLCALLS_SEATS_LINK_VERTICAL_THRESHOLD int = -5
 )
 
 //Storage Database constants
 const (
-	LOCATIONS_TABLE string = "locations"
+	LOCATIONS_TABLE    string = "locations"
 	FLIGHTS_72HR_TABLE string = "hr72_flights"
+)
+
+//Server REST API constants
+const (
+	REST_ORIGIN_KEY      string = "origin"
+	REST_DESTINATION_KEY string = "destination"
+
+	//REST_START_TIME_KEY is UTC time
+	//Represented in ISO 1806 / RFC 3339 format 2018-04-01T22:53:13Z
+	REST_START_TIME_KEY string = "startTime"
+
+	//REST_DURATION_DAYS_KEY is numbers of days forward from REST_START_TIME_KEY to select.
+	REST_DURATION_DAYS_KEY string = "durationDays"
 )

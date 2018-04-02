@@ -290,7 +290,6 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		slides = append(slides, newSlide)
 	}
 
-
 	//Find date displayed in photo. Pick best date from slides.
 	var slideDate time.Time
 	if slideDate, err = findDateOfPhotoNodeSlides(slides); err != nil {
@@ -316,7 +315,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 	var rollCalls []RollCall
 	var rollCallsNoBBox []RollCall
 
-	//Check if Destination label is over 0.5 (threshold constant) of total image height. If too low on image, Destination Label may be incorrect. 
+	//Check if Destination label is over 0.5 (threshold constant) of total image height. If too low on image, Destination Label may be incorrect.
 	var destLabelValid bool
 	if destLabelValid, err = slides[0].isYCoordinateInHeightPercentage(destLabelBBox.Min.Y, DESTINATION_TEXT_VERTICAL_THRESHOLD); err != nil {
 		return
@@ -354,46 +353,42 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 
 	deleteTerminalFromDestArray(&destinations, slides[0].Terminal)
 
-
 	/*
-	fmt.Println("found dests in all slides")
-	for _, d := range destinations {
-		log.Println(d)
-	}
-	return
+		fmt.Println("found dests in all slides")
+		for _, d := range destinations {
+			log.Println(d)
+		}
+		return
 	*/
-	
 
 	//Find vertically closest Destination for every RollCall
 	linkRollCallsToNearestDestinations(rollCalls, destinations)
 
 	/*
-	fmt.Println("After nearest rc to dest link")
-	for _, d := range destinations {
-		log.Println(d)
-		if d.LinkedRollCall != nil {
-			log.Println(*(d.LinkedRollCall))
+		fmt.Println("After nearest rc to dest link")
+		for _, d := range destinations {
+			log.Println(d)
+			if d.LinkedRollCall != nil {
+				log.Println(*(d.LinkedRollCall))
+			}
 		}
-	}
 	*/
 
 	//Link SeatsAvailable with RollCalls on same line
 	linkRollCallsToNearestSeatsAvailable(rollCalls, seatsAvailable)
 
 	/*
-	fmt.Println("After link seats")
-	for _, rc := range rollCalls {
-		log.Println(rc)
-		if rc.LinkedSeatsAvailable != nil {
-			log.Println(*(rc.LinkedSeatsAvailable))
+		fmt.Println("After link seats")
+		for _, rc := range rollCalls {
+			log.Println(rc)
+			if rc.LinkedSeatsAvailable != nil {
+				log.Println(*(rc.LinkedSeatsAvailable))
+			}
 		}
-	}
 	*/
 
 	//Find vertically closest Destination for every SeatsAvailable
 	linkDestinationsToNearestSeatsAvailable(destinations, seatsAvailable)
-
-	
 
 	//Create array of individual Grouping for each Destination to pass into combine Destinations to Groupings stage
 	var destinationGroupings []Grouping
@@ -427,8 +422,8 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		}
 	}
 
-	//Create list of flights, 
-	//Initially Destination is a flight. 
+	//Create list of flights,
+	//Initially Destination is a flight.
 	//Structure: flight -> Destination -> LinkedRollCall * -> LinkedSeatsAvailable *
 	//Convert Destinations to Flight struct and add
 	var finalFlights []Flight
@@ -438,7 +433,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		for dIndex, _ := range destinationGroupings[dgIndex].Destinations {
 			if destinationGroupings[dgIndex].LinkedRollCall != nil {
 				destinationGroupings[dgIndex].Destinations[dIndex].LinkedRollCall = destinationGroupings[dgIndex].LinkedRollCall
-			
+
 				//Link Destination to Grouping.LinkedRollCall.LinkedSeatsAvailable if no Destination linked seats already
 				if destinationGroupings[dgIndex].Destinations[dIndex].LinkedSeatsAvailable == nil {
 					destinationGroupings[dgIndex].Destinations[dIndex].LinkedSeatsAvailable = (*destinationGroupings[dgIndex].LinkedRollCall).LinkedSeatsAvailable
@@ -446,19 +441,19 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 			}
 
 			/*
-			//Do not add any destinations without roll calls
-			if destinationGroupings[dgIndex].Destinations[dIndex].LinkedRollCall == nil {
-				continue
-			}
+				//Do not add any destinations without roll calls
+				if destinationGroupings[dgIndex].Destinations[dIndex].LinkedRollCall == nil {
+					continue
+				}
 			*/
 
 			//Create Flight struct to add to slice
 			tmpFlight := Flight{
-				Origin: slides[0].Terminal.Title,
+				Origin:      slides[0].Terminal.Title,
 				Destination: destinationGroupings[dgIndex].Destinations[dIndex].TerminalTitle,
-				RollCall: (*destinationGroupings[dgIndex].Destinations[dIndex].LinkedRollCall).Time,
-				SeatCount: (*destinationGroupings[dgIndex].Destinations[dIndex].LinkedSeatsAvailable).Number,
-				SeatType: (*destinationGroupings[dgIndex].Destinations[dIndex].LinkedSeatsAvailable).Letter,
+				RollCall:    (*destinationGroupings[dgIndex].Destinations[dIndex].LinkedRollCall).Time,
+				SeatCount:   (*destinationGroupings[dgIndex].Destinations[dIndex].LinkedSeatsAvailable).Number,
+				SeatType:    (*destinationGroupings[dgIndex].Destinations[dIndex].LinkedSeatsAvailable).Letter,
 				PhotoSource: slides[0].FBNodeId}
 
 			finalFlights = append(finalFlights, tmpFlight)
@@ -476,7 +471,6 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 	if err = insertFlightsIntoTable(FLIGHTS_72HR_TABLE, finalFlights); err != nil {
 		return
 	}
-
 
 	incrementPhotosProcessed()
 	/*

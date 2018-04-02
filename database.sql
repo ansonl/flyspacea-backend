@@ -7,6 +7,7 @@ SeatCount INT,
 SeatType VARCHAR(3), 
 Cancelled BOOLEAN,
 PhotoSource VARCHAR(2048),
+SourceDate TIMESTAMP,
 CONSTRAINT flights_pk PRIMARY KEY (Origin, Destination, RollCall),
 CONSTRAINT flights_origin_fk FOREIGN KEY (Origin) REFERENCES Locations(Title),
 CONSTRAINT flights_dest_fk FOREIGN KEY (Destination) REFERENCES Locations(Title));
@@ -22,8 +23,8 @@ INSERT INTO locations (Title, URL)
     VALUES ($1, $2);
 
 #Insert new flight
-INSERT INTO flights (Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource) 
-    VALUES ($1, $2, $3, $4, $5, $6, $7);
+INSERT INTO flights (Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource, SourceDate) 
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
 
 SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled 
  FROM flights 

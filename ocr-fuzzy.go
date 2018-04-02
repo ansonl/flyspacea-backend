@@ -36,7 +36,7 @@ func createFuzzyModels() (err error) {
 	}
 
 	//Create separate fuzzy model object for each keyword. Store fuzzy models in map
-	createFuzzyModelsForKeywords := func (keywords []LabelKeyword, modelMap *map[string]*fuzzy.Model) {
+	createFuzzyModelsForKeywords := func(keywords []LabelKeyword, modelMap *map[string]*fuzzy.Model) {
 		*modelMap = make(map[string]*fuzzy.Model)
 		for _, v := range keywords {
 			v.Spelling = strings.ToLower(v.Spelling)
@@ -153,17 +153,16 @@ func doOCRForSlide(s *Slide, wl OCRWhiteListType) (err error) {
 	client.SetPageSegMode(gosseract.PSM_AUTO) //C++ API may have different PSM than command line. https://groups.google.com/d/msg/tesseract-ocr/bD1zJNiDubY/kb7NZPIV38AJ
 	client.SetImage(filepath)
 
-	switch(wl) {
+	switch wl {
 	case OCR_WHITELIST_NORMAL:
 		client.SetWhitelist("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ,:=().*-/")
-		break;
+		break
 	case OCR_WHITELIST_SA:
 		client.SetWhitelist("1234567890TFSP")
-		break;
+		break
 	default:
 		log.Fatal("Unknown white list type ", wl)
 	}
-	
 
 	if (*s).PlainText, err = client.Text(); err != nil {
 		return

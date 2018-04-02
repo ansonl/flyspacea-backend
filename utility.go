@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"image"
 	"io"
@@ -9,7 +10,6 @@ import (
 	"os"
 	"strings"
 	"time"
-	"database/sql"
 )
 
 // exists returns whether the given file or directory exists or not
@@ -246,7 +246,7 @@ func (sReference Slide) isYCoordinateInHeightPercentage(yCoord int, maxPercentag
 		return
 	}
 
-	if float64(yCoord) > float64(im.Height) * maxPercentage {
+	if float64(yCoord) > float64(im.Height)*maxPercentage {
 		valid = false
 	} else {
 		valid = true
@@ -261,7 +261,7 @@ func checkDatabaseHandleValid(targetHandle *(sql.DB)) (err error) {
 		return
 
 	}
-	
+
 	if err = db.Ping(); err != nil {
 		err = fmt.Errorf("DB ping failed.")
 		return

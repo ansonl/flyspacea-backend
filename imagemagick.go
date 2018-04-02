@@ -41,9 +41,9 @@ func runImageMagickColorProcess(sourceSaveType SaveImageType, sReference Slide) 
 		fuzz = "25%"
 
 		/*
-				convert bwi.png -fuzz 25% -fill purple -opaque black +transparent purple bwi_m.png
-		convert bwi.png -fuzz 25% -fill purple -opaque white +transparent purple bwi_m.png -composite bwi_p25.png
-		convert bwi_p25.png -fill black -opaque purple -transparent-color white -flatten bwi_p25.jpeg
+					convert bwi.png -fuzz 25% -fill purple -opaque black +transparent purple bwi_m.png
+			convert bwi.png -fuzz 25% -fill purple -opaque white +transparent purple bwi_m.png -composite bwi_p25.png
+			convert bwi_p25.png -fill black -opaque purple -transparent-color white -flatten bwi_p25.jpeg
 		*/
 
 		args = []string{originalSavePath, "-fuzz", fuzz, "-fill", IMAGE_PROCESSING_TMP_COLOR, "+opaque", opaque1, "+transparent", IMAGE_PROCESSING_TMP_COLOR, workingSavePath}
@@ -67,16 +67,16 @@ func runImageMagickColorProcess(sourceSaveType SaveImageType, sReference Slide) 
 		opaque1 = "white"
 		fuzz = "35%"
 
-			args = []string{"-alpha", "off", "-fuzz", fuzz, "-fill", fill, "+opaque", opaque1, originalSavePath, processedSavePath}
-			//log.Printf("%v", args)
-			if err = exec.Command(cmd, args...).Run(); err != nil {
-				return
-			}
+		args = []string{"-alpha", "off", "-fuzz", fuzz, "-fill", fill, "+opaque", opaque1, originalSavePath, processedSavePath}
+		//log.Printf("%v", args)
+		if err = exec.Command(cmd, args...).Run(); err != nil {
+			return
+		}
 
-			args = []string{processedSavePath, "-negate", processedSavePath}
-			if err = exec.Command(cmd, args...).Run(); err != nil {
-				return
-			}
+		args = []string{processedSavePath, "-negate", processedSavePath}
+		if err = exec.Command(cmd, args...).Run(); err != nil {
+			return
+		}
 
 		break
 	default:

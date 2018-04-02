@@ -456,10 +456,10 @@ func findSeatsFromPlainText(plainText string) (foundSAs []SeatsAvailable, err er
 
 	for _, result := range regexResult {
 		/*
-		fmt.Println("found regex len ", len(result))
-		for n, r := range result {
-			fmt.Println(n, len(r), r)
-		}
+			fmt.Println("found regex len ", len(result))
+			for n, r := range result {
+				fmt.Println(n, len(r), r)
+			}
 		*/
 
 		var capturedSeatCount int
@@ -666,12 +666,12 @@ func combineDestinationGroupsToAnchorDestinations(groupsP *[]Grouping) {
 //For each RollCall - link to SeatsAvailable sharing > threshold vertical pixels. Similar to linkRollCallsToNearestDestinations but reduced for simplicity. There should be one to one relationship for RollCall and SeatsAvailable
 func linkRollCallsToNearestSeatsAvailable(rcs []RollCall, saArray []SeatsAvailable) {
 	/*
-	for _, r := range rcs {
-		fmt.Println(r)
-	}
-	for _, s := range saArray {
-		fmt.Println(s)
-	}
+		for _, r := range rcs {
+			fmt.Println(r)
+		}
+		for _, s := range saArray {
+			fmt.Println(s)
+		}
 	*/
 
 	//Link each SeatsAvailable. RollCall -> SeatsAvailable.

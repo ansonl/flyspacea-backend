@@ -79,16 +79,16 @@ type TerminalKeywordsResult struct {
 
 //Represents location map in terminal/location keyword file
 type TerminalLocation struct {
-	Latitude float64 `json:"latitude"`
+	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
 }
 
 //Terminal representation
 //Used for both Terminal list and keywords list depending on which files loaded from.
 type Terminal struct {
-	Title string `json:"title"`
-	Id    string `json:"id"`
-	Keywords []string `json:"keywords"`
+	Title    string           `json:"title"`
+	Id       string           `json:"id"`
+	Keywords []string         `json:"keywords"`
 	Location TerminalLocation `json:"location"`
 }
 
@@ -123,7 +123,7 @@ type Destination struct {
 	//non nil value indicates 'anchor' (same horizonal level RollCall) Destination for grouping Destinations to other nearby Destinations.
 	//later linked for all Destinations in Grouping for insertion of flight to database
 	LinkedRollCall *RollCall
-	//SeatsAvailable for Destination. 
+	//SeatsAvailable for Destination.
 	//NOT used to indicate 'anchor'. Use LinkedRollCall to indicate anchor.
 	LinkedSeatsAvailable *SeatsAvailable
 }
@@ -153,17 +153,6 @@ type Grouping struct {
 	SharedInfo
 }
 
-//Representation of a specific flight
-type Flight struct {
-	Origin string
-	Destination string
-	RollCall time.Time
-	SeatCount int
-	SeatType string
-	Cancelled bool
-	PhotoSource string
-}
-
 //Update Grouping struct BBox to include all Destinations in grouping
 func (g *Grouping) updateBBox() {
 	if len((*g).Destinations) == 0 {
@@ -188,3 +177,25 @@ func (g *Grouping) updateBBox() {
 	}
 }
 
+//Representation of a specific flight
+type Flight struct {
+	Origin      string    `json:"origin"`
+	Destination string    `json:"destination"`
+	RollCall    time.Time `json:"rollCall"`
+	SeatCount   int       `json:"seatCount"`
+	SeatType    string    `json:"seatType"`
+	Cancelled   bool      `json:"cancelled"`
+	PhotoSource string    `json:"photoSource"`
+}
+
+/*
+ * Representation of web server data
+ */
+
+type SAResponse struct {
+	Status    int      `json:"status"`
+	Error     error    `json:"error"`
+	User      string   `json:"user"`
+	AuthToken string   `json:"authToken"`
+	Flights   []Flight `json:"flights"`
+}
