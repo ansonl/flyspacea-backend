@@ -102,7 +102,7 @@ func runServer(wg *sync.WaitGroup, config *tls.Config) {
 	//Get flights for parameter filters
 	http.HandleFunc("/flights", flightsHandler)
 
-	err := http.ListenAndServe(":"+os.Getenv("PORT"), nil) 
+	err := http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 	if err != nil {
 		panic(err)
 	}

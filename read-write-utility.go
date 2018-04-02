@@ -2,9 +2,19 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/bradfitz/latlong"
 	"io/ioutil"
+	"time"
 	//"log"
 )
+
+func (t Terminal) getTZ() (err error) {
+	t.Timezone, err = time.LoadLocation(
+		latlong.LookupZoneName(
+			t.Location.Latitude,
+			t.Location.Longitude))
+	return
+}
 
 func readTerminalArrayToMap(terminalArray []Terminal) (terminalMap map[string]Terminal) {
 	//set key to v.Title and set v.Index
@@ -27,6 +37,13 @@ func readTerminalArrayFromFiles(filenames ...string) (keywordsArray []Terminal, 
 		var tmp []Terminal
 		if err = json.Unmarshal(locationsRaw, &tmp); err != nil {
 			return
+		}
+
+		//Get Timezone for every terminal
+		for i, _ := range tmp {
+			if err = tmp[i].getTZ(); err != nil {
+				return
+			}
 		}
 
 		//log.Printf("%v locations in file %v", len(tmp), filenames)

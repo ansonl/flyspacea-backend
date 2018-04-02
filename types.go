@@ -90,6 +90,7 @@ type Terminal struct {
 	Id       string           `json:"id"`
 	Keywords []string         `json:"keywords"`
 	Location TerminalLocation `json:"location"`
+	Timezone *time.Location
 }
 
 //Processed version of downloaded photo
@@ -194,7 +195,7 @@ type Flight struct {
 
 type SAResponse struct {
 	Status    int      `json:"status"`
-	Error     string    `json:"error"`
+	Error     string   `json:"error"`
 	User      string   `json:"user"`
 	AuthToken string   `json:"authToken"`
 	Flights   []Flight `json:"flights"`

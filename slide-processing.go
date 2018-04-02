@@ -73,7 +73,7 @@ func findDateOfPhotoNodeSlides(slides []Slide) (slideDate time.Time, err error) 
 			for _, s := range slides {
 				var foundDate time.Time
 				//Try to find date from uncropped image
-				if foundDate, err = findDateFromPlainText(s.PlainText, closestMonthSpelling, estimatedMonth); err != nil {
+				if foundDate, err = findDateFromPlainText(s.PlainText, closestMonthSpelling, estimatedMonth, s.Terminal.Timezone); err != nil {
 					return
 				}
 
@@ -101,7 +101,7 @@ func findDateOfPhotoNodeSlides(slides []Slide) (slideDate time.Time, err error) 
 				}
 
 				//Try to find date from cropped image
-				if foundDate, err = findDateFromPlainText(copySlide.PlainText, closestMonthSpelling, estimatedMonth); err != nil {
+				if foundDate, err = findDateFromPlainText(copySlide.PlainText, closestMonthSpelling, estimatedMonth, s.Terminal.Timezone); err != nil {
 					return
 				}
 
@@ -119,7 +119,7 @@ func findDateOfPhotoNodeSlides(slides []Slide) (slideDate time.Time, err error) 
 		for _, s := range slides {
 			var foundDate time.Time
 			//Try to find date from uncropped image
-			if foundDate, err = findDateFromPlainText(s.PlainText, v, estimatedMonth); err != nil {
+			if foundDate, err = findDateFromPlainText(s.PlainText, v, estimatedMonth, s.Terminal.Timezone); err != nil {
 				return
 			}
 
@@ -142,7 +142,7 @@ func findDateOfPhotoNodeSlides(slides []Slide) (slideDate time.Time, err error) 
 }
 
 //Return time.Time of detected date for slide.
-func findDateFromPlainText(plainText string, closestMonthSpelling string, estimatedMonth time.Month) (date time.Time, err error) {
+func findDateFromPlainText(plainText string, closestMonthSpelling string, estimatedMonth time.Month, slideTZ *time.Location) (date time.Time, err error) {
 	//Lowercase closestMonthSpelling
 	closestMonthSpelling = strings.ToLower(closestMonthSpelling)
 
@@ -200,7 +200,7 @@ func findDateFromPlainText(plainText string, closestMonthSpelling string, estima
 	}
 
 	//If found date is closer to time.Now than other dates, keep it and check other processed slides for other date matches
-	date = time.Date(capturedYear, estimatedMonth, capturedDay, 0, 0, 0, 0, time.UTC)
+	date = time.Date(capturedYear, estimatedMonth, capturedDay, 0, 0, 0, 0, slideTZ)
 	return
 }
 

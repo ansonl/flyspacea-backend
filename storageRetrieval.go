@@ -36,7 +36,7 @@ func setupRequiredTables() (err error) {
 		return
 	}
 	if locationsAlreadyExist {
-		log.Println(LOCATIONS_TABLE + " table already exists.")
+		//log.Println(LOCATIONS_TABLE + " table already exists.")
 	} else {
 		log.Println(LOCATIONS_TABLE + " table created.")
 		if err = populateLocationsTable(); err != nil {
@@ -62,7 +62,7 @@ func setupRequiredTables() (err error) {
 		return
 	}
 	if flightsTableAlreadyExist {
-		log.Println(FLIGHTS_72HR_TABLE + " table already exists.")
+		//log.Println(FLIGHTS_72HR_TABLE + " table already exists.")
 	} else {
 		log.Println(FLIGHTS_72HR_TABLE + " table created.")
 	}
