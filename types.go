@@ -100,6 +100,7 @@ type Slide struct {
 	Extension string
 	Terminal  Terminal
 	FBNodeId  string
+	FBCreatedTime time.Time
 
 	PlainText string
 	HOCRText  string

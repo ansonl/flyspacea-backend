@@ -5,14 +5,21 @@ import (
 	"github.com/bradfitz/latlong"
 	"io/ioutil"
 	"time"
+	"fmt"
 	//"log"
 )
 
-func (t Terminal) getTZ() (err error) {
-	t.Timezone, err = time.LoadLocation(
-		latlong.LookupZoneName(
-			t.Location.Latitude,
-			t.Location.Longitude))
+func (t *Terminal) getTZ() (err error) {
+	tz := latlong.LookupZoneName(
+			(*t).Location.Latitude,
+			(*t).Location.Longitude)
+
+	if len(tz) == 0 {
+		err = fmt.Errorf("latlong.LookupZoneName returned empty string for Terminal %v\n", (*t))
+	}
+
+	(*t).Timezone, err = time.LoadLocation(
+		tz)
 	return
 }
 
@@ -44,6 +51,7 @@ func readTerminalArrayFromFiles(filenames ...string) (keywordsArray []Terminal, 
 			if err = tmp[i].getTZ(); err != nil {
 				return
 			}
+			fmt.Println(tmp[i].Timezone, tmp[i].Title, tmp[i].Location)
 		}
 
 		//log.Printf("%v locations in file %v", len(tmp), filenames)

@@ -249,7 +249,7 @@ func insertFlightsIntoTable(table string, flights []Flight) (err error) {
 		if result, err = db.Exec(fmt.Sprintf(`
 			INSERT INTO %v (Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource, SourceDate) 
 	    	VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
-	 		`, table), flight.Origin, flight.Destination, flight.RollCall.Format("2006-01-02 15:04:05"), flight.SeatCount, flight.SeatType, false, flight.PhotoSource, time.Now().Format("2006-01-02 15:04:05")); err != nil {
+	 		`, table), flight.Origin, flight.Destination, flight.RollCall.In(time.UTC).Format("2006-01-02 15:04:05"), flight.SeatCount, flight.SeatType, false, flight.PhotoSource, time.Now().In(time.UTC).Format("2006-01-02 15:04:05")); err != nil {
 			return
 		}
 

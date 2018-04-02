@@ -238,8 +238,8 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 	}
 
 	//If image is too old, ignore
-	if time.Since(photoCreatedTime) > time.Hour*96 {
-		displayMessageForTerminal(targetTerminal, edgePhoto.Id+" over 96 hours old.")
+	if time.Since(photoCreatedTime) > time.Hour*24 {
+		displayMessageForTerminal(targetTerminal, edgePhoto.Id+" over 24 hours old.")
 		return
 	}
 
@@ -248,7 +248,11 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 	var saveTypes []SaveImageType
 	saveTypes = []SaveImageType{SAVE_IMAGE_TRAINING, SAVE_IMAGE_TRAINING_PROCESSED_BLACK, SAVE_IMAGE_TRAINING_PROCESSED_WHITE}
 
-	tmpSlide := Slide{saveTypes[0], "", "", targetTerminal, edgePhoto.Id, "", ""}
+	tmpSlide := Slide{
+		SaveType: saveTypes[0],
+		Terminal: targetTerminal, 
+		FBNodeId: edgePhoto.Id, 
+		FBCreatedTime: time.Time{}}
 
 	//Request Photo node for slide
 	var photoNode PhotoNode
@@ -269,10 +273,11 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		newSlide.Extension = tmpSlide.Extension
 		newSlide.Terminal = targetTerminal
 		newSlide.FBNodeId = edgePhoto.Id
+		newSlide.FBCreatedTime = photoCreatedTime
 
 		//Manual slide control
-		newSlide.Extension = "jpeg"
-		newSlide.FBNodeId = "1614074308661972"
+		//newSlide.Extension = "jpeg"
+		//newSlide.FBNodeId = "1614074308661972"
 		//newSlide.FBNodeId = "1600297960039607"
 		//newSlide.FBNodeId = "1600298003372936"
 
@@ -320,7 +325,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 	if destLabelValid, err = slides[0].isYCoordinateInHeightPercentage(destLabelBBox.Min.Y, DESTINATION_TEXT_VERTICAL_THRESHOLD); err != nil {
 		return
 	}
-	if !destLabelValid {
+	if !destLabelValid {//
 		destLabelBBox.Min.Y = 0
 	}
 

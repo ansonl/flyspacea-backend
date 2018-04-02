@@ -28,7 +28,9 @@ func findDateOfPhotoNodeSlides(slides []Slide) (slideDate time.Time, err error) 
 	//Store current and next month values
 	var currentMonth time.Month
 	var nextMonth time.Month
-	currentMonth = time.Now().Month()
+	//Get current month of image creation date on Facebook instead of current month of time.Now()
+	//currentMonth = time.Now().Month()
+	currentMonth = slides[0].FBCreatedTime.Month()
 	if nextMonth = currentMonth + 1; nextMonth > time.December {
 		nextMonth = time.January
 	}
@@ -282,7 +284,7 @@ func findRollCallTimesFromSlides(slides []Slide, estimatedDay time.Time, limitMi
 	for _, s := range slides {
 		var found24HR []time.Time
 		//fmt.Println("date slide type ", s.SaveType)
-		if found24HR, err = find24HRFromPlainText(s.PlainText, estimatedDay); err != nil {
+		if found24HR, err = find24HRFromPlainText(s.PlainText, estimatedDay, s.Terminal.Timezone); err != nil {
 			return
 		}
 
@@ -323,7 +325,7 @@ func findRollCallTimesFromSlides(slides []Slide, estimatedDay time.Time, limitMi
 }
 
 //Search plain text for 24HR time. Return slice of time.Time of found 24HR time on estimatedDay.
-func find24HRFromPlainText(plainText string, estimatedDay time.Time) (found24HR []time.Time, err error) {
+func find24HRFromPlainText(plainText string, estimatedDay time.Time, slideTZ *time.Location) (found24HR []time.Time, err error) {
 	//lowercase input string
 	var input = strings.ToLower(plainText)
 	//fmt.Println(input)
@@ -376,7 +378,7 @@ func find24HRFromPlainText(plainText string, estimatedDay time.Time) (found24HR 
 			capturedHour,
 			capturedMinute,
 			0, 0,
-			time.UTC))
+			slideTZ))
 	}
 	return
 }
