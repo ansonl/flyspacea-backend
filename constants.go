@@ -115,7 +115,7 @@ const (
 	REST_DESTINATION_KEY string = "destination"
 
 	//REST_START_TIME_KEY is UTC time
-	//Represented in ISO 1806 / RFC 3339 format 2018-04-01T22:53:13Z
+	//Represented in ISO 1806 / RFC 3339 format 2006-01-02T15:04:05Z
 	REST_START_TIME_KEY string = "startTime"
 
 	//REST_DURATION_DAYS_KEY is numbers of days forward from REST_START_TIME_KEY to select.

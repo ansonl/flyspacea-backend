@@ -31,7 +31,7 @@ func flightsHandler(w http.ResponseWriter, r *http.Request) {
 	if err = r.ParseForm(); err != nil {
 		fmt.Fprintf(w, SAResponse{
 			Status: 1,
-			Error:  fmt.Errorf("Parse form error: %v", err.Error())}.createJSONOutput())
+			Error:  fmt.Sprintf("Parse form error: %v", err.Error())}.createJSONOutput())
 		return
 	}
 
@@ -49,13 +49,13 @@ func flightsHandler(w http.ResponseWriter, r *http.Request) {
 	if startTimeText = r.Form.Get(REST_START_TIME_KEY); len(startTimeText) == 0 {
 		fmt.Fprintf(w, SAResponse{
 			Status: 1,
-			Error:  fmt.Errorf("Missing %v parameter.", REST_START_TIME_KEY)}.createJSONOutput())
+			Error:  fmt.Sprintf("Missing %v parameter.", REST_START_TIME_KEY)}.createJSONOutput())
 		return
 	}
-	if startTime, err = time.Parse(time.RFC3339, "2006-01-02T15:04:05Z"); err != nil {
+	if startTime, err = time.Parse(time.RFC3339, startTimeText); err != nil {
 		fmt.Fprintf(w, SAResponse{
 			Status: 1,
-			Error:  fmt.Errorf("%v parameter error: %v", REST_START_TIME_KEY, err.Error())}.createJSONOutput())
+			Error:  fmt.Sprintf("%v parameter error: %v", REST_START_TIME_KEY, err.Error())}.createJSONOutput())
 		return
 	}
 
@@ -64,14 +64,14 @@ func flightsHandler(w http.ResponseWriter, r *http.Request) {
 	if durationDaysText = r.Form.Get(REST_DURATION_DAYS_KEY); len(durationDaysText) == 0 {
 		fmt.Fprintf(w, SAResponse{
 			Status: 1,
-			Error:  fmt.Errorf("Missing %v parameter.", REST_DURATION_DAYS_KEY)}.createJSONOutput())
+			Error:  fmt.Sprintf("Missing %v parameter.", REST_DURATION_DAYS_KEY)}.createJSONOutput())
 		return
 	}
 	var durationDays int
 	if durationDays, err = strconv.Atoi(durationDaysText); err != nil {
 		fmt.Fprintf(w, SAResponse{
 			Status: 1,
-			Error:  fmt.Errorf("%v parameter error: %v", REST_DURATION_DAYS_KEY, err.Error())}.createJSONOutput())
+			Error:  fmt.Sprintf("%v parameter error: %v", REST_DURATION_DAYS_KEY, err.Error())}.createJSONOutput())
 		return
 	}
 	duration = time.Hour * 24 * time.Duration(durationDays) //Convert duration to days
@@ -85,7 +85,7 @@ func flightsHandler(w http.ResponseWriter, r *http.Request) {
 		duration); err != nil {
 		fmt.Fprintf(w, SAResponse{
 			Status: 2,
-			Error:  fmt.Errorf("Query error: %v", err.Error())}.createJSONOutput())
+			Error:  fmt.Sprintf("Query error: %v", err.Error())}.createJSONOutput())
 		return
 	}
 
@@ -95,8 +95,6 @@ func flightsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func runServer(wg *sync.WaitGroup, config *tls.Config) {
-	server := http.Server{Addr: ":" + os.Getenv("PORT"), TLSConfig: config}
-	//server := http.Server{Addr: ":https", TLSConfig: config}
 
 	//Refresh specific terminal
 	//http.HandleFunc("/refreshTerminal", refreshTerminalHandler)
@@ -104,7 +102,7 @@ func runServer(wg *sync.WaitGroup, config *tls.Config) {
 	//Get flights for parameter filters
 	http.HandleFunc("/flights", flightsHandler)
 
-	err := server.ListenAndServeTLS("", "")
+	err := http.ListenAndServe(":"+os.Getenv("PORT"), nil) 
 	if err != nil {
 		panic(err)
 	}

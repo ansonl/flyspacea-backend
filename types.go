@@ -194,7 +194,7 @@ type Flight struct {
 
 type SAResponse struct {
 	Status    int      `json:"status"`
-	Error     error    `json:"error"`
+	Error     string    `json:"error"`
 	User      string   `json:"user"`
 	AuthToken string   `json:"authToken"`
 	Flights   []Flight `json:"flights"`

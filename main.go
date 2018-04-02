@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"sync"
-	"time"
+	//"time"
 )
 
 func main() {
@@ -14,6 +14,7 @@ func main() {
 		log.Println(err)
 	}
 
+	/*
 	//Test table selection
 	var startDate time.Time
 	if startDate, err = time.Parse("2006-01-02", "2018-03-23"); err != nil {
@@ -28,6 +29,14 @@ func main() {
 		}
 	}
 	return
+	*/
+
+	//start server and wait
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go runServer(&wg, nil)
+	wg.Wait()
+
 
 	if err = createFuzzyModels(); err != nil {
 		log.Fatal(err)
@@ -42,11 +51,7 @@ func main() {
 	log.Printf("\u001b[1m\u001b[35m%v\u001b[0m\n", "Starting Update")
 	go updateAllTerminals(terminalMap)
 
-	//start server and wait
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go runServer(&wg, nil)
-	wg.Wait()
+	
 
 	/*
 	   v := Terminal{}

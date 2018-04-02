@@ -231,7 +231,7 @@ func selectFlightsFromTableWithOriginDestTimeDuration(table string, origin strin
 	}
 	flightRows.Close()
 
-	fmt.Printf("SELECT flights %v between origin %v dest %v times %v %v\n%v\n rows selected.", table, origin, dest, start, start.Add(duration), countOfRows)
+	fmt.Printf("SELECT flights %v between origin %v dest %v times %v %v\n%v rows selected.\n", table, origin, dest, start, start.Add(duration), countOfRows)
 
 	return
 }
