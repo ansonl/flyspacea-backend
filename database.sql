@@ -3,18 +3,23 @@ CREATE TABLE HR72_flights (
 Origin VARCHAR(100),
 Destination VARCHAR(100),
 RollCall TIMESTAMP,
+UnknownRollCallDate BOOLEAN,
 SeatCount INT,
 SeatType VARCHAR(3), 
 Cancelled BOOLEAN,
 PhotoSource VARCHAR(2048),
 SourceDate TIMESTAMP,
-CONSTRAINT flights_pk PRIMARY KEY (Origin, Destination, RollCall),
+CONSTRAINT flights_pk PRIMARY KEY (Origin, Destination, RollCall, PhotoSource),
 CONSTRAINT flights_origin_fk FOREIGN KEY (Origin) REFERENCES Locations(Title),
 CONSTRAINT flights_dest_fk FOREIGN KEY (Destination) REFERENCES Locations(Title));
 
 DROP TABLE IF EXISTS Locations;
 CREATE TABLE Locations (
  Title VARCHAR(100),
+ Phone VARCHAR(50),
+ Email VARCHAR(255),
+ GeneralInfo VARCHAR(2048),
+ FBId VARCHAR(255),
  URL VARCHAR(2048),
  CONSTRAINT locations_pk PRIMARY KEY (Title));
 

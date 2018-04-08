@@ -13,6 +13,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"strings"
 
 	//Worker management
 	"context"
@@ -21,19 +22,128 @@ import (
 	"runtime"
 )
 
-func updateAllTerminals(terminalMap map[string]Terminal) {
+func getAllTerminalsInfo(terminalArray []Terminal) {
+	//Spawn goroutine to download and process each image
+	ctx := context.TODO()
+	var maxWorkers int
+	var sem *semaphore.Weighted
+	//maxWorkers = runtime.GOMAXPROCS(0)
+	maxWorkers = 1
+	sem = semaphore.NewWeighted(int64(maxWorkers))
+
+	for i, _ := range terminalArray {
+		if err := sem.Acquire(ctx, 1); err != nil {
+			log.Printf("Failed to acquire semaphore: %v\n", err)
+			break
+		}
+
+		go func(t *Terminal) {
+			defer sem.Release(1)
+			log.Printf("Getting info for terminal %v\n", (*t).Title)
+			if err := t.getAndSetTerminalInfo(); err != nil {
+				displayErrorForTerminal((*t), err.Error())
+			} else {
+				//fmt.Println((*t).PageInfoEdge)
+				incrementValidTerminals() //No error for first api call to terminal = valid FB id
+			}
+		}(&terminalArray[i])
+	}
+
+	if err := sem.Acquire(ctx, int64(maxWorkers)); err != nil {
+		log.Printf("Failed to acquire semaphore: %v\n", err)
+	}
+}
+
+func (t *Terminal) getAndSetTerminalInfo() (err error) {
+	//Create request url and parameters
+	apiUrl := GRAPH_API_URL
+	resource := fmt.Sprintf("%v/%v/", GRAPH_API_VERSION, (*t).Id)
+	data := url.Values{}
+	//Multiple url.Values.Add will Encode to k=v&k=v. Facebook only processes last key.
+	data.Add(GRAPH_FIELDS_KEY, fmt.Sprintf("%v,%v,%v", GRAPH_FIELD_PHONE_KEY, GRAPH_FIELD_EMAILS_KEY, GRAPH_FIELD_GENERAL_INFO_KEY))
+	data.Add(GRAPH_ACCESS_TOKEN_KEY, GRAPH_ACCESS_TOKEN)
+
+	u, _ := url.ParseRequestURI(apiUrl)
+	u.Path = resource
+	urlStr := fmt.Sprintf("%v?%v", u, data.Encode())
+
+	//log.Println(urlStr)
+
+	//Create request
+	var req *http.Request
+	var client *http.Client
+	client = &http.Client{
+		Timeout: time.Second * 20}
+	if req, err = http.NewRequest("GET", urlStr, nil); err != nil {
+		return
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
+
+	//Make request
+	var resp *http.Response
+	if resp, err = client.Do(req); err != nil {
+		return
+	}
+
+	//Read response body into []byte
+	defer resp.Body.Close()
+	var body []byte
+	if body, err = ioutil.ReadAll(resp.Body); err != nil {
+		//"Error reading page photos edge resp."
+		return
+	}
+
+	//Unmarshall into struct
+	var pageInfoEdge PageInfoEdge
+	if err = json.Unmarshal(body, &pageInfoEdge); err != nil {
+		//"Error unmarshaling page info edge."
+		return
+	}
+
+	//Trim phone number and email
+	//TODO: Add regex for phone number :(
+	phoneSpaceIndex := strings.Index(pageInfoEdge.Phone, " ")
+	if phoneSpaceIndex > 10 { //Trim only if space found after 10th digit. In case managers input a space in the beginning of the phone number.
+		pageInfoEdge.Phone = pageInfoEdge.Phone[:phoneSpaceIndex]
+	}
+	if len(pageInfoEdge.Emails) > 0 {
+		spaceIndex := strings.Index(pageInfoEdge.Emails[0], " ")
+		if spaceIndex > 10 { //Trim only if space found after 10th char for minlen("@us.af.mil"). In case managers input a space in the beginning of the phone number.
+			pageInfoEdge.Emails[0] = pageInfoEdge.Emails[0][:spaceIndex]
+		}
+	}
+	if len(pageInfoEdge.GeneralInfo) > 2048 {
+		pageInfoEdge.GeneralInfo = pageInfoEdge.GeneralInfo[:2048]
+	}
+
+	//Check for error
+	if pageInfoEdge.Error.Code != 0 {
+		err = fmt.Errorf("Code %v\nMessage %v", pageInfoEdge.Error.Code, pageInfoEdge.Error.Message)
+		return
+	}
+
+	(*t).PageInfoEdge = pageInfoEdge
+
+	return
+}
+
+func updateAllTerminalsFlights(terminalMap map[string]Terminal) {
+	var startTime, endTime time.Time
+	startTime = time.Now()
+
 	for _, v := range terminalMap {
-		if err := updateTerminal(v); err != nil {
+		if err := updateTerminalFlights(v); err != nil {
 			displayErrorForTerminal(v, err.Error())
 		}
 	}
 
-	log.Printf("Update ended.\n")
+	log.Printf("Terminal Flights Update ended.\nStart time: %v\n End time: %v\nElapsed time: %v\n", startTime, endTime, endTime.Sub(startTime))
 
 	displayStatistics()
 }
 
-func updateTerminal(targetTerminal Terminal) (err error) {
+func updateTerminalFlights(targetTerminal Terminal) (err error) {
 	var terminalId string
 	terminalId = targetTerminal.Id
 
@@ -54,6 +164,7 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 		displayErrorForTerminal(targetTerminal, "72 hour album not found.")
 	} else {
 		displayMessageForTerminal(targetTerminal, "72 hour album found.")
+		incrementTerminalsWith72HRAlbum()
 	}
 
 	//Request Photos edge from Graph API
@@ -64,7 +175,7 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 
 	//Look at the photo nodes returned by the photos edge
 	var limit int
-	limit = 1
+	limit = 4
 	if len(photosEdge.Data) < limit {
 		limit = len(photosEdge.Data)
 	}
@@ -74,10 +185,12 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 	var maxWorkers int
 	var sem *semaphore.Weighted
 	maxWorkers = runtime.GOMAXPROCS(0)
-	maxWorkers = 1
+	//maxWorkers = 1
 	sem = semaphore.NewWeighted(int64(maxWorkers))
 
 	displayMessageForTerminal(targetTerminal, fmt.Sprintf("Starting update with %v workers.", maxWorkers))
+
+	var errorCount int
 
 	for photoIndex := 0; photoIndex < limit; photoIndex++ {
 		if err := sem.Acquire(ctx, 1); err != nil {
@@ -89,12 +202,17 @@ func updateTerminal(targetTerminal Terminal) (err error) {
 			defer sem.Release(1)
 			if err := processPhotoNode(edgePhoto, t); err != nil {
 				displayErrorForTerminal(t, err.Error())
+				errorCount++
 			}
 		}(photosEdge.Data[photoIndex], targetTerminal)
 	}
 
 	if err := sem.Acquire(ctx, int64(maxWorkers)); err != nil {
 		log.Printf("Failed to acquire semaphore: %v\n", err)
+	}
+
+	if errorCount == 0 {
+		incrementNoErrorTerminals()
 	}
 
 	return
@@ -117,7 +235,8 @@ func find72HrAlbumId(t Terminal) (albumId string, err error) {
 	//Create request
 	var req *http.Request
 	var client *http.Client
-	client = &http.Client{}
+	client = &http.Client{
+		Timeout: time.Second * 20}
 	if req, err = http.NewRequest("GET", urlStr, nil); err != nil {
 		return
 	}
@@ -185,7 +304,8 @@ func getPhotosEdge(id string) (photosEdge PhotosEdge, err error) {
 	//Create request
 	var req *http.Request
 	var client *http.Client
-	client = &http.Client{}
+	client = &http.Client{
+		Timeout: time.Second * 20}
 	if req, err = http.NewRequest("GET", urlStr, nil); err != nil {
 		return
 	}
@@ -227,7 +347,7 @@ func getPhotosEdge(id string) (photosEdge PhotosEdge, err error) {
 
 //Download, save, OCR a photo from Photos Edge
 func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err error) {
-	incrementPhotosFound()
+	
 
 	//Check if photo created within X timeframe (made recently?)
 	var photoCreatedTime time.Time
@@ -242,6 +362,8 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		displayMessageForTerminal(targetTerminal, edgePhoto.Id+" over 24 hours old.")
 		return
 	}
+
+	incrementPhotosFound()
 
 	//displayMessageForTerminal(targetTerminal, fmt.Sprintf("Downloading recent photo %v",photoIndex+1))
 
@@ -277,7 +399,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 
 		//Manual slide control
 		//newSlide.Extension = "jpeg"
-		//newSlide.FBNodeId = "1614074308661972"
+		//newSlide.FBNodeId = "1630035233732546"
 		//newSlide.FBNodeId = "1600297960039607"
 		//newSlide.FBNodeId = "1600298003372936"
 
@@ -301,13 +423,8 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		return
 	}
 
-	//Check if date was found by comparing to "blank" time.Time
-	if slideDate.Equal(time.Time{}) == false {
-		incrementPhotosFoundDateHeader()
-	}
-
 	//Display found date
-	displayMessageForTerminal(slides[0].Terminal, fmt.Sprintf("%v \u001b[1m\u001b[31m%v\u001b[0m", slides[0].FBNodeId, slideDate.Format("02 Jan 2006 -0700")))
+	displayMessageForTerminal(slides[0].Terminal, fmt.Sprintf("%v found date for photo node \u001b[1m\u001b[31m%v\u001b[0m", slides[0].FBNodeId, slideDate.Format("02 Jan 2006 -0700")))
 
 	//Get dest bbox
 	//TODO: Find bounds of destination column and crop to get better OCR results.
@@ -359,12 +476,14 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 	deleteTerminalFromDestArray(&destinations, slides[0].Terminal)
 
 	/*
-		fmt.Println("found dests in all slides")
-		for _, d := range destinations {
-			log.Println(d)
-		}
-		return
+	//Print destination object. Shows spelling found and distance. 
+	fmt.Println("found dests in all slides")
+	for _, d := range destinations {
+		log.Println(d)
+	}
+	//return
 	*/
+	
 
 	//Find vertically closest Destination for every RollCall
 	linkRollCallsToNearestDestinations(rollCalls, destinations)
@@ -452,24 +571,48 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 				}
 			*/
 
+			//Set Flight.UnknownRollCallDate if applicable
+			//Check if date was NOT found by comparing to "blank" time.Time
+			var unknownRCDate bool
+			if slideDate.Equal(time.Time{}) {
+				unknownRCDate = true
+			} else {
+				incrementPhotosFoundDateHeader()
+			}
+
 			//Create Flight struct to add to slice
 			tmpFlight := Flight{
 				Origin:      slides[0].Terminal.Title,
 				Destination: destinationGroupings[dgIndex].Destinations[dIndex].TerminalTitle,
-				RollCall:    (*destinationGroupings[dgIndex].Destinations[dIndex].LinkedRollCall).Time,
-				SeatCount:   (*destinationGroupings[dgIndex].Destinations[dIndex].LinkedSeatsAvailable).Number,
-				SeatType:    (*destinationGroupings[dgIndex].Destinations[dIndex].LinkedSeatsAvailable).Letter,
-				PhotoSource: slides[0].FBNodeId}
+
+				UnknownRollCallDate: unknownRCDate,
+				PhotoSource: slides[0].FBNodeId,
+				SourceDate: slides[0].FBCreatedTime}
+
+			
+
+			if destinationGroupings[dgIndex].Destinations[dIndex].LinkedRollCall != nil {
+				tmpFlight.RollCall = (*destinationGroupings[dgIndex].Destinations[dIndex].LinkedRollCall).Time
+			}
+
+			if destinationGroupings[dgIndex].Destinations[dIndex].LinkedSeatsAvailable != nil {
+				tmpFlight.SeatCount = (*destinationGroupings[dgIndex].Destinations[dIndex].LinkedSeatsAvailable).Number
+				tmpFlight.SeatType = (*destinationGroupings[dgIndex].Destinations[dIndex].LinkedSeatsAvailable).Letter
+			}
 
 			finalFlights = append(finalFlights, tmpFlight)
 		}
 	}
 
+	/*
+	//Print flights list for photo
+	displayMessageForTerminal(slides[0].Terminal, fmt.Sprintf("%v Flights list for photo node %v", slides[0].FBNodeId))
 	for _, ff := range finalFlights {
 		fmt.Println(ff)
 	}
+	*/
 
-	if err = deleteFlightsFromTableForDayForOrigin(FLIGHTS_72HR_TABLE, slideDate, slides[0].Terminal.Title); err != nil {
+	if err = deleteFlightsFromTableForDayForOriginTerminal(FLIGHTS_72HR_TABLE, slideDate, slides[0].Terminal); err != nil {
 		return
 	}
 
@@ -506,7 +649,8 @@ func getPhotoNodeForSlide(sReference Slide) (photoNode PhotoNode, err error) {
 	//Create request
 	var req *http.Request
 	var client *http.Client
-	client = &http.Client{}
+	client = &http.Client{
+		Timeout: time.Second * 20}
 	if req, err = http.NewRequest("GET", urlStr, nil); err != nil {
 		return
 	}
@@ -572,7 +716,8 @@ func downloadAndSaveImageForPhotoNode(photoNode PhotoNode, sReference *Slide) (e
 	//Create request
 	var req *http.Request
 	var client *http.Client
-	client = &http.Client{}
+	client = &http.Client{
+		Timeout: time.Second * 20}
 	if req, err = http.NewRequest("GET", photoNode.Images[0].Source, nil); err != nil {
 		return
 	}

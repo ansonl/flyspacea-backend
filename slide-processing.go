@@ -15,6 +15,7 @@ import (
 )
 
 //Find date of 72 hour slide in header by looking for month name
+//Returned time.Time is set to TZ of slides[0]
 func findDateOfPhotoNodeSlides(slides []Slide) (slideDate time.Time, err error) {
 
 	//Build months name array
@@ -138,6 +139,11 @@ func findDateOfPhotoNodeSlides(slides []Slide) (slideDate time.Time, err error) 
 		}
 	}
 
+	//If found date is > 144hr away from current time, assume we got the wrong date since we are only looking at recent photos
+	if math.Abs(float64(time.Since(slideDate))) > float64(time.Hour * 144) {
+		slideDate = time.Time{}
+	}
+
 	//fmt.Printf("%v date %v bbox %v %v %v %v\n", closestMonthSlide.Terminal.Title, closestMonthSpelling, bbox.Min.X, bbox.Min.Y, bbox.Max.X, bbox.Max.Y)
 
 	return
@@ -215,7 +221,7 @@ func findLabelBoundsOfPhotoNodeSlides(slides []Slide, label string) (bbox image.
 		return
 	}
 
-	fmt.Println("closest spelling ", closestDestinationSpelling)
+	//fmt.Println("closest spelling ", closestDestinationSpelling)
 
 	//Find KEYWORD_DESTINATION bounds in hOCR
 	bboxes, err := getTextBounds(closestDestinationSlide.HOCRText, closestDestinationSpelling)
@@ -244,7 +250,7 @@ func findDestinationsFromSlides(slides []Slide, limitMinY int) (foundDestination
 		found = make(map[string]TerminalKeywordsResult)
 		found = findTerminalKeywordsInPlainText(s.PlainText)
 
-		fmt.Println("found keywords", found)
+		//fmt.Println("found keywords", found)
 
 		//Get text bounds from hOCR for each potential spelling found.
 		for spelling, result := range found {
@@ -253,7 +259,7 @@ func findDestinationsFromSlides(slides []Slide, limitMinY int) (foundDestination
 				return
 			}
 
-			fmt.Println("found bbox for ", spelling, bboxes, "\nmin y ", limitMinY)
+			//fmt.Println("found bbox for ", spelling, bboxes, "\nmin y ", limitMinY)
 
 			//Skip result if bounding box too high. MinY too small.
 			//Append new Destination to foundDestinations for each bounding box found.
@@ -449,7 +455,7 @@ func findSeatsFromPlainText(plainText string) (foundSAs []SeatsAvailable, err er
 
 	//lowercase input string
 	var input = strings.ToLower(plainText)
-	fmt.Println(input)
+	//fmt.Println(input)
 	var regexResult [][]string
 	if regexResult = SeatsCountRegex.FindAllStringSubmatch(input, -1); regexResult == nil {
 		//No match, proceed to next processed slide
@@ -593,10 +599,12 @@ func combineDestinationGroupsToAnchorDestinations(groupsP *[]Grouping) {
 
 	for growIndex := 0; growIndex < len(groups); growIndex++ {
 
+		/*
 		//fmt.Println("groups")
 		for _, g := range groups {
 			fmt.Println(g)
 		}
+		*/
 
 		//fmt.Println("grow group ", growIndex, groups[growIndex])
 
@@ -693,12 +701,14 @@ func linkRollCallsToNearestSeatsAvailable(rcs []RollCall, saArray []SeatsAvailab
 
 //For each Destination - link to SeatsAvailable sharing > threshold vertical pixels. Similar to linkRollCallsToNearestDestinations but reduced for simplicity. There MAY be a one to one relationship for RollCall and SeatsAvailable. Not guaranteed since there may be only one seat label for multiple destinations (ex: in a grouping).
 func linkDestinationsToNearestSeatsAvailable(dests []Destination, saArray []SeatsAvailable) {
+	/*
 	for _, r := range dests {
 		fmt.Println(r)
 	}
 	for _, s := range saArray {
 		fmt.Println(s)
 	}
+	*/
 
 	//Link each SeatsAvailable. RollCall -> SeatsAvailable.
 	//Runtime: O(n*m)

@@ -9,20 +9,38 @@ import (
 func main() {
 	//fmt.Printf("\n\u001b[1mboldtext\u001b[0m\r\u001b[2Fprevline\n\n\n")
 
-	//Setup storage database
+	/*
+	deleteFlightsFromTableForDayForOriginTerminal("", time.Now(), Terminal{
+		Timezone: "Beijing"})
+	return
+	*/
+
 	var err error
-	if err = setupDatabase(); err != nil {
-		log.Println(err)
-	}
-	log.Println("Setup storage database.")
 
 	//Load terminals
-	terminalArray, err := readTerminalArrayFromFiles(TERMINAL_SINGLE_FILE)
-	if err != nil {
+	var terminalArray []Terminal
+	if terminalArray, err = readTerminalArrayFromFiles(TERMINAL_FILE); err != nil {
 		log.Fatal(err)
 	}
+	//Read in location keyword file
+	getAllTerminalsInfo(terminalArray)
+	//log.Println(terminalArray)
 	terminalMap := readTerminalArrayToMap(terminalArray)
-	log.Println("Read terminals data.")
+	log.Printf("Loaded %v Terminals.\n", len(terminalArray))
+
+	//Setup storage database
+	if err = createDatabase(); err != nil {
+		log.Println(err)
+	}
+	log.Println("Created storage database.")
+
+	if err = populateLocationsTable(nil); err != nil {
+		log.Println(err)
+		return
+	}
+	log.Println("Populated storage reference database.")
+
+	
 
 	/*
 		//Test table selection
@@ -51,7 +69,7 @@ func main() {
 	}
 
 	log.Printf("\u001b[1m\u001b[35m%v\u001b[0m\n", "Starting Update")
-	go updateAllTerminals(terminalMap)
+	go updateAllTerminalsFlights(terminalMap)
 
 	//Wait for server to end
 	wg.Wait()

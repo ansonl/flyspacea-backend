@@ -140,7 +140,7 @@ func runImageMagickCropProcess(sReference Slide, cropGeometry []int) (err error)
 	//{size}{+-}x{+-}y
 	cmd := "convert"
 	args := []string{"-crop", fmt.Sprintf("%vx%v+%v+%v", cropGeometry[0], cropGeometry[1], cropGeometry[2], cropGeometry[3]), originalSavePath, processedSavePath}
-	fmt.Printf("%v", args)
+	//fmt.Printf("%v", args)
 	if err = exec.Command(cmd, args...).Run(); err != nil {
 		return
 	}

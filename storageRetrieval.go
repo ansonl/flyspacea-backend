@@ -12,24 +12,28 @@ import (
 
 var db *(sql.DB)
 
-func setupDatabase() (err error) {
+func createDatabase() (err error) {
 	//Create global db handle
 	if db, err = sql.Open("postgres", os.Getenv("DATABASE_URL")); err != nil {
 		return
 	}
 
 	//Create needed tables
-	if err = setupRequiredTables(); err != nil {
+	if err = createRequiredTables(); err != nil {
 		return
 	}
 	return
 }
 
-func setupRequiredTables() (err error) {
+func createRequiredTables() (err error) {
 	var locationsAlreadyExist bool
 	if locationsAlreadyExist, err = setupTable(LOCATIONS_TABLE, fmt.Sprintf(`
 		CREATE TABLE %v (
 		Title VARCHAR(100),
+		Phone VARCHAR(50),
+		Email VARCHAR(255),
+		GeneralInfo VARCHAR(2048),
+		FBId VARCHAR(255),
 		URL VARCHAR(2048),
 		CONSTRAINT locations_pk PRIMARY KEY (Title));
 		`, LOCATIONS_TABLE)); err != nil {
@@ -39,9 +43,6 @@ func setupRequiredTables() (err error) {
 		//log.Println(LOCATIONS_TABLE + " table already exists.")
 	} else {
 		log.Println(LOCATIONS_TABLE + " table created.")
-		if err = populateLocationsTable(); err != nil {
-			return
-		}
 	}
 
 	var flightsTableAlreadyExist bool
@@ -49,13 +50,14 @@ func setupRequiredTables() (err error) {
 			CREATE TABLE %v (
 			Origin VARCHAR(100),
 			Destination VARCHAR(100),
-			RollCall TIMESTAMP,
+			RollCall TIMESTAMP NULL,
+			UnknownRollCallDate BOOLEAN,
 			SeatCount INT,
 			SeatType VARCHAR(3), 
 			Cancelled BOOLEAN,
 			PhotoSource VARCHAR(2048),
 			SourceDate TIMESTAMP,
-			CONSTRAINT flights_pk PRIMARY KEY (Origin, Destination, RollCall),
+			CONSTRAINT flights_pk PRIMARY KEY (Origin, Destination, RollCall, PhotoSource),
 			CONSTRAINT flights_origin_fk FOREIGN KEY (Origin) REFERENCES Locations(Title),
 			CONSTRAINT flights_dest_fk FOREIGN KEY (Destination) REFERENCES Locations(Title));
 		`, FLIGHTS_72HR_TABLE)); err != nil {
@@ -107,17 +109,22 @@ func doesTableExist(tableName string) (tableExist bool, err error) {
 	return
 }
 
-func populateLocationsTable() (err error) {
+//INSERT locations into locations table
+func populateLocationsTable(terminalArray []Terminal) (err error) {
+	var locationKeywordsArray []Terminal
+	if locationKeywordsArray, err = readTerminalArrayFromFiles(LOCATION_KEYWORDS_FILE); err != nil { //same files reread when building fuzzy models in ocr-fuzzy.go. Maybe pass data in future.
+		return
+	}
+	//Testing
+	locationKeywordsArray = nil
+
+	for _, v := range terminalArray {
+		locationKeywordsArray = append(locationKeywordsArray, v)
+	}
+
 	if err = checkDatabaseHandleValid(db); err != nil {
 		return
 	}
-
-	//Read in location keyword file
-	var locationKeywordsArray []Terminal
-	if locationKeywordsArray, err = readTerminalArrayFromFiles(TERMINAL_FILE, LOCATION_KEYWORDS_FILE); err != nil { //same files reread when building fuzzy models in ocr-fuzzy.go. Maybe pass data in future.
-		return
-	}
-
 	//Insert locations into table
 	var rowsAffected int64
 	fmt.Println("Inserting %v locations into %v table...", len(locationKeywordsArray), LOCATIONS_TABLE)
@@ -143,10 +150,24 @@ func populateLocationsTable() (err error) {
 
 	for i, lk := range locationKeywordsArray {
 		var result sql.Result
+
+		var insertPhone sql.NullString
+		if len(lk.Phone) > 0 {
+			insertPhone.String = lk.Phone
+			insertPhone.Valid = true
+		}
+
+
+		var insertEmail sql.NullString
+		if len(lk.Emails) > 0 && len(lk.Emails[0]) > 0 {
+			insertEmail.String = lk.Emails[0]
+			insertEmail.Valid = true
+		}
+
 		if result, err = db.Exec(fmt.Sprintf(`
-			INSERT INTO %v (Title, URL) 
-	    	VALUES ($1, $2);
-	    	`, LOCATIONS_TABLE), lk.Title, nil); err != nil {
+			INSERT INTO %v (Title, Phone, Email, GeneralInfo, FBId, URL) 
+	    	VALUES ($1, $2, $3, $4, $5, $6);
+	    	`, LOCATIONS_TABLE), lk.Title, insertPhone, insertEmail, lk.GeneralInfo, lk.Id, nil); err != nil {
 			return
 		}
 
@@ -189,7 +210,7 @@ func selectFlightsFromTableWithOriginDestTimeDuration(table string, origin strin
 			SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource
 			FROM %v
 			WHERE Origin=$1 AND RollCall >= $2 AND RollCall < $3;
- 		`, table), origin, start.Format("2006-01-02 15:04:05"), start.Add(duration).Format("2006-01-02 15:04:05")); err != nil {
+ 		`, table), origin, start, start.Add(duration)); err != nil {
 			return
 		}
 	} else if len(origin) == 0 && len(dest) > 0 { //Search by only Destination
@@ -197,7 +218,7 @@ func selectFlightsFromTableWithOriginDestTimeDuration(table string, origin strin
 			SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource
 			FROM %v
 			WHERE Destination=$1 AND RollCall >= $2 AND RollCall < $3;
- 		`, table), dest, start.Format("2006-01-02 15:04:05"), start.Add(duration).Format("2006-01-02 15:04:05")); err != nil {
+ 		`, table), dest, start, start.Add(duration)); err != nil {
 			return
 		}
 	} else if len(origin) > 0 && len(dest) > 0 { //Search by Origin and Destination
@@ -205,7 +226,7 @@ func selectFlightsFromTableWithOriginDestTimeDuration(table string, origin strin
 			SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource
 			FROM %v
 			WHERE Origin=$1 AND Destination=$2 AND RollCall >= $3 AND RollCall < $4;
- 		`, table), origin, dest, start.Format("2006-01-02 15:04:05"), start.Add(duration).Format("2006-01-02 15:04:05")); err != nil {
+ 		`, table), origin, dest, start, start.Add(duration)); err != nil {
 			return
 		}
 	} else { //Search all in time duration
@@ -213,7 +234,7 @@ func selectFlightsFromTableWithOriginDestTimeDuration(table string, origin strin
 			SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource
 			FROM %v
 			WHERE RollCall >= $1 AND RollCall < $2;
- 		`, table), start.Format("2006-01-02 15:04:05"), start.Add(duration).Format("2006-01-02")); err != nil {
+ 		`, table), start, start.Add(duration).Format("2006-01-02")); err != nil {
 			return
 		}
 	}
@@ -245,12 +266,13 @@ func insertFlightsIntoTable(table string, flights []Flight) (err error) {
 	//Insert flights into table
 	var rowsAffected int64
 	for _, flight := range flights {
+		
 		var result sql.Result
 		if result, err = db.Exec(fmt.Sprintf(`
-			INSERT INTO %v (Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource, SourceDate) 
-	    	VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
-	 		`, table), flight.Origin, flight.Destination, flight.RollCall.In(time.UTC).Format("2006-01-02 15:04:05"), flight.SeatCount, flight.SeatType, false, flight.PhotoSource, time.Now().In(time.UTC).Format("2006-01-02 15:04:05")); err != nil {
-			return
+			INSERT INTO %v (Origin, Destination, RollCall, UnknownRollCallDate, SeatCount, SeatType, Cancelled, PhotoSource, SourceDate) 
+	    	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+	 		`, table), flight.Origin, flight.Destination, flight.RollCall.In(time.UTC), flight.UnknownRollCallDate, flight.SeatCount, flight.SeatType, false, flight.PhotoSource, flight.SourceDate.In(time.UTC)); err != nil {
+				return
 		}
 
 		var affected int64
@@ -265,8 +287,10 @@ func insertFlightsIntoTable(table string, flights []Flight) (err error) {
 	return
 }
 
-//Pass in time in local TZ
-func deleteFlightsFromTableForDayForOrigin(table string, targetDay time.Time, origin string) (err error) {
+//Delete flights for time.Time with origin from a originTerminal. Accounts for current time to avoid deleting past flights.
+//Pass in time in origin Terminal TZ
+//Expect targetDay to be 00:00:00 time.
+func deleteFlightsFromTableForDayForOriginTerminal(table string, targetDay time.Time, originTerminal Terminal) (err error) {
 
 	dateEqual := func(date1, date2 time.Time) bool {
 		y1, m1, d1 := date1.Date()
@@ -274,25 +298,39 @@ func deleteFlightsFromTableForDayForOrigin(table string, targetDay time.Time, or
 		return y1 == y2 && m1 == m2 && d1 == d2
 	}
 
-	targetDay = targetDay.UTC()
-
-	var start, end time.Time
-	currentTime := time.Now()
-	if dateEqual(targetDay, currentTime) {
-		start = currentTime
-		end = currentTime.Round(time.Hour * 24)
-	} else if targetDay.After(currentTime) {
-		year, month, day := targetDay.Date()
-		start = time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
-		end = start.Add(time.Hour * 24)
+	//Truncate function rounds to UTC 00:00:00, does not account for TZ
+	//Truncate 24hr equivalent snippet that works correctly with all TZ
+	truncateDay := func(input time.Time) (output time.Time) {
+		year, month, day := input.Date()
+		output = time.Date(year, month, day, 0, 0, 0, 0, input.Location())
+		return
 	}
 
-	err = deleteFlightsFromTableBetweenTimesForOrigin(table, start, end, origin)
+	//Determine whether DELETE timeframe is in the future. We do not want to delete past flights because Terminals' Facebook pages may post updated slides throughout the day that omit fulfilled flights. Safe assumption is to only delete future flights on current and future days. 
+	//If DELETE targetDay is the same 24hr date as current time, we only delete flights between time.Now().In(TERMINAL_LOCAL_TZ) and end of day (2359).
+	//If DELETE targetDay is in future of currentTime, delete all origin flights for targetDay. Expect targetDay to be 00:00:00 time so it will resolve to a future date. 
+	//if DELETE targetDay is in past of currentTime, do not delete anything. 
+	var start, end time.Time
+	currentTime := time.Now().In(originTerminal.Timezone)
+	if dateEqual(targetDay, currentTime) { //DELETE in current date
+		start = currentTime
+		end = truncateDay(currentTime).Add(time.Hour * 24)
+	} else if targetDay.After(currentTime) { //DELETE in future
+		start = truncateDay(targetDay)
+		end = start.Add(time.Hour * 24)
+	} else { //DELETE in past. 
+		//Do not delete anything.
+		log.Printf("Not deleting past flights for %v for date %v\n", originTerminal.Title, targetDay)
+		return
+	}
+
+	err = deleteFlightsFromTableBetweenTimesForOrigin(table, start.UTC(), end.UTC(), originTerminal.Title)
 
 	return
 }
 
 //DELETE Inclusive of start, exclusive of end. Can input 0000 of start date and 0000 end date and get all times up but no including 0000 of end date.
+//Pass in start and end time in UTC TZ
 func deleteFlightsFromTableBetweenTimesForOrigin(table string, start time.Time, end time.Time, origin string) (err error) {
 	if err = checkDatabaseHandleValid(db); err != nil {
 		return
@@ -302,7 +340,7 @@ func deleteFlightsFromTableBetweenTimesForOrigin(table string, start time.Time, 
 	if result, err = db.Exec(fmt.Sprintf(`
 		DELETE FROM %v 
  		WHERE Origin=$1 AND RollCall >= $2 AND RollCall < $3;
- 		`, table), origin, start.Format("2006-01-02 15:04:05"), end.Format("2006-01-02 15:04:05")); err != nil {
+ 		`, table), origin, start, end); err != nil {
 		return
 	}
 	var affected int64

@@ -30,6 +30,10 @@ const (
 	GRAPH_FIELD_UPDATED_TIME_KEY  string = "updated_time"
 	GRAPH_FIELD_NAME_KEY          string = "name"
 	GRAPH_TYPE_UPLOADED_KEY       string = "uploaded"
+
+	GRAPH_FIELD_PHONE_KEY	string = "phone"
+	GRAPH_FIELD_EMAILS_KEY	string = "emails"
+	GRAPH_FIELD_GENERAL_INFO_KEY	string = "general_info"
 )
 
 //Graph API returned map keys

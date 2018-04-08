@@ -47,6 +47,16 @@ type AlbumsEdgeAlbum struct {
 	Id          string `json:"id"`
 }
 
+//Facebook Graph API page info
+//https://developers.facebook.com/docs/graph-api/reference/page/
+type PageInfoEdge struct {
+	Phone  string  `json:"phone"`
+	Emails []string `json:"emails"`
+	GeneralInfo string`json:"general_info"`
+
+	Error  GraphErrorResponse `json:"error"`
+}
+
 //Facebook Graph API standard error response
 //https://developers.facebook.com/docs/graph-api/using-graph-api#errors
 type GraphErrorResponse struct {
@@ -91,6 +101,8 @@ type Terminal struct {
 	Keywords []string         `json:"keywords"`
 	Location TerminalLocation `json:"location"`
 	Timezone *time.Location
+
+	PageInfoEdge
 }
 
 //Processed version of downloaded photo
@@ -184,10 +196,12 @@ type Flight struct {
 	Origin      string    `json:"origin"`
 	Destination string    `json:"destination"`
 	RollCall    time.Time `json:"rollCall"`
+	UnknownRollCallDate bool `json:"unknownRollCallDate"`
 	SeatCount   int       `json:"seatCount"`
 	SeatType    string    `json:"seatType"`
 	Cancelled   bool      `json:"cancelled"`
 	PhotoSource string    `json:"photoSource"`
+	SourceDate time.Time `json:"sourceDate"`
 }
 
 /*

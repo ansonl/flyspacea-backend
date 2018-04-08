@@ -47,11 +47,12 @@ func readTerminalArrayFromFiles(filenames ...string) (keywordsArray []Terminal, 
 		}
 
 		//Get Timezone for every terminal
+		//log.Println("Looking up timezone for terminals.")
 		for i, _ := range tmp {
 			if err = tmp[i].getTZ(); err != nil {
 				return
 			}
-			fmt.Println(tmp[i].Timezone, tmp[i].Title, tmp[i].Location)
+			//fmt.Println(tmp[i].Timezone, tmp[i].Title, tmp[i].Location)
 		}
 
 		//log.Printf("%v locations in file %v", len(tmp), filenames)

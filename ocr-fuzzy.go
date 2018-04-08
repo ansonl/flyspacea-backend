@@ -25,9 +25,12 @@ var fuzzyBannedSpellings map[string]int
 //Create fuzzy models for slide labels and terminal keywords
 func createFuzzyModels() (err error) {
 	//Create ban spelling list to not match
+	//These words are common/shared/false positives
 	fuzzyBannedSpellings = make(map[string]int)
 	fuzzyBannedSpellings["listed"] = 0
 	fuzzyBannedSpellings["island"] = 0
+	fuzzyBannedSpellings["person"] = 0
+
 
 	//Slide data header label keyword to train in fuzzy with customizable training depth
 	type LabelKeyword struct {
@@ -167,13 +170,13 @@ func doOCRForSlide(s *Slide, wl OCRWhiteListType) (err error) {
 	if (*s).PlainText, err = client.Text(); err != nil {
 		return
 	} else if len((*s).PlainText) == 0 {
-		displayMessageForSlide((*s), fmt.Sprintf("No plain text extracted from slide"))
+		//displayMessageForSlide((*s), fmt.Sprintf("No plain text extracted from slide"))
 	}
 
 	if (*s).HOCRText, err = client.HOCRText(); err != nil {
 		return
 	} else if len((*s).HOCRText) == 0 {
-		displayMessageForSlide(*s, fmt.Sprintf("No hOCR text extracted from slide"))
+		//displayMessageForSlide(*s, fmt.Sprintf("No hOCR text extracted from slide"))
 	}
 
 	return

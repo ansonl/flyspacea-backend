@@ -166,7 +166,7 @@
         "url": "http://www.facebook.com/AndersenPassengerTerminal",
         "location": {
             "latitude": 13.5838842,
-            "longitude": -144.9300569
+            "longitude": 144.9300569
         }
     },
     {
@@ -176,7 +176,7 @@
         "url": "http://www.facebook.com/pages/Aviano-Passenger-Terminal/340217489359669",
         "location": {
             "latitude": 46.0360,
-            "longitude": -12.6145
+            "longitude": 12.6145
         }
     },
     {
@@ -226,7 +226,7 @@
         "url": "https://www.facebook.com/AMCKadena",
         "location": {
             "latitude": 26.3557,
-            "longitude": -127.7679
+            "longitude": 127.7679
         }
     },
     {
@@ -246,7 +246,7 @@
         "url": "https://www.facebook.com/IwakuniPassengerTerminal",
         "location": {
             "latitude": 34.1440,
-            "longitude": -132.2306
+            "longitude": 132.2306
         }
     },
     {
@@ -256,7 +256,7 @@
         "url": "http://www.facebook.com/MisawaPassengerTerminal",
         "location": {
             "latitude": 40.7043,
-            "longitude": -141.3696
+            "longitude": 141.3696
         }
     },
     {
@@ -266,7 +266,7 @@
         "url": "http://www.facebook.com/pages/Sigonella-Passenger-Terminal/332837856791726",
         "location": {
             "latitude": 37.4112,
-            "longitude": -14.9091
+            "longitude": 14.9091
         }
     },
     {
@@ -296,7 +296,7 @@
         "url": "http://www.facebook.com/BahrainPassengerTerminal",
         "location": {
             "latitude": 26.2072,
-            "longitude": -50.6100
+            "longitude": 50.6100
         }
     },
     {
@@ -306,7 +306,7 @@
         "url": "http://www.facebook.com/pages/Naples-Passenger-Terminal/228247760626570",
         "location": {
             "latitude": 40.8821,
-            "longitude": -14.2923
+            "longitude": 14.2923
         }
     },
     {
@@ -346,7 +346,7 @@
         "url": "https://www.facebook.com/RichmondAMC/info",
         "location": {
             "latitude": -33.5999976,
-            "longitude": -150.774663568
+            "longitude": 150.774663568
         }
     },
     {
@@ -386,7 +386,7 @@
         "url": "https://www.facebook.com/YokotaPassengerTerminal",
         "location": {
             "latitude": 35.7332,
-            "longitude": -139.3418
+            "longitude": 139.3418
         }
     },
     {
@@ -554,7 +554,7 @@
         "id": "1572890302947201",
         "location": {
             "latitude": 26.2760,
-            "longitude": -127.7488
+            "longitude": 127.7488
         }
     },
     {
@@ -563,7 +563,7 @@
         "id": "139500199531378",
         "location": {
             "latitude": 35.460983,
-            "longitude": -139.447948
+            "longitude": 139.447948
         }
     },
     {
