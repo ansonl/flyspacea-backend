@@ -26,6 +26,7 @@
 
 [metadata.heroku]
   root-package = "spacea"
+  install = ["./..."]
 
 [[constraint]]
   branch = "master"
