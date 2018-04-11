@@ -1,0 +1,63 @@
+{
+	"ImportPath": "spacea",
+	"GoVersion": "go1.10",
+	"GodepVersion": "v80",
+	"Deps": [
+		{
+			"ImportPath": "github.com/bradfitz/latlong",
+			"Rev": "f3db6d0dff40d47957be82e1a6645574fb041f95"
+		},
+		{
+			"ImportPath": "github.com/jbowtie/gokogiri/help",
+			"Comment": "4.6.41-105-g40b4859",
+			"Rev": "40b48594ca1866cf5d28177629b42f8a387377de"
+		},
+		{
+			"ImportPath": "github.com/jbowtie/gokogiri/html",
+			"Comment": "4.6.41-105-g40b4859",
+			"Rev": "40b48594ca1866cf5d28177629b42f8a387377de"
+		},
+		{
+			"ImportPath": "github.com/jbowtie/gokogiri/util",
+			"Comment": "4.6.41-105-g40b4859",
+			"Rev": "40b48594ca1866cf5d28177629b42f8a387377de"
+		},
+		{
+			"ImportPath": "github.com/jbowtie/gokogiri/xml",
+			"Comment": "4.6.41-105-g40b4859",
+			"Rev": "40b48594ca1866cf5d28177629b42f8a387377de"
+		},
+		{
+			"ImportPath": "github.com/jbowtie/gokogiri/xpath",
+			"Comment": "4.6.41-105-g40b4859",
+			"Rev": "40b48594ca1866cf5d28177629b42f8a387377de"
+		},
+		{
+			"ImportPath": "github.com/lib/pq",
+			"Comment": "go1.0-cutoff-203-g88edab0",
+			"Rev": "88edab0803230a3898347e77b474f8c1820a1f20"
+		},
+		{
+			"ImportPath": "github.com/lib/pq/oid",
+			"Comment": "go1.0-cutoff-203-g88edab0",
+			"Rev": "88edab0803230a3898347e77b474f8c1820a1f20"
+		},
+		{
+			"ImportPath": "github.com/otiai10/gosseract",
+			"Comment": "v2.1.0-10-gf2033d7",
+			"Rev": "f2033d7d95801cd99e8c748faa0cf57553086fd2"
+		},
+		{
+			"ImportPath": "github.com/sajari/fuzzy",
+			"Rev": "243c923763cac789d1196949a834ca698dbd7a28"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "cbe0f9307d0156177f9dd5dc85da1a31abc5f2fb"
+		},
+		{
+			"ImportPath": "golang.org/x/sync/semaphore",
+			"Rev": "fd80eb99c8f653c847d294a001bdf2a3a6f768f5"
+		}
+	]
+}
