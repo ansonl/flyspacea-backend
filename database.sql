@@ -27,6 +27,14 @@ CREATE TABLE Locations (
 INSERT INTO locations (Title, URL) 
     VALUES ($1, $2);
 
+    INSERT INTO locations (Title, Phone, Email, GeneralInfo, FBId, URL) 
+	    	VALUES ("test", "test", "test", "test", "test", "test") 
+	    	ON CONFLICT (Title) DO UPDATE SET
+	    	Phone = EXCLUDED.Phone,
+	    	Email = EXCLUDED.Email,
+	    	GeneralInfo = EXCLUDED.GeneralInfo,
+	    	FBId = EXCLUDED.FBId;
+
 #Insert new flight
 INSERT INTO flights (Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource, SourceDate) 
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8);

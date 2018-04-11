@@ -20,6 +20,9 @@ import (
 	"golang.org/x/sync/semaphore"
 	"regexp"
 	"runtime"
+
+	//GC
+	"runtime/debug"
 )
 
 func getAllTerminalsInfo(terminalArray []Terminal) {
@@ -27,8 +30,8 @@ func getAllTerminalsInfo(terminalArray []Terminal) {
 	ctx := context.TODO()
 	var maxWorkers int
 	var sem *semaphore.Weighted
-	//maxWorkers = runtime.GOMAXPROCS(0)
-	maxWorkers = 1
+	maxWorkers = runtime.GOMAXPROCS(0)
+	//maxWorkers = 1
 	sem = semaphore.NewWeighted(int64(maxWorkers))
 
 	for i, _ := range terminalArray {
@@ -112,6 +115,13 @@ func (t *Terminal) getAndSetTerminalInfo() (err error) {
 		if spaceIndex > 10 { //Trim only if space found after 10th char for minlen("@us.af.mil"). In case managers input a space in the beginning of the phone number.
 			pageInfoEdge.Emails[0] = pageInfoEdge.Emails[0][:spaceIndex]
 		}
+
+		if len(pageInfoEdge.Emails[0]) > 255 {
+			pageInfoEdge.Emails[0] = pageInfoEdge.Emails[0][:255]
+		}
+	}
+	if len(pageInfoEdge.Phone) > 50 {
+		pageInfoEdge.Phone = pageInfoEdge.Phone[:50]
 	}
 	if len(pageInfoEdge.GeneralInfo) > 2048 {
 		pageInfoEdge.GeneralInfo = pageInfoEdge.GeneralInfo[:2048]
@@ -138,9 +148,14 @@ func updateAllTerminalsFlights(terminalMap map[string]Terminal) {
 		}
 	}
 
+	endTime = time.Now()
+
 	log.Printf("Terminal Flights Update ended.\nStart time: %v\n End time: %v\nElapsed time: %v\n", startTime, endTime, endTime.Sub(startTime))
 
 	displayStatistics()
+	resetStatistics()
+
+	debug.FreeOSMemory()
 }
 
 func updateTerminalFlights(targetTerminal Terminal) (err error) {
@@ -190,7 +205,7 @@ func updateTerminalFlights(targetTerminal Terminal) (err error) {
 
 	displayMessageForTerminal(targetTerminal, fmt.Sprintf("Starting update with %v workers.", maxWorkers))
 
-	var errorCount int
+	var errorCount, flightsFound int
 
 	for photoIndex := 0; photoIndex < limit; photoIndex++ {
 		if err := sem.Acquire(ctx, 1); err != nil {
@@ -200,10 +215,14 @@ func updateTerminalFlights(targetTerminal Terminal) (err error) {
 
 		go func(edgePhoto PhotosEdgePhoto, t Terminal) {
 			defer sem.Release(1)
-			if err := processPhotoNode(edgePhoto, t); err != nil {
+			var flightsFoundInPhoto int
+			var err error
+			if flightsFoundInPhoto, err = processPhotoNode(edgePhoto, t); err != nil {
 				displayErrorForTerminal(t, err.Error())
 				errorCount++
 			}
+
+			flightsFound += flightsFoundInPhoto
 		}(photosEdge.Data[photoIndex], targetTerminal)
 	}
 
@@ -213,6 +232,10 @@ func updateTerminalFlights(targetTerminal Terminal) (err error) {
 
 	if errorCount == 0 {
 		incrementNoErrorTerminals()
+	}
+
+	if flightsFound > 0 {
+		incrementFoundFlightsTerminals()
 	}
 
 	return
@@ -346,7 +369,7 @@ func getPhotosEdge(id string) (photosEdge PhotosEdge, err error) {
 }
 
 //Download, save, OCR a photo from Photos Edge
-func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err error) {
+func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (flightsFound int, err error) {
 	
 
 	//Check if photo created within X timeframe (made recently?)
@@ -620,6 +643,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (err e
 		return
 	}
 
+	flightsFound = len(finalFlights)
 	incrementPhotosProcessed()
 	/*
 		//Debugging print slides array

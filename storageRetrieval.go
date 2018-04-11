@@ -115,8 +115,15 @@ func populateLocationsTable(terminalArray []Terminal) (err error) {
 	if locationKeywordsArray, err = readTerminalArrayFromFiles(LOCATION_KEYWORDS_FILE); err != nil { //same files reread when building fuzzy models in ocr-fuzzy.go. Maybe pass data in future.
 		return
 	}
+
+	//If debug single terminal, still load all terminals and locations into database. 
+	if DEBUG_SINGLE_FILE {
+		if locationKeywordsArray, err = readTerminalArrayFromFiles(LOCATION_KEYWORDS_FILE, TERMINAL_FILE); err != nil {
+			return
+		}
+	}
 	//Testing
-	locationKeywordsArray = nil
+	//locationKeywordsArray = nil
 
 	for _, v := range terminalArray {
 		locationKeywordsArray = append(locationKeywordsArray, v)
@@ -127,7 +134,7 @@ func populateLocationsTable(terminalArray []Terminal) (err error) {
 	}
 	//Insert locations into table
 	var rowsAffected int64
-	fmt.Println("Inserting %v locations into %v table...", len(locationKeywordsArray), LOCATIONS_TABLE)
+	fmt.Printf("Inserting %v locations into %v table...", len(locationKeywordsArray), LOCATIONS_TABLE)
 
 	//spawn go routine to continuously read and run functions in the channel
 	//Stop reading from channel when read function returns false boolean
@@ -166,7 +173,12 @@ func populateLocationsTable(terminalArray []Terminal) (err error) {
 
 		if result, err = db.Exec(fmt.Sprintf(`
 			INSERT INTO %v (Title, Phone, Email, GeneralInfo, FBId, URL) 
-	    	VALUES ($1, $2, $3, $4, $5, $6);
+	    	VALUES ($1, $2, $3, $4, $5, $6) 
+	    	ON CONFLICT (Title) DO UPDATE SET
+	    	Phone = EXCLUDED.Phone,
+	    	Email = EXCLUDED.Email,
+	    	GeneralInfo = EXCLUDED.GeneralInfo,
+	    	FBId = EXCLUDED.FBId;
 	    	`, LOCATIONS_TABLE), lk.Title, insertPhone, insertEmail, lk.GeneralInfo, lk.Id, nil); err != nil {
 			return
 		}
@@ -207,7 +219,7 @@ func selectFlightsFromTableWithOriginDestTimeDuration(table string, origin strin
 	//Determine which query to use
 	if len(origin) > 0 && len(dest) == 0 { //Search by only Origin
 		if flightRows, err = db.Query(fmt.Sprintf(`
-			SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource
+			SELECT Origin, Destination, RollCall, UnknownRollCallDate, SeatCount, SeatType, Cancelled, PhotoSource, SourceDate
 			FROM %v
 			WHERE Origin=$1 AND RollCall >= $2 AND RollCall < $3;
  		`, table), origin, start, start.Add(duration)); err != nil {
@@ -215,7 +227,7 @@ func selectFlightsFromTableWithOriginDestTimeDuration(table string, origin strin
 		}
 	} else if len(origin) == 0 && len(dest) > 0 { //Search by only Destination
 		if flightRows, err = db.Query(fmt.Sprintf(`
-			SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource
+			SELECT Origin, Destination, RollCall, UnknownRollCallDate, SeatCount, SeatType, Cancelled, PhotoSource, SourceDate
 			FROM %v
 			WHERE Destination=$1 AND RollCall >= $2 AND RollCall < $3;
  		`, table), dest, start, start.Add(duration)); err != nil {
@@ -223,7 +235,7 @@ func selectFlightsFromTableWithOriginDestTimeDuration(table string, origin strin
 		}
 	} else if len(origin) > 0 && len(dest) > 0 { //Search by Origin and Destination
 		if flightRows, err = db.Query(fmt.Sprintf(`
-			SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource
+			SELECT Origin, Destination, RollCall, UnknownRollCallDate, SeatCount, SeatType, Cancelled, PhotoSource, SourceDate
 			FROM %v
 			WHERE Origin=$1 AND Destination=$2 AND RollCall >= $3 AND RollCall < $4;
  		`, table), origin, dest, start, start.Add(duration)); err != nil {
@@ -231,7 +243,7 @@ func selectFlightsFromTableWithOriginDestTimeDuration(table string, origin strin
 		}
 	} else { //Search all in time duration
 		if flightRows, err = db.Query(fmt.Sprintf(`
-			SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource
+			SELECT Origin, Destination, RollCall, UnknownRollCallDate, SeatCount, SeatType, Cancelled, PhotoSource, SourceDate
 			FROM %v
 			WHERE RollCall >= $1 AND RollCall < $2;
  		`, table), start, start.Add(duration).Format("2006-01-02")); err != nil {
@@ -243,7 +255,7 @@ func selectFlightsFromTableWithOriginDestTimeDuration(table string, origin strin
 	for flightRows.Next() {
 		var flight Flight
 
-		if err = flightRows.Scan(&flight.Origin, &flight.Destination, &flight.RollCall, &flight.SeatCount, &flight.SeatType, &flight.Cancelled, &flight.PhotoSource); err != nil {
+		if err = flightRows.Scan(&flight.Origin, &flight.Destination, &flight.RollCall, &flight.UnknownRollCallDate, &flight.SeatCount, &flight.SeatType, &flight.Cancelled, &flight.PhotoSource, &flight.SourceDate); err != nil {
 			return
 		}
 

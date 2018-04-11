@@ -1,5 +1,9 @@
 package main
 
+const (
+	DEBUG_SINGLE_FILE bool = false
+)
+
 //Terminal info files
 const (
 	TERMINAL_SINGLE_FILE   string = "terminals-single.json"

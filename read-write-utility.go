@@ -6,8 +6,25 @@ import (
 	"io/ioutil"
 	"time"
 	"fmt"
+	"os"
 	//"log"
 )
+
+func createImageDirectories(directories ...string) (err error) {
+	for _, directory := range directories {
+		var fileExist bool
+		if fileExist, err = exists(directory); err != nil {
+			return
+		} else if fileExist {
+			continue
+		}
+
+		if err = os.Mkdir(directory, os.ModePerm); err != nil {
+			return
+		}
+	}
+	return
+}
 
 func (t *Terminal) getTZ() (err error) {
 	tz := latlong.LookupZoneName(

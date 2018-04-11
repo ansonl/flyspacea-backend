@@ -3,8 +3,15 @@ package main
 import (
 	"log"
 	"sync"
-	//"time"
+	"time"
 )
+
+/*
+ * curl http://localhost:8080/debug/pprof/heap > base.heap 
+ * go tool pprof -base base.heap ../spacea
+ * pdf
+ */
+//import _ "net/http/pprof"
 
 func main() {
 	//fmt.Printf("\n\u001b[1mboldtext\u001b[0m\r\u001b[2Fprevline\n\n\n")
@@ -17,9 +24,19 @@ func main() {
 
 	var err error
 
+	if err = createImageDirectories(IMAGE_TMP_DIRECTORY, IMAGE_TRAINING_DIRECTORY, IMAGE_TRAINING_PROCESSED_DIRECTORY_BLACK, IMAGE_TRAINING_PROCESSED_DIRECTORY_WHITE); err != nil{
+		log.Println(err)
+	}
+
 	//Load terminals
+	var terminalsToUpdateFile string
+	terminalsToUpdateFile = TERMINAL_FILE
+	if DEBUG_SINGLE_FILE {
+		terminalsToUpdateFile = TERMINAL_SINGLE_FILE
+	}
+
 	var terminalArray []Terminal
-	if terminalArray, err = readTerminalArrayFromFiles(TERMINAL_FILE); err != nil {
+	if terminalArray, err = readTerminalArrayFromFiles(terminalsToUpdateFile); err != nil {
 		log.Fatal(err)
 	}
 	//Read in location keyword file
@@ -34,13 +51,15 @@ func main() {
 	}
 	log.Println("Created storage database.")
 
-	if err = populateLocationsTable(nil); err != nil {
+	if err = populateLocationsTable(terminalArray); err != nil {
 		log.Println(err)
 		return
 	}
 	log.Println("Populated storage reference database.")
 
-	
+	if err = createFuzzyModels(); err != nil {
+		log.Fatal(err)
+	}
 
 	/*
 		//Test table selection
@@ -64,12 +83,14 @@ func main() {
 	wg.Add(1)
 	go runServer(&wg, nil)
 
-	if err = createFuzzyModels(); err != nil {
-		log.Fatal(err)
-	}
-
 	log.Printf("\u001b[1m\u001b[35m%v\u001b[0m\n", "Starting Update")
-	go updateAllTerminalsFlights(terminalMap)
+
+	//Update terminal flights every hour
+	updateAllTerminalsFlights(terminalMap)
+	for _ = range time.Tick(time.Hour*1) {
+		updateAllTerminalsFlights(terminalMap)
+	}
+	//go updateAllTerminalsFlights(terminalMap)
 
 	//Wait for server to end
 	wg.Wait()
