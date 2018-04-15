@@ -3,7 +3,6 @@ package gosseract
 // #if __FreeBSD__ >= 10
 // #cgo LDFLAGS: -L/usr/local/lib -llept -ltesseract
 // #else
-// #cgo CXXFLAGS: -std=c++0x
 // #cgo LDFLAGS: -llept -ltesseract
 // #endif
 // #include <stdlib.h>
@@ -45,12 +44,9 @@ type Client struct {
 	// ImagePath is just path to image file to be processed OCR.
 	ImagePath string
 
-	// ImageData is the in-memory image to be processed OCR.
-	ImageData []byte
-
 	// Variables is just a pool to evaluate "tesseract::TessBaseAPI->SetVariable" in delay.
 	// TODO: Think if it should be public, or private property.
-	Variables map[SettableVariable]string
+	Variables map[string]string
 
 	// PageSegMode is a mode for page layout analysis.
 	// See https://github.com/otiai10/gosseract/issues/52 for more information.
@@ -66,7 +62,7 @@ type Client struct {
 func NewClient() *Client {
 	client := &Client{
 		api:       C.Create(),
-		Variables: map[SettableVariable]string{},
+		Variables: map[string]string{},
 		Trim:      true,
 	}
 	return client
@@ -89,12 +85,6 @@ func (client *Client) SetImage(imagepath string) *Client {
 	return client
 }
 
-// SetImageFromBytes sets the image data to be processed OCR.
-func (client *Client) SetImageFromBytes(data []byte) *Client {
-	client.ImageData = data
-	return client
-}
-
 // SetLanguage sets languages to use. English as default.
 func (client *Client) SetLanguage(langs ...string) *Client {
 	client.Languages = langs
@@ -104,18 +94,12 @@ func (client *Client) SetLanguage(langs ...string) *Client {
 // SetWhitelist sets whitelist chars.
 // See official documentation for whitelist here https://github.com/tesseract-ocr/tesseract/wiki/ImproveQuality#dictionaries-word-lists-and-patterns
 func (client *Client) SetWhitelist(whitelist string) *Client {
-	return client.SetVariable(TESSEDIT_CHAR_WHITELIST, whitelist)
-}
-
-// SetBlacklist sets whitelist chars.
-// See official documentation for whitelist here https://github.com/tesseract-ocr/tesseract/wiki/ImproveQuality#dictionaries-word-lists-and-patterns
-func (client *Client) SetBlacklist(whitelist string) *Client {
-	return client.SetVariable(TESSEDIT_CHAR_BLACKLIST, whitelist)
+	return client.SetVariable("tessedit_char_whitelist", whitelist)
 }
 
 // SetVariable sets parameters, representing tesseract::TessBaseAPI->SetVariable.
 // See official documentation here https://zdenop.github.io/tesseract-doc/classtesseract_1_1_tess_base_a_p_i.html#a2e09259c558c6d8e0f7e523cbaf5adf5
-func (client *Client) SetVariable(key SettableVariable, value string) *Client {
+func (client *Client) SetVariable(key, value string) *Client {
 	client.Variables[key] = value
 	return client
 }
@@ -176,21 +160,13 @@ func (client *Client) init() error {
 // Prepare tesseract::TessBaseAPI options,
 // must be called after `init`.
 func (client *Client) prepare() error {
-	if len(client.ImageData) > 0 {
-		C.SetImageFromBuffer(
-			client.api,
-			(*C.uchar)(unsafe.Pointer(&client.ImageData[0])),
-			C.int(len(client.ImageData)),
-		)
-	} else {
-		// Set Image by giving path
-		imagepath := C.CString(client.ImagePath)
-		defer C.free(unsafe.Pointer(imagepath))
-		C.SetImage(client.api, imagepath)
-	}
+	// Set Image by giving path
+	imagepath := C.CString(client.ImagePath)
+	defer C.free(unsafe.Pointer(imagepath))
+	C.SetImage(client.api, imagepath)
 
 	for key, value := range client.Variables {
-		if ok := client.bind(string(key), value); !ok {
+		if ok := client.bind(key, value); !ok {
 			return fmt.Errorf("failed to set variable with key(%s):value(%s)", key, value)
 		}
 	}
@@ -227,7 +203,7 @@ func (client *Client) Text() (out string, err error) {
 	return out, err
 }
 
-// HOCRText finally initialize tesseract::TessBaseAPI, execute OCR and returns hOCR text.
+// HTML finally initialize tesseract::TessBaseAPI, execute OCR and returns hOCR text.
 // See https://en.wikipedia.org/wiki/HOCR for more information of hOCR.
 func (client *Client) HOCRText() (out string, err error) {
 	if err = client.init(); err != nil {

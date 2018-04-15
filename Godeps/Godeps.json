@@ -1,8 +1,13 @@
 {
-	"ImportPath": "spacea",
+	"ImportPath": "bitbucket.org/ansonliu/spacea",
 	"GoVersion": "go1.10",
 	"GodepVersion": "v80",
 	"Deps": [
+		{
+			"ImportPath": "github.com/ansonl/gosseract",
+			"Comment": "v2.0-81-g3a35e5f",
+			"Rev": "3a35e5f21a956857fd7fffbe8c483a9cd9e1582a"
+		},
 		{
 			"ImportPath": "github.com/bradfitz/latlong",
 			"Rev": "f3db6d0dff40d47957be82e1a6645574fb041f95"
@@ -41,11 +46,6 @@
 			"ImportPath": "github.com/lib/pq/oid",
 			"Comment": "go1.0-cutoff-203-g88edab0",
 			"Rev": "88edab0803230a3898347e77b474f8c1820a1f20"
-		},
-		{
-			"ImportPath": "github.com/otiai10/gosseract",
-			"Comment": "v2.1.0-10-gf2033d7",
-			"Rev": "f2033d7d95801cd99e8c748faa0cf57553086fd2"
 		},
 		{
 			"ImportPath": "github.com/sajari/fuzzy",

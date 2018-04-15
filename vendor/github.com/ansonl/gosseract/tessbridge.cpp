@@ -2,8 +2,8 @@
 #include "/usr/local/include/tesseract/baseapi.h"
 #include "/usr/local/include/leptonica/allheaders.h"
 #else
-#include <tesseract/baseapi.h>
-#include <leptonica/allheaders.h>
+#include "tesseract/baseapi.h"
+#include "leptonica/allheaders.h"
 #endif
 
 #include "tessbridge.h"
@@ -43,12 +43,6 @@ bool SetVariable(TessBaseAPI a, char* name, char* value) {
 void SetImage(TessBaseAPI a, char* imagepath) {
   tesseract::TessBaseAPI * api = (tesseract::TessBaseAPI*)a;
   Pix *image = pixRead(imagepath);
-  api->SetImage(image);
-}
-
-void SetImageFromBuffer(TessBaseAPI a, unsigned char* data, int size) {
-  tesseract::TessBaseAPI * api = (tesseract::TessBaseAPI*)a;
-  Pix *image = pixReadMem(data, (size_t)size);
   api->SetImage(image);
 }
 
