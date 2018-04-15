@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/jbowtie/gokogiri/html"
 	"github.com/jbowtie/gokogiri/xml"
-	"github.com/otiai10/gosseract"
+	"github.com/ansonl/gosseract"
 	"github.com/sajari/fuzzy"
 	"image"
 	"io/ioutil"
