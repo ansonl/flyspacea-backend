@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"github.com/jbowtie/gokogiri/html"
 	"github.com/jbowtie/gokogiri/xml"
-	"github.com/otiai10/gosseract"
+	//"github.com/otiai10/gosseract"
 	"github.com/sajari/fuzzy"
 	"image"
 	"io/ioutil"
 	"log"
+	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -30,7 +32,6 @@ func createFuzzyModels() (err error) {
 	fuzzyBannedSpellings["listed"] = 0
 	fuzzyBannedSpellings["island"] = 0
 	fuzzyBannedSpellings["person"] = 0
-
 
 	//Slide data header label keyword to train in fuzzy with customizable training depth
 	type LabelKeyword struct {
@@ -149,36 +150,121 @@ func createFuzzyModels() (err error) {
 
 //Perform OCR on file for slide and set s.PlainText and s.HOCRText
 func doOCRForSlide(s *Slide, wl OCRWhiteListType) (err error) {
-	filepath := photoPath(*s)
 
-	client := gosseract.NewClient()
-	defer client.Close()
-	client.SetPageSegMode(gosseract.PSM_AUTO) //C++ API may have different PSM than command line. https://groups.google.com/d/msg/tesseract-ocr/bD1zJNiDubY/kb7NZPIV38AJ
-	client.SetImage(filepath)
+	imageFilepath := photoPath(*s)
 
+	var configWlFilename string
 	switch wl {
 	case OCR_WHITELIST_NORMAL:
-		client.SetWhitelist("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ,:=().*-/")
+		configWlFilename = TESS_CONFIGFILE_NORMAL_FILENAME
 		break
 	case OCR_WHITELIST_SA:
-		client.SetWhitelist("1234567890TFSP")
+		configWlFilename = TESS_CONFIGFILE_SA_FILENAME
 		break
 	default:
 		log.Fatal("Unknown white list type ", wl)
 	}
 
-	if (*s).PlainText, err = client.Text(); err != nil {
-		return
-	} else if len((*s).PlainText) == 0 {
-		//displayMessageForSlide((*s), fmt.Sprintf("No plain text extracted from slide"))
+	configFileTextPath := filepath.Join(TESS_CONFIGFILE_DIRECTORY, configWlFilename) + "." + TESS_CONFIGFILE_EXTENSION
+	outputTextFilename := TESS_OUTPUTBASE + "." + TESS_OUTPUT_TXT_EXTENSION
+
+	configFileHOCRPath := filepath.Join(TESS_CONFIGFILE_DIRECTORY, configWlFilename) + TESS_CONFIGFILE_HOCR_FILENAME + "." + TESS_CONFIGFILE_EXTENSION
+	outputHOCRFilename := TESS_OUTPUTBASE + "." + TESS_OUTPUT_HOCR_EXTENSION
+
+	//Define the OCR operations we will be performing
+	type OCROperation struct {
+		ConfigFile   string
+		OutputFile   string
+		OutputString *string
 	}
 
-	if (*s).HOCRText, err = client.HOCRText(); err != nil {
-		return
-	} else if len((*s).HOCRText) == 0 {
-		//displayMessageForSlide(*s, fmt.Sprintf("No hOCR text extracted from slide"))
+	//Create OCR operations of plaintext and HOCR
+	var ocrOps []OCROperation
+	ocrOps = []OCROperation{
+		OCROperation{
+			ConfigFile:   configFileTextPath,
+			OutputFile:   outputTextFilename,
+			OutputString: &(*s).PlainText},
+		OCROperation{
+			ConfigFile:   configFileHOCRPath,
+			OutputFile:   outputHOCRFilename,
+			OutputString: &(*s).HOCRText}}
+
+	for _, ocrOp := range ocrOps {
+		/*
+		 * tesseract imagename|stdin outputbase|stdout [options...] [configfile...]
+		 * ex: tesseract test_images/p1.jpeg output --psm 3 --oem 3 osmtype1.config
+		 */
+		var args []string
+		cmd := "tesseract"
+
+		//Get plaintext
+		args = []string{imageFilepath, TESS_OUTPUTBASE, "--psm", "3", "--oem", "3", ocrOp.ConfigFile}
+		if err = exec.Command(cmd, args...).Run(); err != nil {
+			return
+		}
+
+		var ocrBytes []byte
+		if ocrBytes, err = ioutil.ReadFile(ocrOp.OutputFile); err != nil {
+			return
+		}
+		*ocrOp.OutputString = string(ocrBytes)
 	}
 
+	/*
+		var args []string
+
+		//Get plaintext
+		args = []string{imageFilepath, TESS_OUTPUTBASE, "--psm", "3", "--oem", "3", configFileTextPath}
+		if err = exec.Command(cmd, args...).Run(); err != nil {
+			return
+		}
+
+		if (*s).PlainText, err = ioutil.ReadFile(outputTextFilename); err != nil {
+			return
+		}
+
+		//Get HOCR text
+		args = []string{imageFilepath, TESS_OUTPUTBASE, "--psm", "3", "--oem", "3", configFileHOCRPath}
+		if err = exec.Command(cmd, args...).Run(); err != nil {
+			return
+		}
+
+		if (*s).HOCRText, err = ioutil.ReadFile(outputHOCRFilename); err != nil {
+			return
+		}
+	*/
+
+	/*
+
+		client := gosseract.NewClient()
+		defer client.Close()
+		client.SetPageSegMode(gosseract.PSM_AUTO) //C++ API may have different PSM than command line. https://groups.google.com/d/msg/tesseract-ocr/bD1zJNiDubY/kb7NZPIV38AJ
+		client.SetImage(filepath)
+
+		switch wl {
+		case OCR_WHITELIST_NORMAL:
+			client.SetWhitelist("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ,:=().*-/")
+			break
+		case OCR_WHITELIST_SA:
+			client.SetWhitelist("1234567890TFSP")
+			break
+		default:
+			log.Fatal("Unknown white list type ", wl)
+		}
+
+		if (*s).PlainText, err = client.Text(); err != nil {
+			return
+		} else if len((*s).PlainText) == 0 {
+			//displayMessageForSlide((*s), fmt.Sprintf("No plain text extracted from slide"))
+		}
+
+		if (*s).HOCRText, err = client.HOCRText(); err != nil {
+			return
+		} else if len((*s).HOCRText) == 0 {
+			//displayMessageForSlide(*s, fmt.Sprintf("No hOCR text extracted from slide"))
+		}
+	*/
 	return
 }
 

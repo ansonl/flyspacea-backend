@@ -43,11 +43,6 @@
 			"Rev": "88edab0803230a3898347e77b474f8c1820a1f20"
 		},
 		{
-			"ImportPath": "github.com/otiai10/gosseract",
-			"Comment": "v2.1.0-10-gf2033d7",
-			"Rev": "f2033d7d95801cd99e8c748faa0cf57553086fd2"
-		},
-		{
 			"ImportPath": "github.com/sajari/fuzzy",
 			"Rev": "243c923763cac789d1196949a834ca698dbd7a28"
 		},

@@ -12,8 +12,8 @@ import (
 	"net/url"
 	"os"
 	"strconv"
-	"time"
 	"strings"
+	"time"
 
 	//Worker management
 	"context"
@@ -370,7 +370,6 @@ func getPhotosEdge(id string) (photosEdge PhotosEdge, err error) {
 
 //Download, save, OCR a photo from Photos Edge
 func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (flightsFound int, err error) {
-	
 
 	//Check if photo created within X timeframe (made recently?)
 	var photoCreatedTime time.Time
@@ -394,9 +393,9 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (fligh
 	saveTypes = []SaveImageType{SAVE_IMAGE_TRAINING, SAVE_IMAGE_TRAINING_PROCESSED_BLACK, SAVE_IMAGE_TRAINING_PROCESSED_WHITE}
 
 	tmpSlide := Slide{
-		SaveType: saveTypes[0],
-		Terminal: targetTerminal, 
-		FBNodeId: edgePhoto.Id, 
+		SaveType:      saveTypes[0],
+		Terminal:      targetTerminal,
+		FBNodeId:      edgePhoto.Id,
 		FBCreatedTime: time.Time{}}
 
 	//Request Photo node for slide
@@ -465,7 +464,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (fligh
 	if destLabelValid, err = slides[0].isYCoordinateInHeightPercentage(destLabelBBox.Min.Y, DESTINATION_TEXT_VERTICAL_THRESHOLD); err != nil {
 		return
 	}
-	if !destLabelValid {//
+	if !destLabelValid { //
 		destLabelBBox.Min.Y = 0
 	}
 
@@ -499,14 +498,13 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (fligh
 	deleteTerminalFromDestArray(&destinations, slides[0].Terminal)
 
 	/*
-	//Print destination object. Shows spelling found and distance. 
-	fmt.Println("found dests in all slides")
-	for _, d := range destinations {
-		log.Println(d)
-	}
-	//return
+		//Print destination object. Shows spelling found and distance.
+		fmt.Println("found dests in all slides")
+		for _, d := range destinations {
+			log.Println(d)
+		}
+		//return
 	*/
-	
 
 	//Find vertically closest Destination for every RollCall
 	linkRollCallsToNearestDestinations(rollCalls, destinations)
@@ -609,10 +607,8 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (fligh
 				Destination: destinationGroupings[dgIndex].Destinations[dIndex].TerminalTitle,
 
 				UnknownRollCallDate: unknownRCDate,
-				PhotoSource: slides[0].FBNodeId,
-				SourceDate: slides[0].FBCreatedTime}
-
-			
+				PhotoSource:         slides[0].FBNodeId,
+				SourceDate:          slides[0].FBCreatedTime}
 
 			if destinationGroupings[dgIndex].Destinations[dIndex].LinkedRollCall != nil {
 				tmpFlight.RollCall = (*destinationGroupings[dgIndex].Destinations[dIndex].LinkedRollCall).Time
@@ -628,11 +624,11 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (fligh
 	}
 
 	/*
-	//Print flights list for photo
-	displayMessageForTerminal(slides[0].Terminal, fmt.Sprintf("%v Flights list for photo node %v", slides[0].FBNodeId))
-	for _, ff := range finalFlights {
-		fmt.Println(ff)
-	}
+		//Print flights list for photo
+		displayMessageForTerminal(slides[0].Terminal, fmt.Sprintf("%v Flights list for photo node %v", slides[0].FBNodeId))
+		for _, ff := range finalFlights {
+			fmt.Println(ff)
+		}
 	*/
 
 	if err = deleteFlightsFromTableForDayForOriginTerminal(FLIGHTS_72HR_TABLE, slideDate, slides[0].Terminal); err != nil {

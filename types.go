@@ -50,11 +50,11 @@ type AlbumsEdgeAlbum struct {
 //Facebook Graph API page info
 //https://developers.facebook.com/docs/graph-api/reference/page/
 type PageInfoEdge struct {
-	Phone  string  `json:"phone"`
-	Emails []string `json:"emails"`
-	GeneralInfo string`json:"general_info"`
+	Phone       string   `json:"phone"`
+	Emails      []string `json:"emails"`
+	GeneralInfo string   `json:"general_info"`
 
-	Error  GraphErrorResponse `json:"error"`
+	Error GraphErrorResponse `json:"error"`
 }
 
 //Facebook Graph API standard error response
@@ -107,11 +107,11 @@ type Terminal struct {
 
 //Processed version of downloaded photo
 type Slide struct {
-	SaveType  SaveImageType
-	Suffix    string
-	Extension string
-	Terminal  Terminal
-	FBNodeId  string
+	SaveType      SaveImageType
+	Suffix        string
+	Extension     string
+	Terminal      Terminal
+	FBNodeId      string
 	FBCreatedTime time.Time
 
 	PlainText string
@@ -193,15 +193,15 @@ func (g *Grouping) updateBBox() {
 
 //Representation of a specific flight
 type Flight struct {
-	Origin      string    `json:"origin"`
-	Destination string    `json:"destination"`
-	RollCall    time.Time `json:"rollCall"`
-	UnknownRollCallDate bool `json:"unknownRollCallDate"`
-	SeatCount   int       `json:"seatCount"`
-	SeatType    string    `json:"seatType"`
-	Cancelled   bool      `json:"cancelled"`
-	PhotoSource string    `json:"photoSource"`
-	SourceDate time.Time `json:"sourceDate"`
+	Origin              string    `json:"origin"`
+	Destination         string    `json:"destination"`
+	RollCall            time.Time `json:"rollCall"`
+	UnknownRollCallDate bool      `json:"unknownRollCallDate"`
+	SeatCount           int       `json:"seatCount"`
+	SeatType            string    `json:"seatType"`
+	Cancelled           bool      `json:"cancelled"`
+	PhotoSource         string    `json:"photoSource"`
+	SourceDate          time.Time `json:"sourceDate"`
 }
 
 /*

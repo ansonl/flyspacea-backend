@@ -2,11 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/bradfitz/latlong"
 	"io/ioutil"
-	"time"
-	"fmt"
 	"os"
+	"time"
 	//"log"
 )
 
@@ -28,8 +28,8 @@ func createImageDirectories(directories ...string) (err error) {
 
 func (t *Terminal) getTZ() (err error) {
 	tz := latlong.LookupZoneName(
-			(*t).Location.Latitude,
-			(*t).Location.Longitude)
+		(*t).Location.Latitude,
+		(*t).Location.Longitude)
 
 	if len(tz) == 0 {
 		err = fmt.Errorf("latlong.LookupZoneName returned empty string for Terminal %v\n", (*t))

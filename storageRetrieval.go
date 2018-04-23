@@ -116,7 +116,7 @@ func populateLocationsTable(terminalArray []Terminal) (err error) {
 		return
 	}
 
-	//If debug single terminal, still load all terminals and locations into database. 
+	//If debug single terminal, still load all terminals and locations into database.
 	if DEBUG_SINGLE_FILE {
 		if locationKeywordsArray, err = readTerminalArrayFromFiles(LOCATION_KEYWORDS_FILE, TERMINAL_FILE); err != nil {
 			return
@@ -163,7 +163,6 @@ func populateLocationsTable(terminalArray []Terminal) (err error) {
 			insertPhone.String = lk.Phone
 			insertPhone.Valid = true
 		}
-
 
 		var insertEmail sql.NullString
 		if len(lk.Emails) > 0 && len(lk.Emails[0]) > 0 {
@@ -278,13 +277,13 @@ func insertFlightsIntoTable(table string, flights []Flight) (err error) {
 	//Insert flights into table
 	var rowsAffected int64
 	for _, flight := range flights {
-		
+
 		var result sql.Result
 		if result, err = db.Exec(fmt.Sprintf(`
 			INSERT INTO %v (Origin, Destination, RollCall, UnknownRollCallDate, SeatCount, SeatType, Cancelled, PhotoSource, SourceDate) 
 	    	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
 	 		`, table), flight.Origin, flight.Destination, flight.RollCall.In(time.UTC), flight.UnknownRollCallDate, flight.SeatCount, flight.SeatType, false, flight.PhotoSource, flight.SourceDate.In(time.UTC)); err != nil {
-				return
+			return
 		}
 
 		var affected int64
@@ -318,10 +317,10 @@ func deleteFlightsFromTableForDayForOriginTerminal(table string, targetDay time.
 		return
 	}
 
-	//Determine whether DELETE timeframe is in the future. We do not want to delete past flights because Terminals' Facebook pages may post updated slides throughout the day that omit fulfilled flights. Safe assumption is to only delete future flights on current and future days. 
+	//Determine whether DELETE timeframe is in the future. We do not want to delete past flights because Terminals' Facebook pages may post updated slides throughout the day that omit fulfilled flights. Safe assumption is to only delete future flights on current and future days.
 	//If DELETE targetDay is the same 24hr date as current time, we only delete flights between time.Now().In(TERMINAL_LOCAL_TZ) and end of day (2359).
-	//If DELETE targetDay is in future of currentTime, delete all origin flights for targetDay. Expect targetDay to be 00:00:00 time so it will resolve to a future date. 
-	//if DELETE targetDay is in past of currentTime, do not delete anything. 
+	//If DELETE targetDay is in future of currentTime, delete all origin flights for targetDay. Expect targetDay to be 00:00:00 time so it will resolve to a future date.
+	//if DELETE targetDay is in past of currentTime, do not delete anything.
 	var start, end time.Time
 	currentTime := time.Now().In(originTerminal.Timezone)
 	if dateEqual(targetDay, currentTime) { //DELETE in current date
@@ -330,7 +329,7 @@ func deleteFlightsFromTableForDayForOriginTerminal(table string, targetDay time.
 	} else if targetDay.After(currentTime) { //DELETE in future
 		start = truncateDay(targetDay)
 		end = start.Add(time.Hour * 24)
-	} else { //DELETE in past. 
+	} else { //DELETE in past.
 		//Do not delete anything.
 		log.Printf("Not deleting past flights for %v for date %v\n", originTerminal.Title, targetDay)
 		return

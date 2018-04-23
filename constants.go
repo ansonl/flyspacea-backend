@@ -35,9 +35,9 @@ const (
 	GRAPH_FIELD_NAME_KEY          string = "name"
 	GRAPH_TYPE_UPLOADED_KEY       string = "uploaded"
 
-	GRAPH_FIELD_PHONE_KEY	string = "phone"
-	GRAPH_FIELD_EMAILS_KEY	string = "emails"
-	GRAPH_FIELD_GENERAL_INFO_KEY	string = "general_info"
+	GRAPH_FIELD_PHONE_KEY        string = "phone"
+	GRAPH_FIELD_EMAILS_KEY       string = "emails"
+	GRAPH_FIELD_GENERAL_INFO_KEY string = "general_info"
 )
 
 //Graph API returned map keys
@@ -79,6 +79,19 @@ type OCRWhiteListType int
 const (
 	OCR_WHITELIST_NORMAL OCRWhiteListType = iota
 	OCR_WHITELIST_SA
+)
+
+//Tesseract OCR whitelist config filenames
+const (
+	TESS_CONFIGFILE_DIRECTORY       string = "tesseract_configfiles"
+	TESS_CONFIGFILE_NORMAL_FILENAME string = "normal_whitelist"
+	TESS_CONFIGFILE_SA_FILENAME     string = "seats_whitelist"
+	TESS_CONFIGFILE_HOCR_FILENAME   string = "_hocr"
+	TESS_CONFIGFILE_EXTENSION       string = "config"
+
+	TESS_OUTPUTBASE            string = "output"
+	TESS_OUTPUT_TXT_EXTENSION  string = "txt"
+	TESS_OUTPUT_HOCR_EXTENSION string = "hocr"
 )
 
 //OCR keywords

@@ -140,7 +140,7 @@ func findDateOfPhotoNodeSlides(slides []Slide) (slideDate time.Time, err error) 
 	}
 
 	//If found date is > 144hr away from current time, assume we got the wrong date since we are only looking at recent photos
-	if math.Abs(float64(time.Since(slideDate))) > float64(time.Hour * 144) {
+	if math.Abs(float64(time.Since(slideDate))) > float64(time.Hour*144) {
 		slideDate = time.Time{}
 	}
 
@@ -600,10 +600,10 @@ func combineDestinationGroupsToAnchorDestinations(groupsP *[]Grouping) {
 	for growIndex := 0; growIndex < len(groups); growIndex++ {
 
 		/*
-		//fmt.Println("groups")
-		for _, g := range groups {
-			fmt.Println(g)
-		}
+			//fmt.Println("groups")
+			for _, g := range groups {
+				fmt.Println(g)
+			}
 		*/
 
 		//fmt.Println("grow group ", growIndex, groups[growIndex])
@@ -702,12 +702,12 @@ func linkRollCallsToNearestSeatsAvailable(rcs []RollCall, saArray []SeatsAvailab
 //For each Destination - link to SeatsAvailable sharing > threshold vertical pixels. Similar to linkRollCallsToNearestDestinations but reduced for simplicity. There MAY be a one to one relationship for RollCall and SeatsAvailable. Not guaranteed since there may be only one seat label for multiple destinations (ex: in a grouping).
 func linkDestinationsToNearestSeatsAvailable(dests []Destination, saArray []SeatsAvailable) {
 	/*
-	for _, r := range dests {
-		fmt.Println(r)
-	}
-	for _, s := range saArray {
-		fmt.Println(s)
-	}
+		for _, r := range dests {
+			fmt.Println(r)
+		}
+		for _, s := range saArray {
+			fmt.Println(s)
+		}
 	*/
 
 	//Link each SeatsAvailable. RollCall -> SeatsAvailable.

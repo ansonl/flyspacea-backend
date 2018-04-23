@@ -7,7 +7,7 @@ import (
 )
 
 /*
- * curl http://localhost:8080/debug/pprof/heap > base.heap 
+ * curl http://localhost:8080/debug/pprof/heap > base.heap
  * go tool pprof -base base.heap ../spacea
  * pdf
  */
@@ -17,14 +17,14 @@ func main() {
 	//fmt.Printf("\n\u001b[1mboldtext\u001b[0m\r\u001b[2Fprevline\n\n\n")
 
 	/*
-	deleteFlightsFromTableForDayForOriginTerminal("", time.Now(), Terminal{
-		Timezone: "Beijing"})
-	return
+		deleteFlightsFromTableForDayForOriginTerminal("", time.Now(), Terminal{
+			Timezone: "Beijing"})
+		return
 	*/
 
 	var err error
 
-	if err = createImageDirectories(IMAGE_TMP_DIRECTORY, IMAGE_TRAINING_DIRECTORY, IMAGE_TRAINING_PROCESSED_DIRECTORY_BLACK, IMAGE_TRAINING_PROCESSED_DIRECTORY_WHITE); err != nil{
+	if err = createImageDirectories(IMAGE_TMP_DIRECTORY, IMAGE_TRAINING_DIRECTORY, IMAGE_TRAINING_PROCESSED_DIRECTORY_BLACK, IMAGE_TRAINING_PROCESSED_DIRECTORY_WHITE); err != nil {
 		log.Println(err)
 	}
 
@@ -87,7 +87,7 @@ func main() {
 
 	//Update terminal flights every hour
 	updateAllTerminalsFlights(terminalMap)
-	for _ = range time.Tick(time.Hour*1) {
+	for _ = range time.Tick(time.Hour * 1) {
 		updateAllTerminalsFlights(terminalMap)
 	}
 	//go updateAllTerminalsFlights(terminalMap)

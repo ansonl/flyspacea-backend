@@ -61,13 +61,13 @@ func displayStatistics() {
 		Terminals w/ found flights %v
 		Photos Found %v
 		Photos Found Date Header %v
-		Photos Processed %v`, 
+		Photos Processed %v`,
 		validTerminals,
 		terminalsWith72HRAlbum,
 		noErrorTerminals,
 		foundFlightsTerminals,
-		photosFound, 
-		photosFoundDateHeader, 
+		photosFound,
+		photosFoundDateHeader,
 		photosProcessed)
 	//log.Printf("No match date header inputs %v\n", noMatchDateHeaderInputs)
 }
