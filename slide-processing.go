@@ -231,6 +231,7 @@ func findLabelBoundsOfPhotoNodeSlides(slides []Slide, label string) (bbox image.
 
 	if len(bboxes) == 0 {
 		err = errors.New("No bbox found for findLabelBoundsOfPhotoNodeSlides")
+		return
 	} else if len(bboxes) > 1 {
 		fmt.Println("multiple bbox", bboxes)
 	}
