@@ -196,12 +196,12 @@ type Flight struct {
 	Origin              string    `json:"origin"`
 	Destination         string    `json:"destination"`
 	RollCall            time.Time `json:"rollCall"`
-	UnknownRollCallDate bool      `json:"unknownRollCallDate"`
+	UnknownRollCallDate bool      `json:"unknownRollCallDate"` //boolean indicates if RollCall date is unknown. False value may still indicate time of day was found.
 	SeatCount           int       `json:"seatCount"`
 	SeatType            string    `json:"seatType"`
 	Cancelled           bool      `json:"cancelled"`
-	PhotoSource         string    `json:"photoSource"`
-	SourceDate          time.Time `json:"sourceDate"`
+	PhotoSource         string    `json:"photoSource"` //FB node id
+	SourceDate          time.Time `json:"sourceDate"` //FB node created time
 }
 
 /*

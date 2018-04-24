@@ -128,6 +128,10 @@ const (
 const (
 	LOCATIONS_TABLE    string = "locations"
 	FLIGHTS_72HR_TABLE string = "hr72_flights"
+	FLIGHTS_72HR_TABLE_INDEX_RC string = "hr72_flights_index_rc"
+	FLIGHTS_72HR_TABLE_INDEX_ORIGIN_RC string = "hr72_flights_index_origin_rc"
+	FLIGHTS_72HR_TABLE_INDEX_DEST_RC string = "hr72_flights_index_dest_rc"
+	FLIGHTS_72HR_TABLE_INDEX_ORIGIN_DEST_RC string = "hr72_flights_index_origin_dest_rc"
 )
 
 //Server REST API constants

@@ -22,6 +22,11 @@ func main() {
 		return
 	*/
 
+	//Start HTTP server
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go runServer(&wg, nil)
+
 	var err error
 
 	if err = createImageDirectories(IMAGE_TMP_DIRECTORY, IMAGE_TRAINING_DIRECTORY, IMAGE_TRAINING_PROCESSED_DIRECTORY_BLACK, IMAGE_TRAINING_PROCESSED_DIRECTORY_WHITE); err != nil {
@@ -49,19 +54,36 @@ func main() {
 	if err = createDatabase(); err != nil {
 		log.Println(err)
 	}
-	log.Println("Created storage database.")
 
+	//Population locations table with locations from file
 	if err = populateLocationsTable(terminalArray); err != nil {
 		log.Println(err)
 		return
 	}
-	log.Println("Populated storage reference database.")
 
-	if err = createFuzzyModels(); err != nil {
-		log.Fatal(err)
+	log.Printf("\u001b[1m\u001b[35m%v\u001b[0m\n", "Starting Update")
+
+	//Update terminal flights every hour
+	updateAllTerminalsFlights(terminalMap)
+	for _ = range time.Tick(time.Minute * 30) {
+		updateAllTerminalsFlights(terminalMap)
 	}
+	//go updateAllTerminalsFlights(terminalMap)
+
+	//Wait for server to end
+	wg.Wait()
 
 	/*
+	   v := Terminal{}
+	   v.Title="Travis Pax Term"
+	   v.Id="travispassengerterminal"
+	   updateTerminal(v)
+	*/
+
+	//fmt.Printf("%v\n",readTerminalFileToArray("terminals.json"))
+
+
+	   /*
 		//Test table selection
 		var startDate time.Time
 		if startDate, err = time.Parse("2006-01-02", "2018-03-23"); err != nil {
@@ -78,30 +100,19 @@ func main() {
 		return
 	*/
 
-	//Start HTTP server
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go runServer(&wg, nil)
-
-	log.Printf("\u001b[1m\u001b[35m%v\u001b[0m\n", "Starting Update")
-
-	//Update terminal flights every hour
-	updateAllTerminalsFlights(terminalMap)
-	for _ = range time.Tick(time.Hour * 1) {
-		updateAllTerminalsFlights(terminalMap)
+	   /*
+	//Fuzzy model creation release test
+	//Create fuzzy models for lookup
+	if err := createFuzzyModels(); err != nil {
+		log.Fatal(err)
 	}
-	//go updateAllTerminalsFlights(terminalMap)
+	log.Println("created fuzzy model")
 
-	//Wait for server to end
-	wg.Wait()
+	time.Sleep(time.Second*10)
 
-	/*
-	   v := Terminal{}
-	   v.Title="Travis Pax Term"
-	   v.Id="travispassengerterminal"
-	   updateTerminal(v)
+	//Tear down fuzzy models to release memory
+	destroyFuzzyModels()
+	log.Println("destroyed fuzzy model")
 	*/
-
-	//fmt.Printf("%v\n",readTerminalFileToArray("terminals.json"))
 
 }

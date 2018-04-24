@@ -13,6 +13,31 @@ CONSTRAINT flights_pk PRIMARY KEY (Origin, Destination, RollCall, PhotoSource),
 CONSTRAINT flights_origin_fk FOREIGN KEY (Origin) REFERENCES Locations(Title),
 CONSTRAINT flights_dest_fk FOREIGN KEY (Destination) REFERENCES Locations(Title));
 
+DROP INDEX IF EXISTS hr72_flights_index_origin_dest_rc;
+DROP INDEX IF EXISTS hr72_flights_index_origin_rc;
+DROP INDEX IF EXISTS hr72_flights_index_dest_rc;
+DROP INDEX IF EXISTS hr72_flights_index_rc;
+CREATE INDEX hr72_flights_index_origin_dest_rc ON HR72_flights (
+	Origin ASC,
+	Destination ASC,
+	RollCall DESC
+);
+CREATE INDEX hr72_flights_index_origin_rc ON HR72_flights (
+	Origin ASC,
+	RollCall DESC
+);
+CREATE INDEX hr72_flights_index_dest_rc ON HR72_flights (
+	Destination ASC,
+	RollCall DESC
+);
+CREATE INDEX hr72_flights_index_rc ON HR72_flights (
+	RollCall DESC
+);
+
+EXPLAIN SELECT * FROM hr72_flights WHERE ORIGIN='as'
+EXPLAIN SELECT * FROM hr72_flights WHERE RollCall >= '2006-01-02' AND RollCall < '2076-01-02'
+EXPLAIN SELECT * FROM hr72_flights WHERE ORIGIN='as' AND Destination='a' AND RollCall >= '2006-01-02' AND RollCall < '2076-01-02'
+
 DROP TABLE IF EXISTS Locations;
 CREATE TABLE Locations (
  Title VARCHAR(100),

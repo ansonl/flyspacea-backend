@@ -1,0 +1,36 @@
+{
+  "name": "Space A",
+  "description": "Space A flight recognizer by Anson Liu.",
+  "keywords": [
+    "travel",
+    "golang",
+    "space available",
+    "spacea",
+    "usa",
+    "usaf",
+    "ansonliu"
+  ],
+  "website": "http://ansonliu.com/",
+  "repository": "",
+  "logo": "",
+  "success_url": "/welcome",
+  "env": {
+    "TZ": {
+      "description": "Server timezone for baseline Golang time.Time initialization.",
+      "value": "Etc/UTC"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql"
+    }
+  ],
+  "buildpacks": [
+    {
+      "url": "https://github.com/Dkevs/heroku-buildpack-tesseract"
+    },
+    {
+      "url": "heroku/go"
+    }
+  ]
+}

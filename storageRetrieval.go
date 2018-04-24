@@ -69,6 +69,49 @@ func createRequiredTables() (err error) {
 		log.Println(FLIGHTS_72HR_TABLE + " table created.")
 	}
 
+	/*
+		//Delete indexes
+		if _, err = db.Exec(fmt.Sprintf(`
+			DROP INDEX IF EXISTS %v;
+			DROP INDEX IF EXISTS %v;
+			DROP INDEX IF EXISTS %v;
+			DROP INDEX IF EXISTS %v;
+			`,
+			FLIGHTS_72HR_TABLE_INDEX_ORIGIN_DEST_RC,
+			FLIGHTS_72HR_TABLE_INDEX_ORIGIN_RC,
+			FLIGHTS_72HR_TABLE_INDEX_DEST_RC,
+			FLIGHTS_72HR_TABLE_INDEX_RC)); err != nil {
+
+		}
+		*/
+
+	if _, err = db.Exec(fmt.Sprintf(`
+		CREATE INDEX IF NOT EXISTS %v ON %v (
+			Origin ASC,
+			Destination ASC,
+			RollCall DESC
+		);
+		CREATE INDEX IF NOT EXISTS %v ON %v (
+			Origin ASC,
+			RollCall DESC
+		);
+		CREATE INDEX IF NOT EXISTS %v ON %v (
+			Destination ASC,
+			RollCall DESC
+		);
+		CREATE INDEX IF NOT EXISTS %v ON %v (
+			RollCall DESC
+		);
+		`, 
+		FLIGHTS_72HR_TABLE_INDEX_ORIGIN_DEST_RC, FLIGHTS_72HR_TABLE,
+		FLIGHTS_72HR_TABLE_INDEX_ORIGIN_RC, FLIGHTS_72HR_TABLE,
+		FLIGHTS_72HR_TABLE_INDEX_DEST_RC, FLIGHTS_72HR_TABLE,
+		FLIGHTS_72HR_TABLE_INDEX_RC, FLIGHTS_72HR_TABLE)); err != nil {
+		return
+	} else {
+		//log.Println(FLIGHTS_72HR_TABLE + " indexes created.")
+	}
+
 	return
 }
 

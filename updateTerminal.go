@@ -25,6 +25,7 @@ import (
 	"runtime/debug"
 )
 
+//Get all terminals' FB page info
 func getAllTerminalsInfo(terminalArray []Terminal) {
 	//Spawn goroutine to download and process each image
 	ctx := context.TODO()
@@ -57,6 +58,7 @@ func getAllTerminalsInfo(terminalArray []Terminal) {
 	}
 }
 
+//Get t *Terminal FB page info
 func (t *Terminal) getAndSetTerminalInfo() (err error) {
 	//Create request url and parameters
 	apiUrl := GRAPH_API_URL
@@ -138,26 +140,44 @@ func (t *Terminal) getAndSetTerminalInfo() (err error) {
 	return
 }
 
+//Update flights for all terminals in terminalMap map[string]Terminal
+//Calls fuzzy model creation and release
 func updateAllTerminalsFlights(terminalMap map[string]Terminal) {
+	resetStatistics()
+
 	var startTime, endTime time.Time
 	startTime = time.Now()
+
+	//Set live stats info
+	setLiveTotalTerminals(len(terminalMap))
+
+	//Create fuzzy models for lookup
+	if err := createFuzzyModels(); err != nil {
+		log.Fatal(err)
+	}
 
 	for _, v := range terminalMap {
 		if err := updateTerminalFlights(v); err != nil {
 			displayErrorForTerminal(v, err.Error())
 		}
+		
+		incrementLiveTerminalsUpdated()
 	}
+
+	//Tear down fuzzy models to release memory
+	destroyFuzzyModels()
 
 	endTime = time.Now()
 
 	log.Printf("Terminal Flights Update ended.\nStart time: %v\n End time: %v\nElapsed time: %v\n", startTime, endTime, endTime.Sub(startTime))
 
 	displayStatistics()
-	resetStatistics()
+	
 
 	debug.FreeOSMemory()
 }
 
+//Update targetTerminal flights
 func updateTerminalFlights(targetTerminal Terminal) (err error) {
 	var terminalId string
 	terminalId = targetTerminal.Id

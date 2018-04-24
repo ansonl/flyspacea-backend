@@ -24,6 +24,14 @@ var locationKeywordMap map[string]string
 var fuzzyModelByDepth map[int]*fuzzy.Model
 var fuzzyBannedSpellings map[string]int
 
+//Destroy fuzzy models
+func destroyFuzzyModels() {
+	fuzzyModelForKeyword = nil
+	locationKeywordMap = nil
+	fuzzyModelByDepth = nil
+	fuzzyBannedSpellings = nil
+}
+
 //Create fuzzy models for slide labels and terminal keywords
 func createFuzzyModels() (err error) {
 	//Create ban spelling list to not match

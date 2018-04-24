@@ -10,7 +10,10 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	"database/sql"
 )
+
+var serverStartTime time.Time
 
 //Marshal SAResponse into JSON, return error string if Marshal error.
 func (resp SAResponse) createJSONOutput() string {
@@ -20,6 +23,51 @@ func (resp SAResponse) createJSONOutput() string {
 		return err.Error()
 	}
 	return string(output)
+}
+
+func aboutHandler(w http.ResponseWriter, r *http.Request) {
+	//bypass same origin policy
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	http.Redirect(w, r, "https://github.com/ansonl/shipmate", http.StatusFound)
+
+	log.Println("About requested")
+}
+
+func uptimeHandler(w http.ResponseWriter, r *http.Request) {
+	//bypass same origin policy
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	//Get approx table rows
+	//https://wiki.postgresql.org/wiki/Count_estimate
+	getTableRows := func(table string) (rows int, err error) {
+		if err = checkDatabaseHandleValid(db); err != nil {
+			return
+		}
+
+		var flightRows *sql.Rows
+		if flightRows, err = db.Query(fmt.Sprintf(`
+			SELECT reltuples FROM pg_class WHERE relname = '%v';
+			`, table)); err != nil {
+			return
+		}
+
+		for flightRows.Next() {
+			if err = flightRows.Scan(&rows); err != nil {
+				return
+			}
+		}
+		return
+	}
+
+	diff := time.Since(serverStartTime)
+	var err error
+	var flightRows int
+	if flightRows, err = getTableRows(FLIGHTS_72HR_TABLE); err != nil {
+		fmt.Fprintf(w, "Error: %v", err.Error())
+	}
+
+	fmt.Fprintf(w, "Server uptime:\t%v\nFlights stored (approx):\t%v\n\nLatest update run stats:\n%v\n\nCurrent:\n%v", diff.String(), flightRows, statisticsString(), liveStatisticsString())
 }
 
 func flightsHandler(w http.ResponseWriter, r *http.Request) {
@@ -96,10 +144,13 @@ func flightsHandler(w http.ResponseWriter, r *http.Request) {
 
 func runServer(wg *sync.WaitGroup, config *tls.Config) {
 
+	serverStartTime = time.Now()
+
 	//Refresh specific terminal
 	//http.HandleFunc("/refreshTerminal", refreshTerminalHandler)
 
 	//Get flights for parameter filters
+	http.HandleFunc("/uptime", uptimeHandler)
 	http.HandleFunc("/flights", flightsHandler)
 
 	err := http.ListenAndServe(":"+os.Getenv("PORT"), nil)
