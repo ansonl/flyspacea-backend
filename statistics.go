@@ -136,6 +136,7 @@ func liveStatisticsString() (live string) {
 	live += "⌟\n"
 
 	live += "CPU Info\n"
+	/*
 	if cpusInfo, err := linuxproc.ReadCPUInfo("/proc/stat"); err != nil {
 		live += "stat read failed " + err.Error() + "\n"
 	} else {
@@ -143,6 +144,7 @@ func liveStatisticsString() (live string) {
 		live += "NumCore\t" + strconv.Itoa(int(cpusInfo.NumCore())) + "\n"
 		live += "NumPhysicalCPU\t" + strconv.Itoa(int(cpusInfo.NumPhysicalCPU())) + "\n"
 	}
+	*/
 
 	if cpusStat, err := linuxproc.ReadStat("/proc/stat"); err != nil {
 		live += "stat read failed " + err.Error() + "\n"
