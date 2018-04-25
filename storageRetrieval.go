@@ -12,9 +12,16 @@ import (
 
 var db *(sql.DB)
 
-func createDatabase() (err error) {
+func connectDatabase() (err error) {
 	//Create global db handle
 	if db, err = sql.Open("postgres", os.Getenv("DATABASE_URL")); err != nil {
+		return
+	}
+	return
+}
+
+func createDatabaseTables() (err error) {
+	if err = checkDatabaseHandleValid(db); err != nil {
 		return
 	}
 

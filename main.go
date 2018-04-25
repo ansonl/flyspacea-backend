@@ -60,7 +60,7 @@ func main() {
 		log.Printf("Loaded %v Terminals.\n", len(terminalArray))
 
 		//Setup storage database
-		if err = createDatabase(); err != nil {
+		if err = createDatabaseTables(); err != nil {
 			log.Println(err)
 		}
 
@@ -83,10 +83,13 @@ func main() {
 	//Parse cmd parameters and launch appropriate mode
 	flag.Parse()
 	if *processMode == "web" {
+		connectDatabase()
 		startWebMode()
 	} else if *processMode == "worker" {
+		connectDatabase()
 		startWorkerMode()
 	} else if *processMode == "all" {
+		connectDatabase()
 		startWebMode()
 		startWorkerMode()
 	} else {
