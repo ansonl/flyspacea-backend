@@ -83,7 +83,7 @@ func createRequiredTables() (err error) {
 			FLIGHTS_72HR_TABLE_INDEX_RC)); err != nil {
 
 		}
-		*/
+	*/
 
 	if _, err = db.Exec(fmt.Sprintf(`
 		CREATE INDEX IF NOT EXISTS %v ON %v (
@@ -102,7 +102,7 @@ func createRequiredTables() (err error) {
 		CREATE INDEX IF NOT EXISTS %v ON %v (
 			RollCall DESC
 		);
-		`, 
+		`,
 		FLIGHTS_72HR_TABLE_INDEX_ORIGIN_DEST_RC, FLIGHTS_72HR_TABLE,
 		FLIGHTS_72HR_TABLE_INDEX_ORIGIN_RC, FLIGHTS_72HR_TABLE,
 		FLIGHTS_72HR_TABLE_INDEX_DEST_RC, FLIGHTS_72HR_TABLE,

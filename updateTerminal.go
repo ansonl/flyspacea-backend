@@ -160,7 +160,7 @@ func updateAllTerminalsFlights(terminalMap map[string]Terminal) {
 		if err := updateTerminalFlights(v); err != nil {
 			displayErrorForTerminal(v, err.Error())
 		}
-		
+
 		incrementLiveTerminalsUpdated()
 	}
 
@@ -172,7 +172,6 @@ func updateAllTerminalsFlights(terminalMap map[string]Terminal) {
 	log.Printf("Terminal Flights Update ended.\nStart time: %v\n End time: %v\nElapsed time: %v\n", startTime, endTime, endTime.Sub(startTime))
 
 	displayStatistics()
-	
 
 	debug.FreeOSMemory()
 }

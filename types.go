@@ -201,7 +201,7 @@ type Flight struct {
 	SeatType            string    `json:"seatType"`
 	Cancelled           bool      `json:"cancelled"`
 	PhotoSource         string    `json:"photoSource"` //FB node id
-	SourceDate          time.Time `json:"sourceDate"` //FB node created time
+	SourceDate          time.Time `json:"sourceDate"`  //FB node created time
 }
 
 /*

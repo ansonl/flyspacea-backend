@@ -1,8 +1,8 @@
 package main
 
 import (
-	"log"
 	"fmt"
+	"log"
 	"strconv"
 )
 
@@ -31,7 +31,6 @@ func resetStatistics() {
 	photosFoundDateHeader = 0
 	photosProcessed = 0
 }
-
 
 func incrementValidTerminals() {
 	validTerminals++
@@ -118,11 +117,11 @@ func liveStatisticsString() (live string) {
 	live += "⌝\n"
 	live += "|"
 
-	for i := 0; i < liveTerminalsUpdated; i++  {
+	for i := 0; i < liveTerminalsUpdated; i++ {
 		live += "█"
 	}
 
-	for i := 0; i < liveTotalTerminals - liveTerminalsUpdated; i++  {
+	for i := 0; i < liveTotalTerminals-liveTerminalsUpdated; i++ {
 		live += " "
 	}
 

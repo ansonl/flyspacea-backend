@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -10,7 +11,6 @@ import (
 	"strconv"
 	"sync"
 	"time"
-	"database/sql"
 )
 
 var serverStartTime time.Time
@@ -64,10 +64,17 @@ func uptimeHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var flightRows int
 	if flightRows, err = getTableRows(FLIGHTS_72HR_TABLE); err != nil {
-		fmt.Fprintf(w, "Error: %v", err.Error())
+		fmt.Fprintf(w, "Error: %v\n", err.Error())
 	}
 
-	fmt.Fprintf(w, "Server uptime:\t%v\nFlights stored (approx):\t%v\n\nLatest update run stats:\n%v\n\nCurrent:\n%v", diff.String(), flightRows, statisticsString(), liveStatisticsString())
+	fmt.Fprintf(w, `Server uptime:	%v
+Process mode:	%v
+Flights stored (approx):	%v
+
+%v
+
+Current:
+%v`, diff.String(), *processMode, flightRows, statisticsString(), liveStatisticsString())
 }
 
 func flightsHandler(w http.ResponseWriter, r *http.Request) {
