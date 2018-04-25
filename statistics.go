@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	linuxproc "github.com/c9s/goprocinfo/linux"
 )
 
 var validTerminals int
@@ -106,6 +107,7 @@ func incrementLiveTerminalsUpdated() {
 
 func liveStatisticsString() (live string) {
 
+	//Print progress bar
 	live += fmt.Sprintf("%v/%v terminals update progress.\n", strconv.Itoa(liveTerminalsUpdated), strconv.Itoa(liveTotalTerminals))
 
 	live += "⌜"
@@ -131,7 +133,40 @@ func liveStatisticsString() (live string) {
 	for i := 0; i < liveTotalTerminals; i++ {
 		live += "-"
 	}
-	live += "⌟"
+	live += "⌟\n"
+
+	live += "CPU Info\n"
+	if cpusInfo, err := linuxproc.ReadCPUInfo("/proc/stat"); err != nil {
+		live += "stat read failed " + err.Error() + "\n"
+	} else {
+		live += "NumCPU\t" + strconv.Itoa(int(cpusInfo.NumCPU())) + "\n"
+		live += "NumCore\t" + strconv.Itoa(int(cpusInfo.NumCore())) + "\n"
+		live += "NumPhysicalCPU\t" + strconv.Itoa(int(cpusInfo.NumPhysicalCPU())) + "\n"
+	}
+
+	if cpusStat, err := linuxproc.ReadStat("/proc/stat"); err != nil {
+		live += "stat read failed " + err.Error() + "\n"
+	} else {
+		live += "User\t" + strconv.Itoa(int(cpusStat.CPUStatAll.User)) + "\n"
+		live += "Nice\t" + strconv.Itoa(int(cpusStat.CPUStatAll.Nice)) + "\n"
+		live += "System\t" + strconv.Itoa(int(cpusStat.CPUStatAll.System)) + "\n"
+		live += "Idle\t" + strconv.Itoa(int(cpusStat.CPUStatAll.Idle)) + "\n"
+	}
+
+	live += "Mem Info\n"
+	if memsInfo, err := linuxproc.ReadMemInfo("/proc/stat"); err != nil {
+		live += "stat read failed " + err.Error() + "\n"
+	} else {
+		live += "MemTotal\t" + strconv.Itoa(int(memsInfo.MemTotal)) + "\n"
+		live += "MemFree\t" + strconv.Itoa(int(memsInfo.MemFree)) + "\n"
+		live += "MemAvailable\t" + strconv.Itoa(int(memsInfo.MemAvailable)) + "\n"
+		live += "Cached\t" + strconv.Itoa(int(memsInfo.Cached)) + "\n"
+
+		live += "SwapTotal\t" + strconv.Itoa(int(memsInfo.SwapTotal)) + "\n"
+		live += "SwapFree\t" + strconv.Itoa(int(memsInfo.SwapFree)) + "\n"
+		live += "SwapCached\t" + strconv.Itoa(int(memsInfo.SwapCached)) + "\n"
+	}
+	
 
 	return
 }

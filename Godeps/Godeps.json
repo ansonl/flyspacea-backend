@@ -8,6 +8,10 @@
 			"Rev": "f3db6d0dff40d47957be82e1a6645574fb041f95"
 		},
 		{
+			"ImportPath": "github.com/c9s/goprocinfo/linux",
+			"Rev": "0010a05ce49fde7f50669bc7ecda7d41dd6ab824"
+		},
+		{
 			"ImportPath": "github.com/jbowtie/gokogiri/help",
 			"Comment": "4.6.41-105-g40b4859",
 			"Rev": "40b48594ca1866cf5d28177629b42f8a387377de"
