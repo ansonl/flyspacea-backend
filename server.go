@@ -77,6 +77,23 @@ Current:
 %v`, diff.String(), *processMode, flightRows, statisticsString(), liveStatisticsString())
 }
 
+func locationsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	var err error
+	var locationsArr []string
+	if locationsArr, err = selectAllLocationsFromTable(FLIGHTS_72HR_TABLE); err != nil {
+		fmt.Fprintf(w, SAResponse{
+			Status: 1,
+			Error:  fmt.Sprintf("Get locations error: %v", err.Error())}.createJSONOutput())
+		return
+	}
+
+	fmt.Fprintf(w, SAResponse{
+		Status:  0,
+		Locations: locationsArr}.createJSONOutput())
+}
+
 func flightsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
@@ -158,6 +175,7 @@ func runServer(wg *sync.WaitGroup, config *tls.Config) {
 
 	//Get flights for parameter filters
 	http.HandleFunc("/uptime", uptimeHandler)
+	http.HandleFunc("/locations", locationsHandler)
 	http.HandleFunc("/flights", flightsHandler)
 
 	err := http.ListenAndServe(":"+os.Getenv("PORT"), nil)

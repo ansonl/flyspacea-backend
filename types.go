@@ -214,4 +214,5 @@ type SAResponse struct {
 	User      string   `json:"user"`
 	AuthToken string   `json:"authToken"`
 	Flights   []Flight `json:"flights"`
+	Locations []string `json:"locations"`
 }

@@ -250,6 +250,43 @@ func populateLocationsTable(terminalArray []Terminal) (err error) {
 	return
 }
 
+/* 
+ * SELECT DISTINCT locations from table from all origins and destinations. Return a distinct list of locations from all origins and destinations stored. 
+ *
+ */
+func selectAllLocationsFromTable(table string) (distinctLocations []string, err error) {
+	if err = checkDatabaseHandleValid(db); err != nil {
+		return
+	}
+
+	var locationRows *sql.Rows
+
+	if locationRows, err = db.Query(fmt.Sprintf(`
+		(SELECT DISTINCT origin AS location FROM %v 
+			UNION 
+			SELECT DISTINCT destination AS location FROM hr72_flights) 
+			ORDER BY location ASC;
+		`, table)); err != nil {
+		return
+	}
+
+	var countOfRows = 0
+	for locationRows.Next() {
+		var tmp string
+
+		if err = locationRows.Scan(&tmp); err != nil {
+			return
+		}
+
+		distinctLocations = append(distinctLocations, tmp)
+		countOfRows++
+	}
+	locationRows.Close()
+
+	fmt.Printf("SELECT DISTINCT location list\n%v rows selected.\n", countOfRows)
+	return
+}
+
 /*
 //SELECT flights from table.
  * Parameters

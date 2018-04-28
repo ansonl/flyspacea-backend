@@ -34,6 +34,8 @@ CREATE INDEX hr72_flights_index_rc ON HR72_flights (
 	RollCall DESC
 );
 
+(SELECT DISTINCT origin AS location FROM hr72_flights UNION SELECT DISTINCT destination AS location FROM hr72_flights) ORDER BY location ASC;
+
 EXPLAIN SELECT * FROM hr72_flights WHERE ORIGIN='as'
 EXPLAIN SELECT * FROM hr72_flights WHERE RollCall >= '2006-01-02' AND RollCall < '2076-01-02'
 EXPLAIN SELECT * FROM hr72_flights WHERE ORIGIN='as' AND Destination='a' AND RollCall >= '2006-01-02' AND RollCall < '2076-01-02'
@@ -79,7 +81,7 @@ DELETE FROM %v
 #delete in future day
 DELETE FROM %v 
  WHERE Origin=$1 AND RollCall >= $2 AND RollCall <= $2 + INTERVAL '1 DAY';
-
+s
 
  RollCall > to_timestamp('2016-04-18 17:50:00', 'YYYY-MM-DD') - INTERVAL '14 day';
 
