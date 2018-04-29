@@ -307,7 +307,8 @@ func selectFlightsFromTableWithOriginDestTimeDuration(table string, origin strin
 		if flightRows, err = db.Query(fmt.Sprintf(`
 			SELECT Origin, Destination, RollCall, UnknownRollCallDate, SeatCount, SeatType, Cancelled, PhotoSource, SourceDate
 			FROM %v
-			WHERE Origin=$1 AND RollCall >= $2 AND RollCall < $3;
+			WHERE Origin=$1 AND RollCall >= $2 AND RollCall < $3
+			ORDER BY RollCall, Origin, Destination, SeatCount, SeatType, SourceDate;
  		`, table), origin, start, start.Add(duration)); err != nil {
 			return
 		}
@@ -315,7 +316,8 @@ func selectFlightsFromTableWithOriginDestTimeDuration(table string, origin strin
 		if flightRows, err = db.Query(fmt.Sprintf(`
 			SELECT Origin, Destination, RollCall, UnknownRollCallDate, SeatCount, SeatType, Cancelled, PhotoSource, SourceDate
 			FROM %v
-			WHERE Destination=$1 AND RollCall >= $2 AND RollCall < $3;
+			WHERE Destination=$1 AND RollCall >= $2 AND RollCall < $3
+			ORDER BY RollCall, Origin, Destination, SeatCount, SeatType, SourceDate;
  		`, table), dest, start, start.Add(duration)); err != nil {
 			return
 		}
@@ -323,7 +325,8 @@ func selectFlightsFromTableWithOriginDestTimeDuration(table string, origin strin
 		if flightRows, err = db.Query(fmt.Sprintf(`
 			SELECT Origin, Destination, RollCall, UnknownRollCallDate, SeatCount, SeatType, Cancelled, PhotoSource, SourceDate
 			FROM %v
-			WHERE Origin=$1 AND Destination=$2 AND RollCall >= $3 AND RollCall < $4;
+			WHERE Origin=$1 AND Destination=$2 AND RollCall >= $3 AND RollCall < $4
+			ORDER BY RollCall, Origin, Destination, SeatCount, SeatType, SourceDate;
  		`, table), origin, dest, start, start.Add(duration)); err != nil {
 			return
 		}
@@ -331,7 +334,8 @@ func selectFlightsFromTableWithOriginDestTimeDuration(table string, origin strin
 		if flightRows, err = db.Query(fmt.Sprintf(`
 			SELECT Origin, Destination, RollCall, UnknownRollCallDate, SeatCount, SeatType, Cancelled, PhotoSource, SourceDate
 			FROM %v
-			WHERE RollCall >= $1 AND RollCall < $2;
+			WHERE RollCall >= $1 AND RollCall < $2
+			ORDER BY RollCall, Origin, Destination, SeatCount, SeatType, SourceDate;
  		`, table), start, start.Add(duration).Format("2006-01-02")); err != nil {
 			return
 		}
