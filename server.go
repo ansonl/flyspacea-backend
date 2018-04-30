@@ -90,8 +90,25 @@ func locationsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, SAResponse{
-		Status:  0,
+		Status:    0,
 		Locations: locationsArr}.createJSONOutput())
+}
+
+func oldestRollCallHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	var err error
+	var oldest time.Time
+	if oldest, err = selectOldestRollCallDateFromTable(FLIGHTS_72HR_TABLE); err != nil {
+		fmt.Fprintf(w, SAResponse{
+			Status: 1,
+			Error:  fmt.Sprintf("Get oldest rollcall error: %v", err.Error())}.createJSONOutput())
+		return
+	}
+
+	fmt.Fprintf(w, SAResponse{
+		Status:    0,
+		Data: oldest.Format("2006-01-02T15:04:05Z")}.createJSONOutput())
 }
 
 func flightsHandler(w http.ResponseWriter, r *http.Request) {
@@ -176,6 +193,7 @@ func runServer(wg *sync.WaitGroup, config *tls.Config) {
 	//Get flights for parameter filters
 	http.HandleFunc("/uptime", uptimeHandler)
 	http.HandleFunc("/locations", locationsHandler)
+	http.HandleFunc("/oldestRC", oldestRollCallHandler)
 	http.HandleFunc("/flights", flightsHandler)
 
 	err := http.ListenAndServe(":"+os.Getenv("PORT"), nil)

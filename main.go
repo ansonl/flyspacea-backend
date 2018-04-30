@@ -53,6 +53,7 @@ func main() {
 		if terminalArray, err = readTerminalArrayFromFiles(terminalsToUpdateFile); err != nil {
 			log.Fatal(err)
 		}
+
 		//Read in location keyword file
 		getAllTerminalsInfo(terminalArray)
 		//log.Println(terminalArray)

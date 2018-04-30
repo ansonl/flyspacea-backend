@@ -37,6 +37,9 @@ func (t *Terminal) getTZ() (err error) {
 
 	(*t).Timezone, err = time.LoadLocation(
 		tz)
+
+	//Debug. Used to TZ export
+	(*t).TimezoneTitle = tz
 	return
 }
 
@@ -76,6 +79,30 @@ func readTerminalArrayFromFiles(filenames ...string) (keywordsArray []Terminal, 
 
 		keywordsArray = append(keywordsArray, tmp...)
 	}
+	/*
+	 * Export TZ offset list to json file for preset terminals based on computed TZ
+	 */
+	/*
+	type TerminalTZOffset struct {
+		Title          string `json:"title"`
+		TimezoneOffset int    `json:"tzOffset"`
+	}
+	 */
+
+	var terminalTitleTZOffsetArray []Terminal
+	for _, v := range keywordsArray {
+		t := time.Now()
+		t = t.In(v.Timezone)
+		_, offset := t.Zone()
+		v.TimezoneOffset = offset
+
+		terminalTitleTZOffsetArray = append(terminalTitleTZOffsetArray, v)
+	}
+
+	output, _ := json.MarshalIndent(terminalTitleTZOffsetArray, "", "	")
+	ioutil.WriteFile("tz_export.json", output, 0644)
+	fmt.Println("TZ exported")
+	
 
 	return
 }

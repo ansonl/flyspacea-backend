@@ -103,6 +103,9 @@ type Terminal struct {
 	Timezone *time.Location
 
 	PageInfoEdge
+
+	TimezoneOffset int    `json:"tzOffset"` //Used to debug TZ offset export
+	TimezoneTitle string `json:"tzTitle"`
 }
 
 //Processed version of downloaded photo
@@ -215,4 +218,5 @@ type SAResponse struct {
 	AuthToken string   `json:"authToken"`
 	Flights   []Flight `json:"flights"`
 	Locations []string `json:"locations"`
+	Data string	`json:"data"`
 }

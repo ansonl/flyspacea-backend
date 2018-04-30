@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	linuxproc "github.com/c9s/goprocinfo/linux"
 	"log"
 	"strconv"
-	linuxproc "github.com/c9s/goprocinfo/linux"
 )
 
 var validTerminals int
@@ -137,13 +137,13 @@ func liveStatisticsString() (live string) {
 
 	live += "CPU Info\n"
 	/*
-	if cpusInfo, err := linuxproc.ReadCPUInfo("/proc/stat"); err != nil {
-		live += "stat read failed " + err.Error() + "\n"
-	} else {
-		live += "NumCPU\t" + strconv.Itoa(int(cpusInfo.NumCPU())) + "\n"
-		live += "NumCore\t" + strconv.Itoa(int(cpusInfo.NumCore())) + "\n"
-		live += "NumPhysicalCPU\t" + strconv.Itoa(int(cpusInfo.NumPhysicalCPU())) + "\n"
-	}
+		if cpusInfo, err := linuxproc.ReadCPUInfo("/proc/stat"); err != nil {
+			live += "stat read failed " + err.Error() + "\n"
+		} else {
+			live += "NumCPU\t" + strconv.Itoa(int(cpusInfo.NumCPU())) + "\n"
+			live += "NumCore\t" + strconv.Itoa(int(cpusInfo.NumCore())) + "\n"
+			live += "NumPhysicalCPU\t" + strconv.Itoa(int(cpusInfo.NumPhysicalCPU())) + "\n"
+		}
 	*/
 
 	if cpusStat, err := linuxproc.ReadStat("/proc/stat"); err != nil {
@@ -168,7 +168,6 @@ func liveStatisticsString() (live string) {
 		live += "SwapFree\t" + strconv.Itoa(int(memsInfo.SwapFree)) + "\n"
 		live += "SwapCached\t" + strconv.Itoa(int(memsInfo.SwapCached)) + "\n"
 	}
-	
 
 	return
 }

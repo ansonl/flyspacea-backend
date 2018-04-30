@@ -76,7 +76,7 @@ SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled
 
 #delete in current day
 DELETE FROM %v 
- WHERE Origin=$1 AND RollCall >= now() AND RollCall <= SELECT CURRENT_DATE + INTERVAL '1 DAY';
+ WHERE Origin=$1 AND RollCall >= now() AND RollCall <= SELECT CURRENT_DATE + INTERVAL '1 DAY'; 
 
 #delete in future day
 DELETE FROM %v 
@@ -113,3 +113,12 @@ WHERE Origin=$1 AND Destination=$2 AND RollCall >= $3 AND RollCall < $4;
 SELECT Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource
 FROM %v
 WHERE RollCall >= $1 AND RollCall < $2;
+
+#select flights including not sure matches
+SELECT Origin, Destination, RollCall, UnknownRollCallDate, SeatCount, SeatType, Cancelled, PhotoSource, SourceDate
+			FROM %v
+			WHERE ((RollCall >= $2 AND RollCall < $3) OR (UnknownRollCallDate IS TRUE AND SourceDate >= $2 AND SourceDate < $3))
+			ORDER BY RollCall, Origin, Destination, SeatCount, SeatType, SourceDate;
+
+#get oldest rollcall
+SELECT MIN(RollCall) FROM hr72_flights WHERE UnknownRollCallDate IS FALSE AND RollCall > (SELECT CURRENT_DATE - INTERVAL '1 YEAR');

@@ -250,8 +250,8 @@ func populateLocationsTable(terminalArray []Terminal) (err error) {
 	return
 }
 
-/* 
- * SELECT DISTINCT locations from table from all origins and destinations. Return a distinct list of locations from all origins and destinations stored. 
+/*
+ * SELECT DISTINCT locations from table from all origins and destinations. Return a distinct list of locations from all origins and destinations stored.
  *
  */
 func selectAllLocationsFromTable(table string) (distinctLocations []string, err error) {
@@ -288,6 +288,33 @@ func selectAllLocationsFromTable(table string) (distinctLocations []string, err 
 }
 
 /*
+ * SELECT oldest rollcall date with known rollcall date from table
+ */
+func selectOldestRollCallDateFromTable(table string) (oldestRollCall time.Time, err error) {
+	if err = checkDatabaseHandleValid(db); err != nil {
+		return
+	}
+
+	var locationRows *sql.Rows
+
+	if locationRows, err = db.Query(fmt.Sprintf(`
+		SELECT MIN(RollCall) FROM %v WHERE UnknownRollCallDate IS FALSE AND RollCall > (SELECT CURRENT_DATE - INTERVAL '1 YEAR');
+		`, table)); err != nil {
+		return
+	}
+
+	for locationRows.Next() {
+		if err = locationRows.Scan(&oldestRollCall); err != nil {
+			return
+		}
+	}
+	locationRows.Close()
+
+	fmt.Printf("SELECT MIN(RollCall)\n%v\n", oldestRollCall)
+	return
+}
+
+/*
 //SELECT flights from table.
  * Parameters
  * table SQL DB table name
@@ -307,7 +334,7 @@ func selectFlightsFromTableWithOriginDestTimeDuration(table string, origin strin
 		if flightRows, err = db.Query(fmt.Sprintf(`
 			SELECT Origin, Destination, RollCall, UnknownRollCallDate, SeatCount, SeatType, Cancelled, PhotoSource, SourceDate
 			FROM %v
-			WHERE Origin=$1 AND RollCall >= $2 AND RollCall < $3
+			WHERE Origin=$1 AND ((RollCall >= $2 AND RollCall < $3) OR (UnknownRollCallDate IS TRUE AND SourceDate >= $2 AND SourceDate < $3))
 			ORDER BY RollCall, Origin, Destination, SeatCount, SeatType, SourceDate;
  		`, table), origin, start, start.Add(duration)); err != nil {
 			return
@@ -316,7 +343,7 @@ func selectFlightsFromTableWithOriginDestTimeDuration(table string, origin strin
 		if flightRows, err = db.Query(fmt.Sprintf(`
 			SELECT Origin, Destination, RollCall, UnknownRollCallDate, SeatCount, SeatType, Cancelled, PhotoSource, SourceDate
 			FROM %v
-			WHERE Destination=$1 AND RollCall >= $2 AND RollCall < $3
+			WHERE Destination=$1 AND ((RollCall >= $2 AND RollCall < $3) OR (UnknownRollCallDate IS TRUE AND SourceDate >= $2 AND SourceDate < $3))
 			ORDER BY RollCall, Origin, Destination, SeatCount, SeatType, SourceDate;
  		`, table), dest, start, start.Add(duration)); err != nil {
 			return
@@ -325,7 +352,7 @@ func selectFlightsFromTableWithOriginDestTimeDuration(table string, origin strin
 		if flightRows, err = db.Query(fmt.Sprintf(`
 			SELECT Origin, Destination, RollCall, UnknownRollCallDate, SeatCount, SeatType, Cancelled, PhotoSource, SourceDate
 			FROM %v
-			WHERE Origin=$1 AND Destination=$2 AND RollCall >= $3 AND RollCall < $4
+			WHERE Origin=$1 AND Destination=$2 AND ((RollCall >= $3 AND RollCall < $4) OR (UnknownRollCallDate IS TRUE AND SourceDate >= $3 AND SourceDate < $4))
 			ORDER BY RollCall, Origin, Destination, SeatCount, SeatType, SourceDate;
  		`, table), origin, dest, start, start.Add(duration)); err != nil {
 			return
@@ -334,7 +361,7 @@ func selectFlightsFromTableWithOriginDestTimeDuration(table string, origin strin
 		if flightRows, err = db.Query(fmt.Sprintf(`
 			SELECT Origin, Destination, RollCall, UnknownRollCallDate, SeatCount, SeatType, Cancelled, PhotoSource, SourceDate
 			FROM %v
-			WHERE RollCall >= $1 AND RollCall < $2
+			WHERE (RollCall >= $1 AND RollCall < $2) OR (UnknownRollCallDate IS TRUE AND SourceDate >= $1 AND SourceDate < $2)
 			ORDER BY RollCall, Origin, Destination, SeatCount, SeatType, SourceDate;
  		`, table), start, start.Add(duration).Format("2006-01-02")); err != nil {
 			return
