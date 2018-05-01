@@ -507,6 +507,39 @@ func deleteFlightsFromTableBetweenTimesForOrigin(table string, start time.Time, 
 		return
 	}
 
+	//Delete duplicate partial matches with unknown rollcall date if we know which photos overlap timewise
+	//1. Get photo source of a "to be deleted" flight
+	//2. Delete all partial matches from that photo source
+	var oldPhotoSource string
+	var oldPhotoSourceRows *sql.Rows
+	if oldPhotoSourceRows, err = db.Query(fmt.Sprintf(`
+		SELECT DISTINCT PhotoSource FROM %v WHERE Origin=$1 AND RollCall >= $2 AND RollCall < $3;
+		`, table), origin, start, end); err != nil {
+		return
+	}
+	if (oldPhotoSourceRows.Next()) {
+		log.Println("found old photo source")
+		if err = oldPhotoSourceRows.Scan(&oldPhotoSource); err != nil {
+			return
+		}
+		oldPhotoSourceRows.Close()
+
+		var deleteOldPSResult sql.Result
+		if deleteOldPSResult, err = db.Exec(fmt.Sprintf(`
+			DELETE FROM %v 
+	 		WHERE UnknownRollCallDate IS TRUE AND PhotoSource = $1;
+	 		`, table), oldPhotoSource); err != nil {
+			return
+		}
+		var deleteOldPSaffected int64
+		if deleteOldPSaffected, err = deleteOldPSResult.RowsAffected(); err != nil {
+			return
+		}
+		fmt.Printf("Delete duplicate flights for photo source %v \n%v rows affected\n", oldPhotoSource, deleteOldPSaffected)
+	}
+	
+
+
 	var result sql.Result
 	if result, err = db.Exec(fmt.Sprintf(`
 		DELETE FROM %v 

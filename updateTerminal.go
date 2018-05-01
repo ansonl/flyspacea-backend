@@ -428,6 +428,10 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (fligh
 		return
 	}
 
+	//DEBUG
+	//Download only
+	//return
+
 	var slides []Slide
 	slides = make([]Slide, 0)
 	for _, currentSaveType := range saveTypes {
