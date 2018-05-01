@@ -81,8 +81,50 @@ func locationsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	var err error
+
+	//Parse HTTP Form
+	if err = r.ParseForm(); err != nil {
+		fmt.Fprintf(w, SAResponse{
+			Status: 1,
+			Error:  fmt.Sprintf("Parse form error: %v", err.Error())}.createJSONOutput())
+		return
+	}
+
+	//Initialize variables needed to find flights
+	var startTime time.Time
+	var duration time.Duration
+
+	//Parse REST_START_TIME_KEY
+	var startTimeText string
+	if startTimeText = r.Form.Get(REST_START_TIME_KEY); len(startTimeText) > 0 {
+		if startTime, err = time.Parse(time.RFC3339, startTimeText); err != nil {
+			fmt.Fprintf(w, SAResponse{
+				Status: 1,
+				Error:  fmt.Sprintf("%v parameter error: %v", REST_START_TIME_KEY, err.Error())}.createJSONOutput())
+			return
+		}
+	}
+
+	//Parse REST_DURATION_DAYS_KEY
+	var durationDaysText string
+	if durationDaysText = r.Form.Get(REST_DURATION_DAYS_KEY); len(durationDaysText) > 0 {
+		var durationDays int
+		if durationDays, err = strconv.Atoi(durationDaysText); err != nil {
+			fmt.Fprintf(w, SAResponse{
+				Status: 1,
+				Error:  fmt.Sprintf("%v parameter error: %v", REST_DURATION_DAYS_KEY, err.Error())}.createJSONOutput())
+			return
+		}
+		duration = time.Hour * 24 * time.Duration(durationDays) //Convert duration to days
+	}
+	
+	
+
 	var locationsArr []string
-	if locationsArr, err = selectAllLocationsFromTable(FLIGHTS_72HR_TABLE); err != nil {
+	if locationsArr, err = selectAllLocationsFromTable(
+		FLIGHTS_72HR_TABLE,
+		startTime,
+		duration); err != nil {
 		fmt.Fprintf(w, SAResponse{
 			Status: 1,
 			Error:  fmt.Sprintf("Get locations error: %v", err.Error())}.createJSONOutput())

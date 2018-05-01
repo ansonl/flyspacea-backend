@@ -254,21 +254,63 @@ func populateLocationsTable(terminalArray []Terminal) (err error) {
  * SELECT DISTINCT locations from table from all origins and destinations. Return a distinct list of locations from all origins and destinations stored.
  *
  */
-func selectAllLocationsFromTable(table string) (distinctLocations []string, err error) {
+func selectAllLocationsFromTable(table string, start time.Time, duration time.Duration) (distinctLocations []string, err error) {
 	if err = checkDatabaseHandleValid(db); err != nil {
 		return
 	}
 
 	var locationRows *sql.Rows
 
-	if locationRows, err = db.Query(fmt.Sprintf(`
-		(SELECT DISTINCT origin AS location FROM %v 
-			UNION 
-			SELECT DISTINCT destination AS location FROM hr72_flights) 
-			ORDER BY location ASC;
-		`, table)); err != nil {
-		return
+	if duration > 0 {
+		if locationRows, err = db.Query(fmt.Sprintf(`
+			(
+			  SELECT
+			    DISTINCT origin AS location
+			  FROM
+			    %v
+			  WHERE
+			    (
+			      RollCall >= $1
+			      AND RollCall < $2
+			    )
+			    OR (
+			      UnknownRollCallDate IS TRUE
+			      AND SourceDate >= $1
+			      AND SourceDate < $2
+			    )
+			  UNION
+			  SELECT
+			    DISTINCT destination AS location
+			  FROM
+			    %v
+			  WHERE
+			    (
+			      RollCall >= $1
+			      AND RollCall < $2
+			    )
+			    OR (
+			      UnknownRollCallDate IS TRUE
+			      AND SourceDate >= $1
+			      AND SourceDate < $2
+			    )
+			)
+			ORDER BY
+			  location ASC;
+			`, table, table), start, start.Add(duration)); err != nil {
+			return
+		}
+	} else {
+		if locationRows, err = db.Query(fmt.Sprintf(`
+			(SELECT DISTINCT origin AS location FROM %v 
+				UNION 
+				SELECT DISTINCT destination AS location FROM %v) 
+				ORDER BY location ASC;
+			`, table, table)); err != nil {
+			return
+		}
 	}
+
+	
 
 	var countOfRows = 0
 	for locationRows.Next() {
@@ -288,7 +330,7 @@ func selectAllLocationsFromTable(table string) (distinctLocations []string, err 
 }
 
 /*
- * SELECT oldest rollcall date with known rollcall date from table
+ * SELECT oldest rollcall date with known rollcall date from table from last year
  */
 func selectOldestRollCallDateFromTable(table string) (oldestRollCall time.Time, err error) {
 	if err = checkDatabaseHandleValid(db); err != nil {
