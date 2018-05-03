@@ -119,6 +119,24 @@ func createRequiredTables() (err error) {
 		//log.Println(FLIGHTS_72HR_TABLE + " indexes created.")
 	}
 
+	var photoReportsAlreadyExist bool
+	if photoReportsAlreadyExist, err = setupTable(PHOTOS_REPORTS_TABLE, fmt.Sprintf(`
+		CREATE TABLE %v (
+			Location VARCHAR(100),
+			PhotoSource VARCHAR(2048),
+			Comment VARCHAR(2048),
+			SubmitDate TIMESTAMP,
+			IPAddress VARCHAR(100),
+			CONSTRAINT report_location_fk FOREIGN KEY (Location) REFERENCES Locations(Title));
+		`, PHOTOS_REPORTS_TABLE)); err != nil {
+		return
+	}
+	if photoReportsAlreadyExist {
+		//log.Println(PHOTOS_REPORTS_TABLE + " table already exists.")
+	} else {
+		log.Println(PHOTOS_REPORTS_TABLE + " table created.")
+	}
+
 	return
 }
 
@@ -254,7 +272,7 @@ func populateLocationsTable(terminalArray []Terminal) (err error) {
  * SELECT DISTINCT locations from table from all origins and destinations. Return a distinct list of locations from all origins and destinations stored.
  *
  */
-func selectAllLocationsFromTable(table string, start time.Time, duration time.Duration) (distinctLocations []string, err error) {
+func selectActiveLocationsFromTable(table string, start time.Time, duration time.Duration) (distinctLocations []string, err error) {
 	if err = checkDatabaseHandleValid(db); err != nil {
 		return
 	}
@@ -319,6 +337,43 @@ func selectAllLocationsFromTable(table string, start time.Time, duration time.Du
 		if err = locationRows.Scan(&tmp); err != nil {
 			return
 		}
+
+		distinctLocations = append(distinctLocations, tmp)
+		countOfRows++
+	}
+	locationRows.Close()
+
+	fmt.Printf("SELECT DISTINCT location list\n%v rows selected.\n", countOfRows)
+	return
+}
+
+/*
+ * SELECT DISTINCT locations from table from all origins and destinations. Return a distinct list of locations from all origins and destinations stored.
+ *
+ */
+func selectAllLocationsFromTable(table string) (distinctLocations []Terminal, err error) {
+	if err = checkDatabaseHandleValid(db); err != nil {
+		return
+	}
+
+	var locationRows *sql.Rows
+
+	if locationRows, err = db.Query(fmt.Sprintf(`
+		SELECT Title, Phone, Email, FBId
+FROM %v;
+		`, table)); err != nil {
+		return
+	}
+
+	var countOfRows = 0
+	for locationRows.Next() {
+		var tmp Terminal
+		var email string
+
+		if err = locationRows.Scan(&tmp.Title, &tmp.Phone, &email, &tmp.Id); err != nil {
+			return
+		}
+		tmp.Emails = []string{email}
 
 		distinctLocations = append(distinctLocations, tmp)
 		countOfRows++
@@ -537,8 +592,6 @@ func deleteFlightsFromTableBetweenTimesForOrigin(table string, start time.Time, 
 		}
 		fmt.Printf("Delete duplicate flights for photo source %v \n%v rows affected\n", oldPhotoSource, deleteOldPSaffected)
 	}
-	
-
 
 	var result sql.Result
 	if result, err = db.Exec(fmt.Sprintf(`
@@ -553,6 +606,32 @@ func deleteFlightsFromTableBetweenTimesForOrigin(table string, start time.Time, 
 	}
 
 	fmt.Printf("Delete flights between times for origin %v %v %v %v\n%v rows affected\n", table, start, end, origin, affected)
+
+	return
+}
+
+//Insert PhotoReport into table.
+func insertPhotoReportIntoTable(table string, pr PhotoReport) (err error) {
+	if err = checkDatabaseHandleValid(db); err != nil {
+		return
+	}
+
+	//Insert photo report into table
+	var rowsAffected int64
+
+	var result sql.Result
+	if result, err = db.Exec(fmt.Sprintf(`
+		INSERT INTO %v (Location, PhotoSource, Comment, SubmitDate, IPAddress)
+			VALUES ($1, $2, $3, $4, $5);
+ 		`, table), pr.Location, pr.PhotoSource, pr.Comment, pr.SubmitDate.In(time.UTC), pr.IPAddress); err != nil {
+		return
+	}
+
+	if rowsAffected, err = result.RowsAffected(); err != nil {
+		return
+	}
+
+	fmt.Printf("INSERT PhotoReport\n%v rows affected\n", rowsAffected)
 
 	return
 }

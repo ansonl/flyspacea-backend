@@ -132,6 +132,7 @@ const (
 	FLIGHTS_72HR_TABLE_INDEX_ORIGIN_RC      string = "hr72_flights_index_origin_rc"
 	FLIGHTS_72HR_TABLE_INDEX_DEST_RC        string = "hr72_flights_index_dest_rc"
 	FLIGHTS_72HR_TABLE_INDEX_ORIGIN_DEST_RC string = "hr72_flights_index_origin_dest_rc"
+	PHOTOS_REPORTS_TABLE string = "photo_reports"
 )
 
 //Server REST API constants
@@ -145,4 +146,9 @@ const (
 
 	//REST_DURATION_DAYS_KEY is numbers of days forward from REST_START_TIME_KEY to select.
 	REST_DURATION_DAYS_KEY string = "durationDays"
+
+	//PhotoReport keys
+	REST_LOCATION_KEY string = "location"
+	REST_PHOTOSOURCE_KEY string = "photoSource"
+	REST_COMMENT_KEY string = "comment"
 )

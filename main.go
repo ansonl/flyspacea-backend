@@ -42,6 +42,11 @@ func main() {
 			log.Println(err)
 		}
 
+		//Setup storage database
+		if err = createDatabaseTables(); err != nil {
+			log.Println(err)
+		}
+
 		//Load terminals
 		var terminalsToUpdateFile string
 		terminalsToUpdateFile = TERMINAL_FILE
@@ -60,10 +65,6 @@ func main() {
 		terminalMap := readTerminalArrayToMap(terminalArray)
 		log.Printf("Loaded %v Terminals.\n", len(terminalArray))
 
-		//Setup storage database
-		if err = createDatabaseTables(); err != nil {
-			log.Println(err)
-		}
 
 		//Population locations table with locations from file
 		if err = populateLocationsTable(terminalArray); err != nil {

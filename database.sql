@@ -67,6 +67,9 @@ INSERT INTO locations (Title, URL)
 	    	GeneralInfo = EXCLUDED.GeneralInfo,
 	    	FBId = EXCLUDED.FBId;
 
+SELECT Title, Phone, Email, FBId, URL
+	FROM locations;
+
 #Insert new flight
 INSERT INTO flights (Origin, Destination, RollCall, SeatCount, SeatType, Cancelled, PhotoSource, SourceDate) 
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
@@ -127,3 +130,20 @@ SELECT Origin, Destination, RollCall, UnknownRollCallDate, SeatCount, SeatType, 
 
 #get oldest rollcall
 SELECT MIN(RollCall) FROM hr72_flights WHERE UnknownRollCallDate IS FALSE AND RollCall > (SELECT CURRENT_DATE - INTERVAL '1 YEAR');
+
+
+DROP TABLE IF EXISTS photo_reports;
+CREATE TABLE photo_reports (
+Location VARCHAR(100),
+PhotoSource VARCHAR(2048),
+Comment VARCHAR(2048),
+SubmitDate TIMESTAMP,
+IPAddress VARCHAR(100),
+CONSTRAINT report_location_fk FOREIGN KEY (Location) REFERENCES Locations(Title));
+
+INSERT INTO photo_reports (Location, PhotoSource, Comment, SubmitDate, IPAddress)
+	VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4);
+
+#test insert
+INSERT INTO photo_reports (Location, PhotoSource, Comment, SubmitDate, IPAddress)
+	VALUES ('101 ARW (ANG), Maine', 'a', 'a', CURRENT_TIMESTAMP, 'a');

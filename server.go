@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	"strings"
 )
 
 var serverStartTime time.Time
@@ -121,7 +122,7 @@ func locationsHandler(w http.ResponseWriter, r *http.Request) {
 	
 
 	var locationsArr []string
-	if locationsArr, err = selectAllLocationsFromTable(
+	if locationsArr, err = selectActiveLocationsFromTable(
 		FLIGHTS_72HR_TABLE,
 		startTime,
 		duration); err != nil {
@@ -135,6 +136,29 @@ func locationsHandler(w http.ResponseWriter, r *http.Request) {
 		Status:    0,
 		Locations: locationsArr}.createJSONOutput())
 }
+
+/*
+func allLocationsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	var err error
+
+	var locationsArr []Terminal
+	if locationsArr, err = selectAllLocationsFromTable(
+		FLIGHTS_72HR_TABLE); err != nil {
+		fmt.Fprintf(w, SAResponse{
+			Status: 1,
+			Error:  fmt.Sprintf("Get locations error: %v", err.Error())}.createJSONOutput())
+		return
+	}
+	//TODO: decide what to do with all locations data and whether to switch SAResponse.locations from []string to []Terminal
+
+	fmt.Fprintf(w, SAResponse{
+		Status:    0,
+		Locations: locationsArr}.createJSONOutput())
+		
+}
+*/
 
 func oldestRollCallHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -225,18 +249,76 @@ func flightsHandler(w http.ResponseWriter, r *http.Request) {
 		Flights: foundFlights}.createJSONOutput())
 }
 
+func submitPhotoReportHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	var err error
+
+	//Parse HTTP Form
+	if err = r.ParseForm(); err != nil {
+		fmt.Fprintf(w, SAResponse{
+			Status: 1,
+			Error:  fmt.Sprintf("Parse form error: %v", err.Error())}.createJSONOutput())
+		return
+	}
+
+	//Initialize variables needed to find flights
+	var location string
+	var photoSource string
+	var comment string
+
+	location = r.Form.Get(REST_LOCATION_KEY)
+	photoSource = r.Form.Get(REST_PHOTOSOURCE_KEY)
+	comment = r.Form.Get(REST_COMMENT_KEY)
+
+	//Get X-forwarded-for IP from header or request remoteaddr field.
+	reportIP := r.RemoteAddr
+	forwardedIPs := strings.Split(r.Header.Get("X-FORWARDED-FOR"), ", ")
+	if len(forwardedIPs) > 0 {
+		reportIP = forwardedIPs[len(forwardedIPs)-1]
+	}
+
+	submittedPhotoReport := PhotoReport{
+		Location: location,
+		PhotoSource: photoSource,
+		Comment: comment,
+		SubmitDate: time.Now(),
+		IPAddress: reportIP}
+
+	if err = insertPhotoReportIntoTable(PHOTOS_REPORTS_TABLE, submittedPhotoReport); err != nil {
+		fmt.Fprintf(w, SAResponse{
+			Status: 1,
+			Error:  fmt.Sprintf("Insert photo report error: %v", err.Error())}.createJSONOutput())
+		return
+	}
+
+	fmt.Fprintf(w, SAResponse{
+		Status:  0}.createJSONOutput())
+}
+
 func runServer(wg *sync.WaitGroup, config *tls.Config) {
 
 	serverStartTime = time.Now()
 
 	//Refresh specific terminal
 	//http.HandleFunc("/refreshTerminal", refreshTerminalHandler)
+	
+	http.HandleFunc("/uptime", uptimeHandler)
+
+	//Get active locations within a time range
+	http.HandleFunc("/locations", locationsHandler)
+
+	//Get active locations within a time range
+	//http.HandleFunc("/allLocations", allLocationsHandler)
+
+	//Get oldest rollcall within the last year
+	http.HandleFunc("/oldestRC", oldestRollCallHandler)
 
 	//Get flights for parameter filters
-	http.HandleFunc("/uptime", uptimeHandler)
-	http.HandleFunc("/locations", locationsHandler)
-	http.HandleFunc("/oldestRC", oldestRollCallHandler)
 	http.HandleFunc("/flights", flightsHandler)
+
+	//Log photo report from user
+	http.HandleFunc("/submitPhotoReport", submitPhotoReportHandler)
 
 	err := http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 	if err != nil {

@@ -207,6 +207,15 @@ type Flight struct {
 	SourceDate          time.Time `json:"sourceDate"`  //FB node created time
 }
 
+//Representation of Photo Report by user
+type PhotoReport struct {
+	Location              string    
+	PhotoSource         string    
+	Comment            string 
+	SubmitDate time.Time      
+	IPAddress           string
+}
+
 /*
  * Representation of web server data
  */
