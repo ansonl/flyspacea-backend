@@ -145,7 +145,7 @@ func createFuzzyModels() (err error) {
 		components := strings.FieldsFunc(trimmed, splitRunes)
 		for _, k := range components {
 
-			if len(k) > 5 && !strings.Contains(k, "(") && !strings.Contains(k, ")") {
+			if len(k) > FUZZY_MODEL_KEYWORD_MIN_LENGTH && !strings.Contains(k, "(") && !strings.Contains(k, ")") {
 				addKeyword(k, v.Title)
 			}
 		}
