@@ -40,6 +40,9 @@ func createFuzzyModels() (err error) {
 	fuzzyBannedSpellings["listed"] = 0
 	fuzzyBannedSpellings["island"] = 0
 	fuzzyBannedSpellings["person"] = 0
+	fuzzyBannedSpellings["airlift"] = 0
+	fuzzyBannedSpellings["airwing"] = 0
+	fuzzyBannedSpellings["harbor"] = 0
 
 	//Slide data header label keyword to train in fuzzy with customizable training depth
 	type LabelKeyword struct {

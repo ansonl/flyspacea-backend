@@ -71,7 +71,7 @@
     },
     {
         "title": "JB McGuire-Dix-Lakehurst, New Jersey",
-        "keywords": [],
+        "keywords": ["mcguire"],
         "id": "338615492862399",
         "url": "http://www.facebook.com/JBMDLPaxTerm",
         "location": {
@@ -341,7 +341,7 @@
     },
     {
         "title": "RAAF Base Richmond, Australia",
-        "keywords": [],
+        "keywords": ["alice springs"],
         "id": "151993091614262",
         "url": "https://www.facebook.com/RichmondAMC/info",
         "location": {
@@ -625,7 +625,7 @@
     },
     {
         "title": "Pease ANGB, New Hampshire (ANG)",
-        "keywords": [],
+        "keywords": ["portsmouth"],
         "id": "260404457338396",
         "url": "http://www.facebook.com/PEASESPACEA",
         "location": {
@@ -675,7 +675,7 @@
     },
     {
         "title": "190 ARW (ANG), Topeka, Kansas",
-        "keywords": ["topeka"],
+        "keywords": ["topeka", "forbes field"],
         "id": "205969256215676",
         "location": {
             "latitude": 38.950833,
