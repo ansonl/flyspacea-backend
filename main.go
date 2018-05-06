@@ -5,6 +5,7 @@ import (
 	"log"
 	"sync"
 	"time"
+	"encoding/json"
 )
 
 /*
@@ -42,15 +43,46 @@ func main() {
 			log.Println(err)
 		}
 
-		//Setup storage database
-		if err = createDatabaseTables(); err != nil {
-			log.Println(err)
+		
+		//DEBUG perform OCR and find flights on specific image file in debug training directory
+		if DEBUG_MANUAL_IMAGE_FILE_TARGET {
+			//Create fuzzy models for lookup
+			if err := createFuzzyModels(); err != nil {
+				log.Fatal(err)
+			}
+
+			var terminalData = `
+			{
+        "title": "NS Norfolk, Virginia",
+        "keywords": [],
+        "id": "313903465336244",
+        "url": "http://www.facebook.com/NorfolkPassengerTerminal",
+        "location": {
+            "latitude": 36.9448,
+            "longitude": -76.3191
+        }
+    	}
+    	`
+	    var debugTerminal Terminal
+	    if err = json.Unmarshal([]byte(terminalData), &debugTerminal); err != nil {
+	    	log.Println(err)
+	    	return
+	    }
+	    debugTerminal.getTZ()
+
+	    log.Println("DEBUG_MANUAL_IMAGE_FILE_TARGET on " + photoPath(Slide{
+	    	SaveType:SAVE_IMAGE_TRAINING}))
+
+			processPhotoNode(PhotosEdgePhoto{
+				CreatedTime: time.Now().Format("2006-01-02T15:04:05-0700")}, debugTerminal)
+			return
 		}
+		
 
 		//Load terminals
 		var terminalsToUpdateFile string
 		terminalsToUpdateFile = TERMINAL_FILE
-		if DEBUG_SINGLE_FILE {
+		if DEBUG_TERMINAL_SINGLE_FILE {
 			terminalsToUpdateFile = TERMINAL_SINGLE_FILE
 		}
 
@@ -63,13 +95,24 @@ func main() {
 		getAllTerminalsInfo(terminalArray)
 		//log.Println(terminalArray)
 		terminalMap := readTerminalArrayToMap(terminalArray)
-		log.Printf("Loaded %v Terminals.\n", len(terminalArray))
+		log.Printf("Loaded %v Terminals from %v.\n", len(terminalArray), terminalsToUpdateFile)
 
 
-		//Population locations table with locations from file
-		if err = populateLocationsTable(terminalArray); err != nil {
-			log.Println(err)
-			return
+		//Skip database setup if just testing single terminal file
+		if DEBUG_TERMINAL_SINGLE_FILE {
+
+		} else {
+			//Setup storage database
+			if err = createDatabaseTables(); err != nil {
+				log.Println(err)
+				return
+			}
+
+			//Population locations table with locations from file
+			if err = populateLocationsTable(terminalArray); err != nil {
+				log.Println(err)
+				return
+			}
 		}
 
 		log.Printf("\u001b[1m\u001b[35m%v\u001b[0m\n", "Starting Update")

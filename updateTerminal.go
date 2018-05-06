@@ -197,7 +197,7 @@ func updateTerminalFlights(targetTerminal Terminal) (err error) {
 		albumId = targetTerminal.Id
 		displayErrorForTerminal(targetTerminal, "72 hour album not found.")
 	} else {
-		displayMessageForTerminal(targetTerminal, "72 hour album found.")
+		displayMessageForTerminal(targetTerminal, "72 hour album found id " + albumId + ".")
 		incrementTerminalsWith72HRAlbum()
 	}
 
@@ -315,14 +315,26 @@ func find72HrAlbumId(t Terminal) (albumId string, err error) {
 
 	var Hr72Regex *regexp.Regexp
 	//Match Date Month Year. Capture date and year
-	if Hr72Regex, err = regexp.Compile("(?i)72.*hour"); err != nil {
+	if Hr72Regex, err = regexp.Compile("(?i)72.*(?:hour|hr)"); err != nil {
 		return
 	}
+
+	//Find albums matching regex and latest of those matching albums
+	latestAlbumnTime := time.Now().Add(-7 * 24 * time.Hour) //Set max 72hr album age as 1 week.
 	for _, album := range pageAlbumsEdge.Data {
 		if regexResult := Hr72Regex.FindStringSubmatch(album.Name); regexResult != nil {
-			//Found match
-			albumId = album.Id
-			return
+			var albumCreatedTime time.Time
+			layout := "2006-01-02T15:04:05-0700"
+
+			//Found match for 72 hr album name
+			//determine latest album
+			if albumCreatedTime, err = time.Parse(layout, album.CreatedTime); err != nil {
+				return
+			}
+			if albumCreatedTime.After(latestAlbumnTime) {
+				albumId = album.Id
+				latestAlbumnTime = albumCreatedTime
+			}
 		}
 	}
 	return
@@ -390,11 +402,17 @@ func getPhotosEdge(id string) (photosEdge PhotosEdge, err error) {
 //Download, save, OCR a photo from Photos Edge
 func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (flightsFound int, err error) {
 
+	if DEBUG_MANUAL_IMAGE_FILE_TARGET {
+
+	} else {
+
+	}
+
 	//Check if photo created within X timeframe (made recently?)
 	var photoCreatedTime time.Time
 	//http://stackoverflow.com/questions/24401901/time-parse-why-does-golang-parses-the-time-incorrectly
 	layout := "2006-01-02T15:04:05-0700"
-	if photoCreatedTime, err = time.Parse(layout, edgePhoto.CreatedTime); err != nil {
+	if photoCreatedTime, err = time.Parse(layout, edgePhoto.CreatedTime); err != nil{
 		return
 	}
 
@@ -419,13 +437,19 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (fligh
 
 	//Request Photo node for slide
 	var photoNode PhotoNode
-	if photoNode, err = getPhotoNodeForSlide(tmpSlide); err != nil {
-		return
-	}
 
-	//Download and Save Image for Photo node
-	if err = downloadAndSaveImageForPhotoNode(photoNode, &tmpSlide); err != nil {
-		return
+	//Only do network operations to fetch image if not in DEBUG_MANUAL_IMAGE_FILE_TARGET true mode
+	if DEBUG_MANUAL_IMAGE_FILE_TARGET {
+
+	} else {
+		if photoNode, err = getPhotoNodeForSlide(tmpSlide); err != nil {
+			return
+		}
+
+		//Download and Save Image for Photo node
+		if err = downloadAndSaveImageForPhotoNode(photoNode, &tmpSlide); err != nil {
+			return
+		}
 	}
 
 	//DEBUG
@@ -654,13 +678,19 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (fligh
 		}
 	*/
 
-	if err = deleteFlightsFromTableForDayForOriginTerminal(FLIGHTS_72HR_TABLE, slideDate, slides[0].Terminal); err != nil {
-		return
-	}
+	//DEBUG Only update database if not DEBUG_MANUAL_IMAGE_FILE_TARGET true
+	if DEBUG_MANUAL_IMAGE_FILE_TARGET {
 
-	if err = insertFlightsIntoTable(FLIGHTS_72HR_TABLE, finalFlights); err != nil {
-		return
+	} else {
+
+		if err = deleteFlightsFromTableForDayForOriginTerminal(FLIGHTS_72HR_TABLE, slideDate, slides[0].Terminal); err != nil {
+			return
+		}
+		if err = insertFlightsIntoTable(FLIGHTS_72HR_TABLE, finalFlights); err != nil {
+			return
+		}
 	}
+	
 
 	flightsFound = len(finalFlights)
 	incrementPhotosProcessed()

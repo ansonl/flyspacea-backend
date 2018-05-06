@@ -185,7 +185,7 @@ func populateLocationsTable(terminalArray []Terminal) (err error) {
 	}
 
 	//If debug single terminal, still load all terminals and locations into database.
-	if DEBUG_SINGLE_FILE {
+	if DEBUG_TERMINAL_SINGLE_FILE {
 		if locationKeywordsArray, err = readTerminalArrayFromFiles(LOCATION_KEYWORDS_FILE, TERMINAL_FILE); err != nil {
 			return
 		}

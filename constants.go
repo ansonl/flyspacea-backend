@@ -1,7 +1,11 @@
 package main
 
 const (
-	DEBUG_SINGLE_FILE bool = false
+	DEBUG_EXPORT_TERMINAL_TZ bool = false
+	DEBUG_TERMINAL_SINGLE_FILE bool = false
+	DEBUG_MANUAL_IMAGE_FILE_TARGET bool = false
+	DEBUG_MANUAL_IMAGE_FILE_TARGET_TRAINING_DIRECTORY string = "debug_training"
+	DEBUG_MANUAL_FILENAME string = "31960733_1797087697017806_2704613903555362816_n.jpg" //relative path of image
 )
 
 //Terminal info files

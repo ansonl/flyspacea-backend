@@ -99,10 +99,11 @@ func readTerminalArrayFromFiles(filenames ...string) (keywordsArray []Terminal, 
 		terminalTitleTZOffsetArray = append(terminalTitleTZOffsetArray, v)
 	}
 
-	output, _ := json.MarshalIndent(terminalTitleTZOffsetArray, "", "	")
-	ioutil.WriteFile("tz_export.json", output, 0644)
-	fmt.Println("TZ exported")
+	if DEBUG_EXPORT_TERMINAL_TZ {
+		output, _ := json.MarshalIndent(terminalTitleTZOffsetArray, "", "	")
+		ioutil.WriteFile("tz_export.json", output, 0644)
+		fmt.Println("TZ exported")
+	}
 	
-
 	return
 }

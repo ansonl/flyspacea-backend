@@ -66,12 +66,15 @@ func copyFileContents(src, dst string) (err error) {
 }
 
 //Return local photo path for SaveImageType
-func photoPath(slide Slide) string {
+func photoPath(slide Slide) (photoFilename string) {
 	var photoDirectory string
-	var photoFilename string
 	switch slide.SaveType {
 	case SAVE_IMAGE_TRAINING:
 		photoDirectory = IMAGE_TRAINING_DIRECTORY
+		//Set special initial DEBUG training directory if training manual file
+		if DEBUG_MANUAL_IMAGE_FILE_TARGET {
+			photoDirectory = DEBUG_MANUAL_IMAGE_FILE_TARGET_TRAINING_DIRECTORY
+		}
 		break
 	case SAVE_IMAGE_TRAINING_PROCESSED_BLACK:
 		photoDirectory = IMAGE_TRAINING_PROCESSED_DIRECTORY_BLACK
@@ -93,7 +96,18 @@ func photoPath(slide Slide) string {
 
 	photoFilename = fmt.Sprintf("%v_%v%v.%v", strippedTerminalTitle, slide.FBNodeId, suffix, slide.Extension)
 
-	return fmt.Sprintf("%v/%v", photoDirectory, photoFilename)
+	//DEBUG Override terminal+slide specific filename for DEBUG_MANUAL_FILENAME if DEBUG_MANUAL_IMAGE_FILE_TARGET is true
+	if DEBUG_MANUAL_IMAGE_FILE_TARGET {
+		extensionIndex := strings.LastIndex(DEBUG_MANUAL_FILENAME, ".")
+		if extensionIndex == -1 {
+			photoFilename = DEBUG_MANUAL_FILENAME
+		} else {
+			photoFilename = DEBUG_MANUAL_FILENAME[:extensionIndex] + suffix + DEBUG_MANUAL_FILENAME[extensionIndex:]
+		}
+	}
+
+	photoFilename = fmt.Sprintf("%v/%v", photoDirectory, photoFilename)
+	return 
 }
 
 //Returns the closer time.Time to the target time.Time of two time.Time

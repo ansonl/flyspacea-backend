@@ -19,7 +19,7 @@ func deleteDuplicatesFromDestinationArray(destsArrayPointer *[]Destination) {
 			}
 
 			//Compare intersection image.Rectangle area to the smaller of destA and destB area
-			//OR if same destination terminal and on 50% same horizontal line due to fuzzy match individual words from same location
+			//OR if same destination terminal (predicted by fuzzy match) and on 50% same horizontal line due to fuzzy match individual words from same location
 			var horizontalDuplicate bool
 			if destA.TerminalTitle == destB.TerminalTitle {
 				horizontalDuplicate = sameHorizontalLine(destA.BBox, destB.BBox)

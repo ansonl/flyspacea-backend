@@ -426,6 +426,8 @@ func findSeatsAvailableFromSlides(slides []Slide, seatsLabelBBox image.Rectangle
 			} else {
 				searchString = fmt.Sprintf("%v%v", strconv.Itoa(result.Number), result.Letter)
 			}
+
+			//Find text bounds of found SA text
 			if bboxes, err = getTextBounds(cropSlide.HOCRText, searchString); err != nil {
 				return
 			}
@@ -450,29 +452,31 @@ func findSeatsAvailableFromSlides(slides []Slide, seatsLabelBBox image.Rectangle
 func findSeatsFromPlainText(plainText string) (foundSAs []SeatsAvailable, err error) {
 
 	var SeatsCountRegex *regexp.Regexp
-	if SeatsCountRegex, err = regexp.Compile("\\b(?:(?:(\\d{1,3})(f|t|sp)?)|(sp))\\b"); err != nil {
+	if SeatsCountRegex, err = regexp.Compile("\\b(?:(?:(\\d{1,3})(f|t|sp)?)|(sp|tbd))\\b"); err != nil {
 		return
 	}
 
 	//lowercase input string
 	var input = strings.ToLower(plainText)
-	//fmt.Println(input)
+	fmt.Println(input)
 	var regexResult [][]string
 	if regexResult = SeatsCountRegex.FindAllStringSubmatch(input, -1); regexResult == nil {
 		//No match, proceed to next processed slide
 		return
 	}
 
+	//fmt.Println("SA regex results len ", len(regexResult))
+
 	for _, result := range regexResult {
-		/*
-			fmt.Println("found regex len ", len(result))
+			/*
+			fmt.Println("found SA regex len ", len(result))
 			for n, r := range result {
 				fmt.Println(n, len(r), r)
 			}
-		*/
+			*/
 
 		var capturedSeatCount int
-		var capturedSeatLetter string //F/T/SP
+		var capturedSeatLetter string //F/T/SP|TBD->SP
 
 		//Check appropriate result indices for seat info
 		if len(result[1]) > 0 { //Check if number captured
@@ -483,7 +487,7 @@ func findSeatsFromPlainText(plainText string) (foundSAs []SeatsAvailable, err er
 			if len(result[2]) > 0 { //Check for letter code
 				capturedSeatLetter = result[2]
 			}
-		} else if len(result[3]) > 0 { //No number, check for letter code
+		} else if len(result[3]) > 0 { //No number, check for letter code in third capture group
 			capturedSeatLetter = result[3]
 		}
 
