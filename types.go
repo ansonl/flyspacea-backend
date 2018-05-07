@@ -227,5 +227,6 @@ type SAResponse struct {
 	AuthToken string   `json:"authToken"`
 	Flights   []Flight `json:"flights"`
 	Locations []string `json:"locations"`
+	Terminals []Terminal `json:"terminals"`
 	Data string	`json:"data"`
 }

@@ -137,6 +137,22 @@ func locationsHandler(w http.ResponseWriter, r *http.Request) {
 		Locations: locationsArr}.createJSONOutput())
 }
 
+func departLocationsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	var err error
+	var terminalArray []Terminal
+	if terminalArray, err = readTerminalArrayFromFiles(TERMINAL_FILE); err != nil {
+		fmt.Fprintf(w, SAResponse{
+			Status: 1,
+			Error:  fmt.Sprintf("Get depart locations error: %v", err.Error())}.createJSONOutput())
+	}
+
+	fmt.Fprintf(w, SAResponse{
+		Status:    0,
+		Terminals: terminalArray}.createJSONOutput())
+}
+
 /*
 func allLocationsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -307,6 +323,9 @@ func runServer(wg *sync.WaitGroup, config *tls.Config) {
 
 	//Get active locations within a time range
 	http.HandleFunc("/locations", locationsHandler)
+
+	//Get departure locations
+	http.HandleFunc("/departLocations", departLocationsHandler)
 
 	//Get active locations within a time range
 	//http.HandleFunc("/allLocations", allLocationsHandler)
