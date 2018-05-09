@@ -153,28 +153,21 @@ func departLocationsHandler(w http.ResponseWriter, r *http.Request) {
 		Terminals: terminalArray}.createJSONOutput())
 }
 
-/*
 func allLocationsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	var err error
-
-	var locationsArr []Terminal
-	if locationsArr, err = selectAllLocationsFromTable(
-		FLIGHTS_72HR_TABLE); err != nil {
+	var terminalArray []Terminal
+	if terminalArray, err = readTerminalArrayFromFiles(TERMINAL_FILE, LOCATION_KEYWORDS_FILE); err != nil {
 		fmt.Fprintf(w, SAResponse{
 			Status: 1,
-			Error:  fmt.Sprintf("Get locations error: %v", err.Error())}.createJSONOutput())
-		return
+			Error:  fmt.Sprintf("Get all locations from terminal and locations file error: %v", err.Error())}.createJSONOutput())
 	}
-	//TODO: decide what to do with all locations data and whether to switch SAResponse.locations from []string to []Terminal
 
 	fmt.Fprintf(w, SAResponse{
 		Status:    0,
-		Locations: locationsArr}.createJSONOutput())
-		
+		Terminals: terminalArray}.createJSONOutput())
 }
-*/
 
 func oldestRollCallHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -324,11 +317,11 @@ func runServer(wg *sync.WaitGroup, config *tls.Config) {
 	//Get active locations within a time range
 	http.HandleFunc("/locations", locationsHandler)
 
-	//Get departure locations
+	//Get departure locations objects from file
 	http.HandleFunc("/departLocations", departLocationsHandler)
 
-	//Get active locations within a time range
-	//http.HandleFunc("/allLocations", allLocationsHandler)
+	//Get all locations objects from files
+	http.HandleFunc("/allLocations", allLocationsHandler)
 
 	//Get oldest rollcall within the last year
 	http.HandleFunc("/oldestRC", oldestRollCallHandler)
