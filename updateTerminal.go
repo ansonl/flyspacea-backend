@@ -550,7 +550,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (fligh
 
 	deleteTerminalFromDestArray(&destinations, slides[0].Terminal)
 
-	/*
+	
 	//Print roll calls object. 
 		fmt.Println("found rcs in all slides")
 		for _, rc := range rollCalls {
@@ -563,7 +563,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (fligh
 			log.Println(d)
 		}
 		//return
-	*/
+	
 
 	//Find vertically closest Destination for every RollCall
 	linkRollCallsToNearestDestinations(rollCalls, destinations)

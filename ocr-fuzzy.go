@@ -57,8 +57,13 @@ func createFuzzyModels() (err error) {
 	fuzzyBannedSpellings["rsaf"] = 0
 	fuzzyBannedSpellings["falls"] = 0
 
-	//Words not location related but still bad
+	//Words not location related. Commonly OCRed from terminals
 	fuzzyBannedSpellings["minder"] = 0
+	fuzzyBannedSpellings["country"] = 0
+	fuzzyBannedSpellings["clearance"] = 0
+	fuzzyBannedSpellings["required"] = 0
+	fuzzyBannedSpellings["seats"] = 0
+
 	
 
 	//Slide data header label keyword to train in fuzzy with customizable training depth

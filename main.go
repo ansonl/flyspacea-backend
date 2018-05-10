@@ -75,7 +75,7 @@ func main() {
 
 			processPhotoNode(PhotosEdgePhoto{
 				UpdatedTime: time.Now().Format("2006-01-02T15:04:05-0700")}, debugTerminal)
-			return
+			log.Fatal("DEBUG_MANUAL_IMAGE_FILE_TARGET complete")
 		}
 		
 
