@@ -53,15 +53,15 @@ func main() {
 
 			var terminalData = `
 			{
-        "title": "NS Norfolk, Virginia",
+        "title": "JB Charleston, South Carolina",
         "keywords": [],
-        "id": "313903465336244",
-        "url": "http://www.facebook.com/NorfolkPassengerTerminal",
+        "id": "1768570710123989",
+        "url": "https://www.facebook.com/JBCharlestonPassengerTerminalSC/",
         "location": {
-            "latitude": 36.9448,
-            "longitude": -76.3191
+            "latitude": 32.8910,
+            "longitude": -80.0692
         }
-    	}
+    }
     	`
 	    var debugTerminal Terminal
 	    if err = json.Unmarshal([]byte(terminalData), &debugTerminal); err != nil {
@@ -74,7 +74,7 @@ func main() {
 	    	SaveType:SAVE_IMAGE_TRAINING}))
 
 			processPhotoNode(PhotosEdgePhoto{
-				CreatedTime: time.Now().Format("2006-01-02T15:04:05-0700")}, debugTerminal)
+				UpdatedTime: time.Now().Format("2006-01-02T15:04:05-0700")}, debugTerminal)
 			return
 		}
 		

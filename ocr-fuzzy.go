@@ -34,7 +34,7 @@ func destroyFuzzyModels() {
 
 //Create fuzzy models for slide labels and terminal keywords
 func createFuzzyModels() (err error) {
-	//Create ban spelling list to not match
+	//Create ban spelling list to not train fuzzy model for. Also check for these words at run time and do not lookup them. 
 	//These words are common/shared/false positives
 	fuzzyBannedSpellings = make(map[string]int)
 	fuzzyBannedSpellings["listed"] = 0
@@ -43,6 +43,23 @@ func createFuzzyModels() (err error) {
 	fuzzyBannedSpellings["airlift"] = 0
 	fuzzyBannedSpellings["airwing"] = 0
 	fuzzyBannedSpellings["harbor"] = 0
+	fuzzyBannedSpellings["fort"] = 0
+	fuzzyBannedSpellings["angb"] = 0
+	fuzzyBannedSpellings["term"] = 0
+	fuzzyBannedSpellings["will"] = 0
+	fuzzyBannedSpellings["mcas"] = 0
+	fuzzyBannedSpellings["afspc"] = 0
+	fuzzyBannedSpellings["afmc"] = 0
+	fuzzyBannedSpellings["afsoc"] = 0
+	fuzzyBannedSpellings["aetc"] = 0
+	fuzzyBannedSpellings["raaf"] = 0
+	fuzzyBannedSpellings["jarb"] = 0
+	fuzzyBannedSpellings["rsaf"] = 0
+	fuzzyBannedSpellings["falls"] = 0
+
+	//Words not location related but still bad
+	fuzzyBannedSpellings["minder"] = 0
+	
 
 	//Slide data header label keyword to train in fuzzy with customizable training depth
 	type LabelKeyword struct {
@@ -100,14 +117,21 @@ func createFuzzyModels() (err error) {
 		keyword = strings.ToLower(keyword)
 
 		if len(keyword) < FUZZY_MODEL_KEYWORD_MIN_LENGTH {
-			err = fmt.Errorf("Keyword length less than 5. %v", keyword)
+			err = fmt.Errorf("Keyword length less than %v. %v", FUZZY_MODEL_KEYWORD_MIN_LENGTH, keyword)
+			fmt.Println(err)
+			err = nil
 		}
 
 		//Add to keyword -> terminal title map
 		locationKeywordMap[keyword] = title
 
 		//Determine depth
-		depth := len(keyword) / 2
+		depth := (len(keyword) / 2) - 1
+
+		//Find exact match for the short keywords
+		if len(keyword) < FUZZY_MODEL_KEYWORD_MIN_LENGTH {
+			depth = 0
+		}
 
 		//Limit depth for speed and false positives
 		limit := 2
@@ -142,10 +166,11 @@ func createFuzzyModels() (err error) {
 		addKeyword(trimmed, v.Title)
 
 		//Add componenets of trimmed title with len() > 5 and not contains parens
+		//ex: a long airport-name -> [a, long, airport, name]
 		components := strings.FieldsFunc(trimmed, splitRunes)
 		for _, k := range components {
 
-			if len(k) > FUZZY_MODEL_KEYWORD_MIN_LENGTH && !strings.Contains(k, "(") && !strings.Contains(k, ")") {
+			if len(k) >= FUZZY_MODEL_KEYWORD_MIN_LENGTH && !strings.Contains(k, "(") && !strings.Contains(k, ")") {
 				addKeyword(k, v.Title)
 			}
 		}

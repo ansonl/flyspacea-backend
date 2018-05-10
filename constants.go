@@ -2,10 +2,10 @@ package main
 
 const (
 	DEBUG_EXPORT_TERMINAL_TZ bool = false
-	DEBUG_TERMINAL_SINGLE_FILE bool = false
-	DEBUG_MANUAL_IMAGE_FILE_TARGET bool = false
+	DEBUG_TERMINAL_SINGLE_FILE bool = true
+	DEBUG_MANUAL_IMAGE_FILE_TARGET bool = true
 	DEBUG_MANUAL_IMAGE_FILE_TARGET_TRAINING_DIRECTORY string = "debug_training"
-	DEBUG_MANUAL_FILENAME string = "31960733_1797087697017806_2704613903555362816_n.jpg" //relative path of image
+	DEBUG_MANUAL_FILENAME string = "11.jpeg" //relative path of image
 )
 
 //Terminal info files
@@ -36,6 +36,7 @@ const (
 	GRAPH_FIELD_IMAGES_KEY        string = "images"
 	GRAPH_FIELD_IMAGES_SOURCE_KEY string = "source"
 	GRAPH_FIELD_UPDATED_TIME_KEY  string = "updated_time"
+	GRAPH_FIELD_ID_KEY          string = "id"
 	GRAPH_FIELD_NAME_KEY          string = "name"
 	GRAPH_TYPE_UPLOADED_KEY       string = "uploaded"
 

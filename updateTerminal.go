@@ -267,6 +267,7 @@ func find72HrAlbumId(t Terminal) (albumId string, err error) {
 	resource := fmt.Sprintf("%v/%v/%v", GRAPH_API_VERSION, t.Id, GRAPH_EDGE_ALBUMS)
 	data := url.Values{}
 	data.Add(GRAPH_ACCESS_TOKEN_KEY, GRAPH_ACCESS_TOKEN)
+	data.Add(GRAPH_FIELDS_KEY, fmt.Sprintf("%v,%v,%v", GRAPH_FIELD_UPDATED_TIME_KEY, GRAPH_FIELD_NAME_KEY, GRAPH_FIELD_ID_KEY))
 
 	u, _ := url.ParseRequestURI(apiUrl)
 	u.Path = resource
@@ -322,18 +323,25 @@ func find72HrAlbumId(t Terminal) (albumId string, err error) {
 	//Find albums matching regex and latest of those matching albums
 	latestAlbumnTime := time.Now().Add(-7 * 24 * time.Hour) //Set max 72hr album age as 1 week.
 	for _, album := range pageAlbumsEdge.Data {
+		log.Println(album)
+
 		if regexResult := Hr72Regex.FindStringSubmatch(album.Name); regexResult != nil {
-			var albumCreatedTime time.Time
+			var albumUpdatedTime time.Time
 			layout := "2006-01-02T15:04:05-0700"
+
+			log.Println(album.Name)
 
 			//Found match for 72 hr album name
 			//determine latest album
-			if albumCreatedTime, err = time.Parse(layout, album.CreatedTime); err != nil {
+			if albumUpdatedTime, err = time.Parse(layout, album.UpdatedTime); err != nil {
 				return
 			}
-			if albumCreatedTime.After(latestAlbumnTime) {
+
+			log.Println(albumUpdatedTime)
+			log.Println(latestAlbumnTime)
+			if albumUpdatedTime.After(latestAlbumnTime) {
 				albumId = album.Id
-				latestAlbumnTime = albumCreatedTime
+				latestAlbumnTime = albumUpdatedTime
 			}
 		}
 	}
@@ -348,6 +356,7 @@ func getPhotosEdge(id string) (photosEdge PhotosEdge, err error) {
 	data := url.Values{}
 	data.Add(GRAPH_TYPE_KEY, GRAPH_TYPE_UPLOADED_KEY)
 	data.Add(GRAPH_ACCESS_TOKEN_KEY, GRAPH_ACCESS_TOKEN)
+	data.Add(GRAPH_FIELDS_KEY, fmt.Sprintf("%v,%v,%v", GRAPH_FIELD_UPDATED_TIME_KEY, GRAPH_FIELD_NAME_KEY, GRAPH_FIELD_ID_KEY))
 
 	u, _ := url.ParseRequestURI(apiUrl)
 	u.Path = resource
@@ -402,22 +411,18 @@ func getPhotosEdge(id string) (photosEdge PhotosEdge, err error) {
 //Download, save, OCR a photo from Photos Edge
 func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (flightsFound int, err error) {
 
-	if DEBUG_MANUAL_IMAGE_FILE_TARGET {
-
-	} else {
-
-	}
-
 	//Check if photo created within X timeframe (made recently?)
-	var photoCreatedTime time.Time
+	var photoUpdatedTime time.Time
 	//http://stackoverflow.com/questions/24401901/time-parse-why-does-golang-parses-the-time-incorrectly
 	layout := "2006-01-02T15:04:05-0700"
-	if photoCreatedTime, err = time.Parse(layout, edgePhoto.CreatedTime); err != nil{
+	if photoUpdatedTime, err = time.Parse(layout, edgePhoto.UpdatedTime); err != nil{
 		return
 	}
 
+	//log.Println(photoUpdatedTime)
+
 	//If image is too old, ignore
-	if time.Since(photoCreatedTime) > time.Hour*24 {
+	if time.Since(photoUpdatedTime) > time.Hour*24 {
 		displayMessageForTerminal(targetTerminal, edgePhoto.Id+" over 24 hours old.")
 		return
 	}
@@ -464,7 +469,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (fligh
 		newSlide.Extension = tmpSlide.Extension
 		newSlide.Terminal = targetTerminal
 		newSlide.FBNodeId = edgePhoto.Id
-		newSlide.FBCreatedTime = photoCreatedTime
+		newSlide.FBCreatedTime = photoUpdatedTime
 
 		//Manual slide control
 		//newSlide.Extension = "jpeg"
@@ -544,14 +549,20 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (fligh
 
 	deleteTerminalFromDestArray(&destinations, slides[0].Terminal)
 
-	/*
+	
+	//Print roll calls object. 
+		fmt.Println("found rcs in all slides")
+		for _, rc := range rollCalls {
+			log.Println(rc)
+		}
+
 		//Print destination object. Shows spelling found and distance.
 		fmt.Println("found dests in all slides")
 		for _, d := range destinations {
 			log.Println(d)
 		}
 		//return
-	*/
+	
 
 	//Find vertically closest Destination for every RollCall
 	linkRollCallsToNearestDestinations(rollCalls, destinations)

@@ -36,16 +36,16 @@
 		"keywords": []
 	},
 	{
-		"title": "Point Mugu (146th AW), California",
+		"title": "Point Mugu, California",
 		"keywords": []
 	},
 	{
-		"title": "Point Mugu (Navy), California",
+		"title": "Point Mugu, California",
 		"keywords": []
 	},
 	{
-		"title": "Point Mugu (VR-55) , California",
-		"keywords": []
+		"title": "Point Mugu , California",
+		"keywords": ["vr-55"]
 	},
 	{
 		"title": "Buckley AFB, Colorado",
@@ -104,16 +104,16 @@
 		"keywords": []
 	},
 	{
-		"title": "185th ARW (Iowa ANG) , Iowa",
+		"title": "185th ARW , Iowa",
 		"keywords": []
 	},
 	{
-		"title": "Fort Campbell ( Campbell Army Airfield), Kentucky",
+		"title": "Fort Campbell, Kentucky",
 		"keywords": []
 	},
 	{
-		"title": "Godman AAF (Ft Knox), Kentucky",
-		"keywords": []
+		"title": "Godman AAF, Kentucky",
+		"keywords": ["fort knox"]
 	},
 	{
 		"title": "Kentucky ANG, Kentucky",
@@ -136,7 +136,7 @@
 		"keywords": []
 	},
 	{
-		"title": "Minneapolis St. Paul Airport Air Reserve Station (934th AW), Minnesota",
+		"title": "Minneapolis St. Paul Airport Air Reserve Station, Minnesota",
 		"keywords": []
 	},
 	{
@@ -164,16 +164,16 @@
 		"keywords": []
 	},
 	{
-		"title": "Fort Drum (Wheeler Sack AAF), New York",
-		"keywords": []
+		"title": "Fort Drum, New York",
+		"keywords": ["wheeler sack"]
 	},
 	{
 		"title": "Stewart ANG, New York",
 		"keywords": []
 	},
 	{
-		"title": "Stratton ANG (109th AW), New York",
-		"keywords": []
+		"title": "Stratton ANG, New York",
+		"keywords": ["109th"]
 	},
 	{
 		"title": "Cherry Point, North Carolina",
@@ -204,15 +204,15 @@
 		"keywords": []
 	},
 	{
-		"title": "137th ARW (OK Natl Guard), Oklahoma",
+		"title": "137th ARW, Oklahoma",
 		"keywords": []
 	},
 	{
-		"title": "Pennsylvania ANG (171st ARW), Pennsylvania",
+		"title": "Pennsylvania ANG, Pennsylvania",
 		"keywords": []
 	},
 	{
-		"title": "Pittsburgh AFR (911th AW), Pennsylvania",
+		"title": "Pittsburgh AFR, Pennsylvania",
 		"keywords": []
 	},
 	{
@@ -220,7 +220,7 @@
 		"keywords": []
 	},
 	{
-		"title": "Rhode Island ANG (143rd AW), Rhode Island",
+		"title": "Rhode Island ANG, Rhode Island",
 		"keywords": []
 	},
 	{
@@ -228,11 +228,11 @@
 		"keywords": []
 	},
 	{
-		"title": "McGhee Tyson ANG  (Knoxville) , Tennessee",
-		"keywords": []
+		"title": "McGhee Tyson ANG  , Tennessee",
+		"keywords": ["knoxville"]
 	},
 	{
-		"title": "Nashville (118 AW), Tennessee",
+		"title": "Nashville, Tennessee",
 		"keywords": []
 	},
 	{
@@ -244,8 +244,8 @@
 		"keywords": []
 	},
 	{
-		"title": "Lackland AFB (Kelly Field), Texas",
-		"keywords": []
+		"title": "Lackland AFB, Texas",
+		"keywords": ["kelly field"]
 	},
 	{
 		"title": "NAS Corpus Christi, Texas",
@@ -260,7 +260,7 @@
 		"keywords": []
 	},
 	{
-		"title": "Utah ANG (151st ARW), Utah",
+		"title": "Utah ANG, Utah",
 		"keywords": []
 	},
 	{
@@ -280,11 +280,11 @@
 		"keywords": []
 	},
 	{
-		"title": "West Virginia ANG (Charleston), West Virginia",
+		"title": "West Virginia ANG, West Virginia",
 		"keywords": []
 	},
 	{
-		"title": "Cheyenne (153rd Air Wing), Wyoming",
+		"title": "Cheyenne, Wyoming",
 		"keywords": []
 	},
 	{
@@ -296,12 +296,12 @@
 		"keywords": []
 	},
 	{
-		"title": "Camp Ederle (Vicenza), Italy",
-		"keywords": []
+		"title": "Camp Ederle, Italy",
+		"keywords": ["vicenza"]
 	},
 	{
-		"title": "IASFA (Lodging), Portugal",
-		"keywords": []
+		"title": "IASFA, Portugal",
+		"keywords": ["lodging"]
 	},
 	{
 		"title": "Prestwick, United Kingdom",
@@ -344,8 +344,8 @@
 		"keywords": []
 	},
 	{
-		"title": "Soto Cano AB (Palmerola AB), Honduras",
-		"keywords": []
+		"title": "Soto Cano AB, Honduras",
+		"keywords": ["palmerola"]
 	},
 	{
 		"title": "Key Field, Missouri",
@@ -473,6 +473,10 @@
 	},
 	{
 		"title": "Rosecrans Memorial AP, MO",
+		"keywords": []
+	},
+	{
+		"title": "South Bend, IN",
 		"keywords": []
 	}
 ]

@@ -121,7 +121,7 @@
     },
     {
         "title": "Pope Field, North Carolina",
-        "keywords": [],
+        "keywords": ["pope aaf"],
         "id": "141510739211178",
         "url": "https://www.facebook.com/pages/Pope-Passenger-Terminal/141510739211178",
         "location": {
@@ -281,7 +281,7 @@
     },
     {
         "title": "NS Rota, Spain",
-        "keywords": [],
+        "keywords": ["rota"],
         "id": "331027433647109",
         "url": "http://www.facebook.com/NavalStationRotaSpainPassengerTerminal",
         "location": {
@@ -693,6 +693,7 @@
     },
     {
         "title": "Dyess AFB Pax Term",
+        "keywords": ["dyess afb"],
         "id": "1473369099622926",
         "url": "http://www.facebook.com/DyessPaxTerminal",
         "special-schedule-url": "http://www.dyess.af.mil/Portals/145/Docs/Space-A/Space-A.pdf",
@@ -704,6 +705,7 @@
     },
     {
         "title": "Fort Worth (NAS)",
+        "keywords": ["fort worth"],
         "id": "121264007952051",
         "url": "https://www.facebook.com/NASFortWorthJRB",
         "formatBad": true,
@@ -715,6 +717,7 @@
     {
         "url": "https://www.facebook.com/pages/Moron-AB-Spain-Passenger-Terminal/414779615225368",
         "title": "Moron Pax Term",
+        "keywords": [],
         "id": "414779615225368",
         "formatBad": true,
         "location": {

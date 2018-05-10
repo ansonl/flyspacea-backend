@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unicode"
+	//"unicode"
 )
 
 //Find date of 72 hour slide in header by looking for month name
@@ -335,8 +335,9 @@ func findRollCallTimesFromSlides(slides []Slide, estimatedDay time.Time, limitMi
 func find24HRFromPlainText(plainText string, estimatedDay time.Time, slideTZ *time.Location) (found24HR []time.Time, err error) {
 	//lowercase input string
 	var input = strings.ToLower(plainText)
-	//fmt.Println(input)
+	fmt.Println(input)
 
+	/*
 	//Find whitespace between digits with Regexp\
 	//These will not be found in hOCR
 	var whitespaceBetweenDigitsRegex *regexp.Regexp
@@ -351,6 +352,7 @@ func find24HRFromPlainText(plainText string, estimatedDay time.Time, slideTZ *ti
 			return r
 		}, match)
 	})
+	*/
 
 	//Find 24hr time with Regexp
 	var HR24Regex *regexp.Regexp
@@ -363,6 +365,7 @@ func find24HRFromPlainText(plainText string, estimatedDay time.Time, slideTZ *ti
 	var regexResult []string
 	if regexResult = HR24Regex.FindAllString(input, -1); regexResult == nil {
 		//No match, proceed to next processed slide
+		//fmt.Println("no RC regex result")
 		return
 	}
 
@@ -416,7 +419,7 @@ func findSeatsAvailableFromSlides(slides []Slide, seatsLabelBBox image.Rectangle
 
 		//fmt.Println("look SA in slide", s.SaveType, cropSlide.HOCRText)
 
-		//Get text bounds from hOCR for each 24HR time text found.
+		//Get text bounds from hOCR for each seat text found.
 		for _, result := range foundSAs {
 			var bboxes []image.Rectangle
 
@@ -444,6 +447,7 @@ func findSeatsAvailableFromSlides(slides []Slide, seatsLabelBBox image.Rectangle
 	}
 
 	deleteDuplicatesFromSAArray(&foundSAs)
+	//fmt.Println(foundSAs)
 
 	return
 }
@@ -458,7 +462,7 @@ func findSeatsFromPlainText(plainText string) (foundSAs []SeatsAvailable, err er
 
 	//lowercase input string
 	var input = strings.ToLower(plainText)
-	fmt.Println(input)
+	//fmt.Println(input)
 	var regexResult [][]string
 	if regexResult = SeatsCountRegex.FindAllStringSubmatch(input, -1); regexResult == nil {
 		//No match, proceed to next processed slide
@@ -468,12 +472,14 @@ func findSeatsFromPlainText(plainText string) (foundSAs []SeatsAvailable, err er
 	//fmt.Println("SA regex results len ", len(regexResult))
 
 	for _, result := range regexResult {
+			
 			/*
 			fmt.Println("found SA regex len ", len(result))
 			for n, r := range result {
 				fmt.Println(n, len(r), r)
 			}
 			*/
+			
 
 		var capturedSeatCount int
 		var capturedSeatLetter string //F/T/SP|TBD->SP

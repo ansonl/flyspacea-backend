@@ -19,6 +19,7 @@ type PhotosEdge struct {
 
 type PhotosEdgePhoto struct {
 	CreatedTime string `json:"created_time"`
+	UpdatedTime string `json:"updated_time"`
 	Name        string `json:"name"`
 	Id          string `json:"id"`
 }
@@ -43,6 +44,7 @@ type AlbumsEdge struct {
 
 type AlbumsEdgeAlbum struct {
 	CreatedTime string `json:"created_time"`
+	UpdatedTime string `json:"updated_time"`
 	Name        string `json:"name"`
 	Id          string `json:"id"`
 }
