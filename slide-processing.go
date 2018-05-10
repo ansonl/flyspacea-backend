@@ -335,7 +335,7 @@ func findRollCallTimesFromSlides(slides []Slide, estimatedDay time.Time, limitMi
 func find24HRFromPlainText(plainText string, estimatedDay time.Time, slideTZ *time.Location) (found24HR []time.Time, err error) {
 	//lowercase input string
 	var input = strings.ToLower(plainText)
-	fmt.Println(input)
+	//fmt.Println(input)
 
 	/*
 	//Find whitespace between digits with Regexp\
