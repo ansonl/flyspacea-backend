@@ -78,6 +78,7 @@ Current:
 %v`, diff.String(), *processMode, flightRows, statisticsString(), liveStatisticsString())
 }
 
+//Return active locations in both terminal dict and string array
 func locationsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
@@ -148,8 +149,14 @@ func departLocationsHandler(w http.ResponseWriter, r *http.Request) {
 			Error:  fmt.Sprintf("Get depart locations error: %v", err.Error())}.createJSONOutput())
 	}
 
+	var locationArr []string
+	for _, t := range terminalArray {
+		locationArr = append(locationArr, t.Title)
+	}
+
 	fmt.Fprintf(w, SAResponse{
 		Status:    0,
+		Locations: locationArr,
 		Terminals: terminalArray}.createJSONOutput())
 }
 
