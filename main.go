@@ -51,15 +51,16 @@ func main() {
 				log.Fatal(err)
 			}
 
+			//Terminal data for testing single file DEBUG
 			var terminalData = `
 			{
-        "title": "JB Charleston, South Carolina",
+        "title": "JB Pearl Harbor-Hickam, Hawaii",
         "keywords": [],
-        "id": "1768570710123989",
-        "url": "https://www.facebook.com/JBCharlestonPassengerTerminalSC/",
+        "id": "246992995370117",
+        "url": "https://www.facebook.com/HickamAMC",
         "location": {
-            "latitude": 32.8910,
-            "longitude": -80.0692
+            "latitude": 21.3488,
+            "longitude": -157.9436
         }
     }
     	`

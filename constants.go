@@ -5,7 +5,7 @@ const (
 	DEBUG_TERMINAL_SINGLE_FILE bool = false
 	DEBUG_MANUAL_IMAGE_FILE_TARGET bool = false
 	DEBUG_MANUAL_IMAGE_FILE_TARGET_TRAINING_DIRECTORY string = "debug_training"
-	DEBUG_MANUAL_FILENAME string = "nsf.jpg" //relative path of image
+	DEBUG_MANUAL_FILENAME string = "jbp.jpg" //relative path of image
 )
 
 //Terminal info files
@@ -113,8 +113,11 @@ const (
 	//Minimum OCR word confidence threshold 0-100 to process a result.
 	OCR_WORD_CONFIDENCE_THRESHOLD int = 10
 
-	//Max DestinationLabel.YCoord/ImageTotalHeight to detect incorrect Destination label matches.
+	//Max DestinationLabel.YCoord/ImageTotalHeight to detect (minY) incorrect Destination label matches.
 	DESTINATION_TEXT_VERTICAL_THRESHOLD float64 = 0.5
+
+	//Max Destination Location Keywords.YCoord/ImageTotalHeight (minY) to detect unlikely Destination matches.
+	DESTINATION_KEYWORD_VERTICAL_THRESHOLD float64 = 0.9
 
 	//Percentage of area between two bounding boxes to overlap to be considered duplicates.
 	DUPLICATE_AREA_THRESHOLD float64 = 0.5

@@ -85,8 +85,8 @@
         "id": "173212306112777",
         "url": "https://www.facebook.com/pages/Little-Rock-Passenger-Terminal/173212306112777",
         "location": {
-            "latitude": 34.8880,
-            "longitude": -92.1100
+            "latitude": 34.910435,
+            "longitude": -92.151206
         }
     },
     {
@@ -195,8 +195,8 @@
         "id": "291639120893124",
         "url": "https://www.facebook.com/728AMSTROP",
         "location": {
-            "latitude": 37.001944,
-            "longitude": -35.425833
+            "latitude": 40.063067,
+            "longitude": 32.559534
         }
     },
     {
@@ -265,8 +265,8 @@
         "id": "332837856791726",
         "url": "http://www.facebook.com/pages/Sigonella-Passenger-Terminal/332837856791726",
         "location": {
-            "latitude": 37.4112,
-            "longitude": 14.9091
+            "latitude": 37.408961,
+            "longitude": 14.911271
         }
     },
     {
@@ -315,8 +315,8 @@
         "id": "118078975001312",
         "url": "http://www.facebook.com/soudabaypassengerterminal1",
         "location": {
-            "latitude": 35.240117,
-            "longitude": -24.809269
+            "latitude": 35.49625,
+            "longitude": 24.147639
         }
     },
     {
@@ -326,7 +326,7 @@
         "url": "https://www.facebook.com/pages/Diego-Garcia-Passenger-Terminal/242934902443795",
         "location": {
             "latitude": -7.3132381,
-            "longitude": -72.4121331
+            "longitude": 72.4121331
         }
     },
     {
@@ -336,12 +336,12 @@
         "url": "https://www.facebook.com/OsanPassengerTerminal",
         "location": {
             "latitude": 37.090556,
-            "longitude": -127.029722
+            "longitude": 127.029722
         }
     },
     {
         "title": "RAAF Base Richmond, Australia",
-        "keywords": ["alice springs"],
+        "keywords": ["alice"],
         "id": "151993091614262",
         "url": "https://www.facebook.com/RichmondAMC/info",
         "location": {
@@ -355,8 +355,8 @@
         "id": "378514095530837",
         "url": "http://www.facebook.com/RAFMildenhallPassengerTerminal",
         "location": {
-            "latitude": 52.3614,
-            "longitude": -0.4866
+            "latitude": 52.365,
+            "longitude": 0.4866
         }
     },
     {
@@ -366,7 +366,7 @@
         "url": "https://www.facebook.com/pages/Ramstein-Passenger-Terminal/139447339417453",
         "location": {
             "latitude": 49.4400,
-            "longitude": -7.5971
+            "longitude": 7.5971
         }
     },
     {
@@ -376,7 +376,7 @@
         "url": "https://www.facebook.com/SpangdahlemPassengerTerminal",
         "location": {
             "latitude": 49.9748,
-            "longitude": -6.7008
+            "longitude": 6.7008
         }
     },
     {

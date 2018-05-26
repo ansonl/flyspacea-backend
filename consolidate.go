@@ -142,6 +142,7 @@ func deleteDuplicatesFromSAArray(arrayPointer *[]SeatsAvailable) {
 	}
 }
 
+//Delete terminal self matches from destination array
 func deleteTerminalFromDestArray(arrayPointer *[]Destination, targetTerminal Terminal) {
 	dests := *arrayPointer
 	originalLength := len(dests)
@@ -164,4 +165,34 @@ func deleteTerminalFromDestArray(arrayPointer *[]Destination, targetTerminal Ter
 		}
 		*arrayPointer = tmp
 	}
+}
+
+//Delete destination matches where keyword (minY) is too low on slide
+func deleteLowDestsFromDestArray(arrayPointer *[]Destination, sReference Slide) (err error) {
+	dests := *arrayPointer
+	originalLength := len(dests)
+
+	//Find and remove any matching dests
+	for i := 0; i < len(dests); i++ {
+		var destKeywordLow bool
+		if destKeywordLow, err = sReference.isYCoordinateWithinHeightPercentage(dests[i].BBox.Min.Y, DESTINATION_KEYWORD_VERTICAL_THRESHOLD); err != nil {
+			return
+		}
+		if !destKeywordLow {
+			copy(dests[i:], dests[i+1:])
+			dests[len(dests)-1] = Destination{}
+			dests = dests[:len(dests)-1]
+			i--
+		}
+	}
+	//If duplicates were found, alloc new Destination slice and reassign passed in slice pointer
+	if len(dests) != originalLength {
+		//Create new slice to copy elements over. Original slice will have updated length but old elements in memory (displayed when printing).
+		tmp := make([]Destination, len(dests))
+		for i := 0; i < len(dests); i++ {
+			tmp[i] = dests[i]
+		}
+		*arrayPointer = tmp
+	}
+	return
 }

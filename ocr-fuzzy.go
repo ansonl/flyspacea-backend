@@ -56,6 +56,7 @@ func createFuzzyModels() (err error) {
 	fuzzyBannedSpellings["jarb"] = 0
 	fuzzyBannedSpellings["rsaf"] = 0
 	fuzzyBannedSpellings["falls"] = 0
+	fuzzyBannedSpellings["springs"] = 0
 
 	//Words not location related. Commonly OCRed from terminals
 	fuzzyBannedSpellings["minder"] = 0
@@ -63,6 +64,16 @@ func createFuzzyModels() (err error) {
 	fuzzyBannedSpellings["clearance"] = 0
 	fuzzyBannedSpellings["required"] = 0
 	fuzzyBannedSpellings["seats"] = 0
+	fuzzyBannedSpellings["please"] = 0 //pease afb
+	fuzzyBannedSpellings["nights"] = 0 //wright patterson
+	fuzzyBannedSpellings["arrive"] = 0 
+	fuzzyBannedSpellings["later"] = 0 //barter island
+	fuzzyBannedSpellings["present"] = 0 
+	fuzzyBannedSpellings["yourself"] = 0 
+	fuzzyBannedSpellings["prebooked"] = 0 
+	fuzzyBannedSpellings["sofa"] = 0 
+	fuzzyBannedSpellings["stamp"] = 0 
+	fuzzyBannedSpellings["required"] = 0 
 
 	
 
@@ -167,7 +178,7 @@ func createFuzzyModels() (err error) {
 		//Determine title (ex: Hill AFB) without location (ex: Utah)
 		trimmed := strings.Split(v.Title, ",")[0]
 
-		//Add trimmed title
+		//Add trimmed title for location title in model
 		addKeyword(trimmed, v.Title)
 
 		//Add componenets of trimmed title with len() > 5 and not contains parens

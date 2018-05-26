@@ -513,7 +513,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (fligh
 
 	//Check if Destination label is over 0.5 (threshold constant) of total image height. If too low on image, Destination Label may be incorrect.
 	var destLabelValid bool
-	if destLabelValid, err = slides[0].isYCoordinateInHeightPercentage(destLabelBBox.Min.Y, DESTINATION_TEXT_VERTICAL_THRESHOLD); err != nil {
+	if destLabelValid, err = slides[0].isYCoordinateWithinHeightPercentage(destLabelBBox.Min.Y, DESTINATION_TEXT_VERTICAL_THRESHOLD); err != nil {
 		return
 	}
 	if !destLabelValid { //
@@ -549,7 +549,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (fligh
 	}
 
 	deleteTerminalFromDestArray(&destinations, slides[0].Terminal)
-
+	deleteLowDestsFromDestArray(&destinations, slides[0])
 	
 	//Print roll calls object. 
 		fmt.Println("found rcs in all slides")

@@ -254,7 +254,7 @@ func sameHorizontalLine(bbox1 image.Rectangle, bbox2 image.Rectangle) (horizonta
 }
 
 //Return true if Y coordinate is less/greater than a certain percentage of slide image height. True = lteq. False = greater
-func (sReference Slide) isYCoordinateInHeightPercentage(yCoord int, maxPercentage float64) (valid bool, err error) {
+func (sReference Slide) isYCoordinateWithinHeightPercentage(yCoord int, maxPercentage float64) (valid bool, err error) {
 	var im image.Config
 	if im, err = sReference.getImageConfig(); err != nil {
 		return
