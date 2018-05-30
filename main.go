@@ -93,7 +93,7 @@ func main() {
 		}
 
 		//Read in location keyword file
-		getAllTerminalsInfo(terminalArray)
+		//getAllTerminalsInfo(terminalArray) //Commented out to disable terminal facebook about page info fetch due to API limit
 		//log.Println(terminalArray)
 		terminalMap := readTerminalArrayToMap(terminalArray)
 		log.Printf("Loaded %v Terminals from %v.\n", len(terminalArray), terminalsToUpdateFile)

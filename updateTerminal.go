@@ -27,7 +27,7 @@ import (
 
 //Get all terminals' FB page info
 func getAllTerminalsInfo(terminalArray []Terminal) {
-	//Spawn goroutine to download and process each image
+	//Spawn goroutine to download and process each terminal facebook page about info
 	ctx := context.TODO()
 	var maxWorkers int
 	var sem *semaphore.Weighted
