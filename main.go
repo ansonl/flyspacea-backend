@@ -122,6 +122,11 @@ func main() {
 		updateAllTerminalsFlights(terminalMap)
 		for _ = range time.Tick(time.Minute * 30) {
 			updateAllTerminalsFlights(terminalMap)
+			current := time.Now()
+			log.Println("Purging flights from table with date age older than", FLIGHTS_MAX_SOURCEDATE_AGE_DAYS)
+			if err = deleteFlightsFromTableBetweenTimesForOrigin(FLIGHTS_72HR_TABLE, time.Now(), current.Add(-time.Hour * 24 * time.Duration(FLIGHTS_MAX_SOURCEDATE_AGE_DAYS)),""); err != nil {
+				log.Println("Purge old flights error: ", err)
+			}
 		}
 		//go updateAllTerminalsFlights(terminalMap)
 	}

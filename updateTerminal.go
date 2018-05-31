@@ -694,7 +694,7 @@ func processPhotoNode(edgePhoto PhotosEdgePhoto, targetTerminal Terminal) (fligh
 	if DEBUG_MANUAL_IMAGE_FILE_TARGET {
 
 	} else {
-
+		//Delete previous cancelled/duplicate flights for terminal for day from database
 		if err = deleteFlightsFromTableForDayForOriginTerminal(FLIGHTS_72HR_TABLE, slideDate, slides[0].Terminal); err != nil {
 			return
 		}

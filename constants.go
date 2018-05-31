@@ -141,6 +141,7 @@ const (
 	FLIGHTS_72HR_TABLE_INDEX_DEST_RC        string = "hr72_flights_index_dest_rc"
 	FLIGHTS_72HR_TABLE_INDEX_ORIGIN_DEST_RC string = "hr72_flights_index_origin_dest_rc"
 	PHOTOS_REPORTS_TABLE string = "photo_reports"
+	FLIGHTS_MAX_SOURCEDATE_AGE_DAYS int = 31
 )
 
 //Server REST API constants
