@@ -13,6 +13,8 @@ CONSTRAINT flights_pk PRIMARY KEY (Origin, Destination, RollCall, PhotoSource),
 CONSTRAINT flights_origin_fk FOREIGN KEY (Origin) REFERENCES Locations(Title),
 CONSTRAINT flights_dest_fk FOREIGN KEY (Destination) REFERENCES Locations(Title));
 
+DELETE FROM HR72_flights WHERE SourceDate 
+
 DROP INDEX IF EXISTS hr72_flights_index_origin_dest_rc;
 DROP INDEX IF EXISTS hr72_flights_index_origin_rc;
 DROP INDEX IF EXISTS hr72_flights_index_dest_rc;
