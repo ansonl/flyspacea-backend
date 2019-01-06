@@ -5,7 +5,7 @@ Fly Space-A Photo Processor Server
 
 This the backend server running Fly Space-A. The backend downloads flight schedule photos, processes flight schedules into text data, and provides the flight schedules to client applications over REST API. This code is fully functional. Please see the [technical implementation](https://docs.google.com/presentation/d/1cnS_nTL6xhL5PEHFro7jvDSuHAccr8eSBFV26KIfrzE/edit?usp=sharing) slides for more detailed information on how photos are processed into text.
 
-<iframe src="https://docs.google.com/presentation/d/e/2PACX-1vTI4-2m6gRjPTHvhui8BpOhT46IQ1-k-eYYPKgiapNFGLrbsLqZzNdUYikU6xa2_3XQvzTJ78bIToki/embed?start=false&loop=false&delayms=3000" frameborder="0" width="960" height="749" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+![highlight fsa](https://raw.githubusercontent.com/ansonl/flyspacea-backend/master-public/assets/fsa_results_highlight.png)
 
 How to use
 -------------
