@@ -34,3 +34,5 @@ Credits
 [Fuzzy](https://github.com/sajari/fuzzy) by Sajari
 
 [goprocinfo](https://github.com/c9s/goprocinfo) by c9s
+
+[ImageMagick](https://github.com/ImageMagick/ImageMagick) by [ImageMagick Studios LLC](https://imagemagick.org/)
