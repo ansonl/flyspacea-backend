@@ -32,7 +32,7 @@ const (
 
 //Graph API parameter key-values and key-values' related returned map keys
 const (
-	GRAPH_ACCESS_TOKEN            string = "522755171230853%7ChxS9OzJ4I0CqmmrESRpNHfx77vs"
+	GRAPH_ACCESS_TOKEN            string = "PASTE_APP_ACCESS_TOKEN_HERE"
 	GRAPH_FIELD_IMAGES_KEY        string = "images"
 	GRAPH_FIELD_IMAGES_SOURCE_KEY string = "source"
 	GRAPH_FIELD_UPDATED_TIME_KEY  string = "updated_time"
