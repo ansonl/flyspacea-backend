@@ -9,12 +9,14 @@ Please see the [technical implementation](https://docs.google.com/presentation/d
 
 ![highlight fsa](https://raw.githubusercontent.com/ansonl/flyspacea-backend/master-public/assets/fsa_results_highlight.png)
 
-Why is this released? Can I use it for my own projects?
+Why is this released? License? Can I use it for my own projects?
 -------------
 
 This backend used to provide the information needed for the free Fly Space-A service, but [*Facebook Graph API **Page Public Content Access***](https://developers.facebook.com/docs/graph-api/reference/page/) was revoked in mid-2018 during tightening of Graph API accesses due/related to the [2018 Cambridge Analytica news](https://en.wikipedia.org/wiki/Cambridge_Analytica#2016_presidential_election). ***Page Public Content Access*** became only available to approved to only verified "businesses" for reasons that make no sense as the name suggests: access to page content that is already public. "Individual" entities are only allowed the most limited accesses as of early-2019 and have no ***Page Public Content Access***. When contacted, Facebook support equivalented sole propriertor entity to an "individual" entity. Subsequently, the new mid-2018 "App Review" process was never completed and Graph API access was blocked. 
 
-I am releasing this code under MIT License in hope that the code helps you with your projects. Also because Fly Space-A is not running due to the above issue.
+I am releasing the code in hope that this helps you with your projects. Also because Fly Space-A is not running due to the above issue.
+
+All code produced by Anson Liu is released under MIT License. Linked libraries retain the licenses of their respective authors. 
 
 How to use
 -------------
