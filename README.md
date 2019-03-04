@@ -56,6 +56,8 @@ Credits
 
 [Fuzzy](https://github.com/sajari/fuzzy) by Sajari
 
+[Tesseract OCR](https://github.com/tesseract-ocr/tesseract) by Google
+
 [goprocinfo](https://github.com/c9s/goprocinfo) by c9s
 
 [ImageMagick](https://github.com/ImageMagick/ImageMagick) by [ImageMagick Studios LLC](https://imagemagick.org/)
